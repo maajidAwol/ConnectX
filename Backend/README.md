@@ -28,17 +28,22 @@ ConnectX is a Django-based backend application designed to manage users, product
    pipenv shell
    ```
 
-4. **Apply migrations:**
+4. **Install dependencies from Pipfile.lock:**
+   ```bash
+   pipenv install --ignore-pipfile
+   ```
+
+5. **Apply migrations:**
    ```bash
    python manage.py migrate
    ```
 
-5. **Create a superuser (optional):**
+6. **Create a superuser (optional):**
    ```bash
    python manage.py createsuperuser
    ```
 
-6. **Run the development server:**
+7. **Run the development server:**
    ```bash
    python manage.py runserver
    ```
