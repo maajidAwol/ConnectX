@@ -2,6 +2,8 @@ from rest_framework import permissions
 
 class IsAdminOrEntrepreneur(permissions.BasePermission):
     def has_permission(self, request, view):
+        if request.user.is_staff or request.user.is_superuser:
+            return True
         if request.user.role == 'admin':
             return True
         if request.user.role == 'entrepreneur' and view.action in ['list', 'create', 'retrieve']:
@@ -13,7 +15,8 @@ class IsAdmin(permissions.BasePermission):
     Allows access only to admin users.
     """
     def has_permission(self, request, view):
-        return True
+        if request.user.is_staff or request.user.is_superuser:
+            return True
         return request.user.role == 'admin'
 
 class IsEntrepreneur(permissions.BasePermission):
@@ -29,6 +32,9 @@ class IsOwnerOrAdmin(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         # Admin has full access
+        if request.user.is_staff or request.user.is_superuser:
+            return True
+
         if request.user.role == 'admin':
             return True
         # Entrepreneur can only access their own stock requests
