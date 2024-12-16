@@ -80,11 +80,16 @@ WSGI_APPLICATION = "connectx_backend.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'test',
+        'USER': 'postgres',
+        'PASSWORD': 'new_password',
+        'HOST': 'localhost',  # or the IP of your PostgreSQL server
+        'PORT': '5432',       # default PostgreSQL port
     }
 }
+
 
 
 # Password validation
