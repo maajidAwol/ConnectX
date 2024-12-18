@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Permission
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -16,6 +18,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', User.ADMIN)
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -30,19 +33,21 @@ class UserManager(BaseUserManager):
         user.user_permissions.set(permissions)
         user.save(using=self._db)
         return user
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     ADMIN = 'admin'
     ENTREPRENEUR = 'entrepreneur'
     CUSTOMER = 'customer'
+    OWNER = 'owner'  
     
     ROLE_CHOICES = [
         (ADMIN, 'Admin'),
         (ENTREPRENEUR, 'Entrepreneur'),
         (CUSTOMER, 'Customer'),
+        (OWNER, 'Owner'),
     ]
     
-    # change user_is into interger field
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -51,15 +56,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    password = models.CharField(max_length=128, default='default_password')
+    password = models.CharField(max_length=128)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
 
+    def save(self, *args, **kwargs):
+        # Ensure password is hashed before saving
+        if self.password and not self.password.startswith('pbkdf2_sha256$'):
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         db_table = 'users'
