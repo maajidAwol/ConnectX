@@ -58,3 +58,69 @@ Once the server is running, you can access the API at `http://127.0.0.1:8000/`. 
 - Product management with categories
 - Order processing and management
 - Transaction logging for sales, restocks, and returns
+## Folder structure
+```
+connectx_backend/
+├── connectx_backend/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+├── orders/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── 0001_initial.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── views.py
+├── products/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── 0001_initial.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── views.py
+├── stock_requests/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── 0001_initial.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── views.py
+├── transactions/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── 0001_initial.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── views.py
+├── users/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── 0001_initial.py
+│   ├── models.py
+│   ├── serializers.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+├── manage.py
+├── Pipfile
+├── Pipfile.lock
+├── README.md
+```
