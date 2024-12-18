@@ -22,5 +22,6 @@ urlpatterns = [
     path('api/', include('users.urls')),
     path('api/transactions/', include('transactions.urls')),
 
+    path('api/', include('stock_requests.urls')),
 
 ]
