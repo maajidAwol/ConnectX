@@ -9,6 +9,9 @@ djangorestframework = "*"
 djangorestframework-simplejwt = "*"
 drf-yasg = "*"
 gunicorn = "*"
+psycopg2-binary = "*"
+python-dotenv = "*"
+rest-framework-simplejwt = "*"
 
 [dev-packages]
 
