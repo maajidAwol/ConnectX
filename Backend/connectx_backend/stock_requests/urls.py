@@ -8,10 +8,15 @@ from .views import (
     ApproveStockRequest,
     RejectStockRequest,
 )
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 
 urlpatterns = [
     path('stock-requests/', StockRequestList.as_view(), name='stockrequest-list'),
-    path('stock-requests/', StockRequestCreate.as_view(), name='stockrequest-create'),
+    path('stock-requests/create', StockRequestCreate.as_view(), name='stockrequest-create'),
     path('stock-requests/<uuid:pk>/', StockRequestRetrieve.as_view(), name='stockrequest-retrieve'),
     path('stock-requests/<uuid:pk>/', StockRequestUpdate.as_view(), name='stockrequest-update'),
     path('stock-requests/<uuid:pk>/', StockRequestDelete.as_view(), name='stockrequest-delete'),
