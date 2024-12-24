@@ -1,21 +1,22 @@
-# from rest_framework import generics, permissions
-# from .models import Transaction
-# from .serializers import TransactionSerializer
+from rest_framework import generics, permissions
+from .models import Transaction
+from .serializers import TransactionSerializer
 
-# # List and Create Transactions
-# class TransactionListCreateView(generics.ListCreateAPIView):
-#     queryset = Transaction.objects.all()
-#     permission_classes = [permissions.AllowAny]  # Changed line
-#     serializer_class = TransactionSerializer
+# List and Create Transactions
+class TransactionListCreateView(generics.ListCreateAPIView):
+    queryset = Transaction.objects.all()
+    permission_classes = [permissions.AllowAny]  # Changed line
+    serializer_class = TransactionSerializer
 
-#     def perform_create(self, serializer):
-#         serializer.save()
+    def perform_create(self, serializer):
+        serializer.save()
 
-# # Retrieve, Update, and Delete Transaction
-# class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = Transaction.objects.all()
-#     permission_classes = [permissions.AllowAny]  # Changed line
-#     serializer_class = TransactionSerializer
+# Retrieve, Update, and Delete Transaction
+class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Transaction.objects.all()
+    permission_classes = [permissions.AllowAny]  # Changed line
+    serializer_class = TransactionSerializer
+'''
 from rest_framework import generics, permissions
 from .models import Transaction
 from .serializers import TransactionSerializer
@@ -55,6 +56,7 @@ class TransactionListCreateView(generics.ListCreateAPIView):
 
 
 # Retrieve, Update, and Delete Transaction
+@swagger_auto_schema
 class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Transaction.objects.all()
     permission_classes = [permissions.AllowAny]  # Changed line
@@ -86,3 +88,4 @@ class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """Handle DELETE requests to remove a transaction."""
         return super().delete(request, *args, **kwargs)
+'''
