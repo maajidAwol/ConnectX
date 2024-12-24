@@ -1,8 +1,8 @@
-# Python
-*.pyc
+.env 
+__pycache__/
+*.py[cod]
 *.pyo
 *.pyd
-__pycache__/
 *.so
 
 # Django
@@ -29,6 +29,7 @@ sdist/
 var/
 wheels/
 share/python-wheels/
+*.egg
 *.egg-info/
 .installed.cfg
 *.egg
@@ -84,7 +85,7 @@ celerybeat-schedule
 
 # SageMath parsed files
 *.sage.py
-
+*db.sqlite3
 # Environments
 .env
 .venv
