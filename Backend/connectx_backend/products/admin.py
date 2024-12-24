@@ -15,3 +15,4 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description', 'seller__username')
     readonly_fields = ('product_id', 'created_at')
 
+
