@@ -10,7 +10,6 @@ drf-yasg = "*"
 gunicorn = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
-djangorestframework = "*"
 rest-framework-simplejwt = "*"
 
 [dev-packages]
