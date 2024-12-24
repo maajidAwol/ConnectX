@@ -5,9 +5,11 @@ from django.conf import settings
 # Category Model
 class Category(models.Model):
     name = models.CharField(max_length=255)
+    description = models.TextField(default='No description',blank=True)
 
     def __str__(self):
         return self.name
+
 
 # Product Model
 class Product(models.Model):
