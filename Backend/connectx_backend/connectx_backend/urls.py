@@ -35,6 +35,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('api/', include('users.urls')),
+    path('api/', include('transactions.urls')),
     path('api/', include('stock_requests.urls')),
     path('api/', include('orders.urls')),
 ]

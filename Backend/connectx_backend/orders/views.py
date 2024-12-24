@@ -4,14 +4,14 @@ from .serializers import OrderSerializer
 class OrderListCreateView(generics.ListCreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [permissions.AllowAny]  # Changed line
+    permission_classes = [permissions.AllowAny]  
     http_method_names = ['get', 'post']
 
     def perform_create(self, serializer):
-        serializer.save()  # Modified line
+        serializer.save()  
 
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [permissions.AllowAny]  # Changed line
-    http_method_names = ['get', 'put', 'patch', 'delete']
+    permission_classes = [permissions.AllowAny] 
+    http_method_names = ['get', 'put', 'delete']

@@ -1,5 +1,6 @@
+import uuid
 from django.db import models
-from products.models import Product
+from orders.models import Order
 
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
@@ -7,10 +8,18 @@ class Transaction(models.Model):
         ('restock', 'Restock'),
         ('return', 'Return'),
     ]
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
-    quantity = models.IntegerField()
+
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="transactions")
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, default='sale')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.get_transaction_type_display()} - {self.product.name}"
+        return f"{self.transaction_type} - Order ID: {self.order.id}"
