@@ -30,6 +30,8 @@ SECRET_KEY = "django-insecure-knk_$kus_#roeezooizs-r)i_j0y-fy^%*liz^xfo%@02yg*k(
 DEBUG = True
 
 ALLOWED_HOSTS = []
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Application definition
 
@@ -81,7 +83,7 @@ WSGI_APPLICATION = "connectx_backend.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+print("dbname",os.environ.get('DB_NAME'))
 DATABASES = {
      'default': {
         'ENGINE': 'django.db.backends.postgresql',

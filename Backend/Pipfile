@@ -5,10 +5,13 @@ name = "pypi"
 
 [packages]
 django = "*"
+djangorestframework = "*"
+drf-yasg = "*"
+gunicorn = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
-rest-framework-simplejwt = "*"
 djangorestframework = "*"
+rest-framework-simplejwt = "*"
 
 [dev-packages]
 
