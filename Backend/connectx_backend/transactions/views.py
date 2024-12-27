@@ -5,7 +5,7 @@ from .serializers import TransactionSerializer
 # List and Create Transactions
 class TransactionListCreateView(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
-    permission_classes = [permissions.AllowAny]  # Changed line
+    permission_classes = [permissions.IsAuthenticated]  # Changed line
     serializer_class = TransactionSerializer
 
     def perform_create(self, serializer):
@@ -14,7 +14,7 @@ class TransactionListCreateView(generics.ListCreateAPIView):
 # Retrieve, Update, and Delete Transaction
 class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Transaction.objects.all()
-    permission_classes = [permissions.AllowAny]  # Changed line
+    permission_classes = [permissions.IsAuthenticated]  # Changed line
     serializer_class = TransactionSerializer
 '''
 from rest_framework import generics, permissions

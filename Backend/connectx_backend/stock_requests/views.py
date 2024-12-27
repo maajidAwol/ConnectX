@@ -1,5 +1,5 @@
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
@@ -9,21 +9,38 @@ from .permissions import IsAdminOrEntrepreneur, IsOwnerOrAdmin, IsAdmin
 
 # Views for StockRequest
 
+import logging
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
+logger = logging.getLogger(__name__)
+from django.views.decorators.csrf import csrf_exempt
 class StockRequestList(generics.ListAPIView):
-    queryset = StockRequest.objects.all()
-    serializer_class = StockRequestSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrEntrepreneur]
+    # queryset = StockRequest.objects.all()
+    # serializer_class = StockRequestSerializer
+    # permission_classes = [IsAuthenticated, IsAdminOrEntrepreneur]
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        """
-        Filter stock requests based on user role.
-        Entrepreneurs see only their requests, Admins see all requests.
-        """
-        user = self.request.user
-        if user.role == "entrepreneur":
-            return StockRequest.objects.filter(entrepreneur=user)
-        return StockRequest.objects.all()
+    @method_decorator(csrf_exempt)
+    def get(self, request, *args, **kwargs):
+        # Log the Authorization header for debugging
+        logger.info(f"Authorization header: {request.headers.get('Authorization')}")
+        return Response({'message': 'Testing response'}, status=200)
+    # def get_queryset(self):
+    #     user = self.request.user
+
+    #     # Check if the user is authenticated
+    #     if user.is_authenticated:
+    #         if user.role == User.ENTREPRENEUR:  # Compare role using User model constants
+    #             return self.queryset.filter(user=user)
+    #         # Optionally filter or raise an error for non-entrepreneurs
+    #         raise PermissionDenied("You do not have permission to view this resource.")
+        
+    #     # Handle unauthenticated users
+    #     raise PermissionDenied("Authentication credentials were not provided.")
 
 
 
