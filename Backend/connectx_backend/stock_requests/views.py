@@ -26,6 +26,7 @@ class StockRequestList(generics.ListAPIView):
         return StockRequest.objects.all()
 
 
+
 class StockRequestCreate(generics.CreateAPIView):
     queryset = StockRequest.objects.all()
     serializer_class = StockRequestSerializer
