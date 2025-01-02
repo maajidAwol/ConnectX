@@ -1,8 +1,10 @@
 from django.db import models
 from users.models import User
 from products.models import Product
+from uuid import uuid4
 
 class StockRequest(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     entrepreneur = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'entrepreneur'})
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     requested_quantity = models.IntegerField()

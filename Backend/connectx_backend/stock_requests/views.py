@@ -1,46 +1,55 @@
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated,AllowAny 
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from .models import StockRequest
 from .serializers import StockRequestSerializer
 from .permissions import IsAdminOrEntrepreneur, IsOwnerOrAdmin, IsAdmin
-
-# Views for StockRequest
-
-import logging
-from rest_framework import generics
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from connectx_backend.authentication import IsAuthenticatedWithCustomToken
+class StockRequestList2(APIView):
+    # permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticatedWithCustomToken]
 
-logger = logging.getLogger(__name__)
-from django.views.decorators.csrf import csrf_exempt
-class StockRequestList(generics.ListAPIView):
-    # queryset = StockRequest.objects.all()
-    # serializer_class = StockRequestSerializer
-    # permission_classes = [IsAuthenticated, IsAdminOrEntrepreneur]
-    permission_classes = [IsAuthenticated]
-
-    @method_decorator(csrf_exempt)
+    
     def get(self, request, *args, **kwargs):
-        # Log the Authorization header for debugging
-        logger.info(f"Authorization header: {request.headers.get('Authorization')}")
-        return Response({'message': 'Testing response'}, status=200)
-    # def get_queryset(self):
-    #     user = self.request.user
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return Response({"error": "Authorization header missing"}, status=400)
 
-    #     # Check if the user is authenticated
-    #     if user.is_authenticated:
-    #         if user.role == User.ENTREPRENEUR:  # Compare role using User model constants
-    #             return self.queryset.filter(user=user)
-    #         # Optionally filter or raise an error for non-entrepreneurs
-    #         raise PermissionDenied("You do not have permission to view this resource.")
-        
-    #     # Handle unauthenticated users
-    #     raise PermissionDenied("Authentication credentials were not provided.")
+        if not auth_header.startswith('Bearer '):
+            return Response({"error": "Invalid Authorization header format"}, status=400)
+
+        token = auth_header.split(' ')[1]
+        jwt_auth = JWTAuthentication()
+
+        try:
+            validated_token = jwt_auth.get_validated_token(token)
+            user = jwt_auth.get_user(validated_token)
+            return Response({"message": "Token is valid", "user": user.email})
+        except Exception as e:
+            return Response({"error": str(e)}, status=401)
+class StockRequestList(APIView):
+    queryset = StockRequest.objects.all()
+    serializer_class = StockRequestSerializer
+    # permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedWithCustomToken]
+
+    
+    def get_queryset(self):
+        """
+        Filter stock requests based on user role.
+        Entrepreneurs see only their requests, Admins see all requests.
+        """
+        user = self.request.user
+        if user.role == "entrepreneur":
+            return StockRequest.objects.filter(entrepreneur=user)
+        return StockRequest.objects.all()
 
 
 
