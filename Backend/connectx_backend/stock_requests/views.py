@@ -33,14 +33,11 @@ class StockRequestList2(APIView):
             return Response({"message": "Token is valid", "user": user.email})
         except Exception as e:
             return Response({"error": str(e)}, status=401)
-class StockRequestList(APIView):
+class StockRequestList(generics.ListAPIView):
     queryset = StockRequest.objects.all()
     serializer_class = StockRequestSerializer
-    # permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny]
-    permission_classes = [IsAuthenticatedWithCustomToken]
+    permission_classes = [IsAuthenticatedWithCustomToken, IsAdminOrEntrepreneur]
 
-    
     def get_queryset(self):
         """
         Filter stock requests based on user role.
@@ -50,7 +47,6 @@ class StockRequestList(APIView):
         if user.role == "entrepreneur":
             return StockRequest.objects.filter(entrepreneur=user)
         return StockRequest.objects.all()
-
 
 
 class StockRequestCreate(generics.CreateAPIView):

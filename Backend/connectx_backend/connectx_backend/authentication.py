@@ -1,16 +1,3 @@
-import logging
-from rest_framework_simplejwt.authentication import JWTAuthentication
-
-logger = logging.getLogger('my_custom_logger')
-
-class LoggingJWTAuthentication(JWTAuthentication):
-    def authenticate(self, request):
-        # Log the Authorization header
-        auth_header = request.headers.get('Authorization', '')
-        logger.debug(f"Authorization header: {auth_header}")
-
-        # Call the parent authenticate method
-        return super().authenticate(request)
 from rest_framework.permissions import BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
