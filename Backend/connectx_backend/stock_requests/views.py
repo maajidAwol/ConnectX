@@ -73,15 +73,6 @@ class ApproveStockRequest(APIView):
                 {"error": "Stock request not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-    def get(self, request, pk):
-        try:
-            stock_request = StockRequest.objects.get(pk=pk)
-            return Response({"status": stock_request.status})
-        except StockRequest.DoesNotExist:
-            return Response(
-                {"error": "Stock request not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
 
 class RejectStockRequest(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -98,15 +89,6 @@ class RejectStockRequest(APIView):
             stock_request.status = "Rejected"
             stock_request.save()
             return Response({"status": "Request rejected"})
-        except StockRequest.DoesNotExist:
-            return Response(
-                {"error": "Stock request not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-    def get(self, request, pk):
-        try:
-            stock_request = StockRequest.objects.get(pk=pk)
-            return Response({"status": stock_request.status})
         except StockRequest.DoesNotExist:
             return Response(
                 {"error": "Stock request not found"}, status=status.HTTP_404_NOT_FOUND
