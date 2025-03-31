@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "categories",
     "payments",
     "shipping",
+    "analytics",
     "transactions",
     "django.contrib.admin",
     "django.contrib.auth",
