@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "tenants",
     "categories",
     "payments",
+    "shipping",
     "transactions",
     "django.contrib.admin",
     "django.contrib.auth",
