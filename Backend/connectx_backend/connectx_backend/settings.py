@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "products",
     "orders",
     "stock_requests",
+    "tenants",
+    "categories",
     "transactions",
     "django.contrib.admin",
     "django.contrib.auth",
