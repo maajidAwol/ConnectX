@@ -10,6 +10,7 @@ drf-yasg = "*"
 gunicorn = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
+graphviz = "*"
 
 [dev-packages]
 

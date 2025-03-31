@@ -6,7 +6,7 @@ from categories.models import Category
 
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="products")
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="products_set")
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_products")
     sku = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=255)

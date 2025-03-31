@@ -8,10 +8,9 @@ class Tenant(models.Model):
     api_key = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)  # Store hashed passwords
-    products = models.JSONField(null=True, blank=True)  # Stores product IDs
+    products_ids = models.JSONField(null=True, blank=True)  # Stores product IDs
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     def save(self, *args, **kwargs):
         """Ensure password is always hashed before saving."""
         if not self.password.startswith("pbkdf2_sha256$"):  # Avoid rehashing
