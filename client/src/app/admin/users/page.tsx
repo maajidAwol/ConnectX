@@ -4,7 +4,7 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DashboardLayout } from "@/components/layouts/dashboard-layout"
+import { DashboardLayout } from "@/components/dashboard-layout"
 import {
   LayoutDashboard,
   Building2,

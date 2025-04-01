@@ -29,6 +29,8 @@ interface DashboardLayoutProps {
     icon: React.ComponentType<{ className?: string }>
     badge?: number
   }[]
+  title: string;
+  description: string;
 }
 
 export function DashboardLayout({ children, role, navigation }: DashboardLayoutProps) {
