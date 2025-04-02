@@ -7,9 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Multi-Tenant E-commerce Platform",
-  description: "A comprehensive e-commerce platform for administrators, merchants, and developers",
-    generator: 'v0.dev'
+  title: "ConnectX E-commerce Backend Service",
+  description: "A comprehensive Panel of ConnectX E-commerce Backend Service",
 }
 
 export default function RootLayout({
