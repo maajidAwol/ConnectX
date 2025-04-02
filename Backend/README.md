@@ -105,7 +105,11 @@ python manage.py graph_models reviews -o reviews_schema.png
   ```bash
   python manage.py graph_models -a -o schema.png --arrow-shape crow
   ```
+## Database Schema
 
+The generated database schema diagram is saved as `schema.png` in the project directory. Below is a preview of the schema:
+
+![Database Schema](schema.png)
 ## Usage
 
 Once the server is running, you can access the API at `http://127.0.0.1:8000/`. You can use tools like Postman or cURL to interact with the API endpoints.
