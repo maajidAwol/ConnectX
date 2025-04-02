@@ -1,0 +1,91 @@
+{
+  "businessProfile": {
+    "companyName": "ConnectX import Export inc",
+    "businessType": "car Retail",
+    "taxId": "TAX-123456789",
+    "address": {
+      "street": "123 Tech Street",
+      "city": "Addis Ababa",
+      "state": "CA",
+      "zipCode": "94105",
+      "country": "Ethiopia"
+    },
+    "contact": {
+      "email": "contact@globalconnectx.inc",
+      "phone": "+1 (555) 123-4567",
+      "website": "www.globalconnectx.com"
+    },
+    "branding": {
+      "logo": "/images/logo.png",
+      "primaryColor": "#2563eb",
+      "secondaryColor": "#1e40af"
+    }
+  },
+  "teamMembers": [
+    {
+      "id": 1,
+      "name": "John Smith",
+      "email": "john.smith@globalconnectx.inc",
+      "role": "Owner",
+      "status": "Active",
+      "permissions": ["all"],
+      "joinDate": "2023-01-15"
+    },
+    {
+      "id": 2,
+      "name": "Sarah Johnson",
+      "email": "sarah.j@globalconnectx.inc",
+      "role": "Manager",
+      "status": "Active",
+      "permissions": ["orders", "products", "customers", "analytics"],
+      "joinDate": "2023-03-20"
+    },
+    {
+      "id": 3,
+      "name": "Mike Wilson",
+      "email": "mike.w@globalconnectx.inc",
+      "role": "Support",
+      "status": "Active",
+      "permissions": ["orders", "customers"],
+      "joinDate": "2023-06-10"
+    }
+  ],
+  "subscription": {
+    "currentPlan": "Professional",
+    "billingCycle": "Monthly",
+    "status": "Active",
+    "nextBillingDate": "2024-04-15",
+    "paymentMethod": {
+      "type": "Credit Card",
+      "last4": "4242",
+      "expiry": "12/25"
+    },
+    "features": [
+      "Unlimited Products",
+      "Advanced Analytics",
+      "Team Management",
+      "Priority Support",
+      "API Access"
+    ],
+    "usage": {
+      "products": "156/Unlimited",
+      "storage": "2.5GB/10GB",
+      "apiCalls": "45,000/100,000"
+    }
+  },
+  "notifications": {
+    "email": {
+      "enabled": true,
+      "orderUpdates": true,
+      "inventoryAlerts": true,
+      "customerMessages": true,
+      "marketingUpdates": false
+    },
+    "sms": {
+      "enabled": true,
+      "orderUpdates": true,
+      "inventoryAlerts": true,
+      "customerMessages": false
+    }
+  }
+} 

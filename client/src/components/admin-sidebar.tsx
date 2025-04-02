@@ -57,9 +57,9 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
         <div className="flex h-14 items-center border-b px-4">
           <Link href={`/${role}/dashboard`} className="flex items-center gap-2 font-semibold">
             <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-              E
+              C
             </div>
-            <span>E-Platform</span>
+            <span>ConnectX</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-2">
@@ -139,9 +139,9 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
               <div className="flex h-14 items-center border-b px-4">
                 <Link href={`/${role}/dashboard`} className="flex items-center gap-2 font-semibold">
                   <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-                    E
+                    C
                   </div>
-                  <span>E-Platform</span>
+                  <span>ConnectX</span>
                 </Link>
               </div>
               <div className="grid gap-2 p-4">

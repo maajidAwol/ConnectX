@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton"
-import {DashboardLayout} from "@/components/dashboard-layout"
+import { DashboardLayout } from "@/components/dashboard-layout"
 import {
   LayoutDashboard,
   Building2,
