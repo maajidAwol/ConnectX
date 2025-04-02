@@ -8,7 +8,7 @@ from .serializers import TenantSerializer
 class TenantViewSet(viewsets.ModelViewSet):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = []  # Remove authentication requirement
 
     def perform_create(self, serializer):
         """Generate a unique API key when creating a tenant."""

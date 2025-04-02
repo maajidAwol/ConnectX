@@ -45,14 +45,12 @@ INSTALLED_APPS = [
     "users",
     "products",
     "orders",
-    
     "tenants",
     "categories",
     "payments",
     "shipping",
     "analytics",
     "reviews",
-   
     "django_extensions",
     "django.contrib.admin",
     "django.contrib.auth",

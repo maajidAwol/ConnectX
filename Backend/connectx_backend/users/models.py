@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Permission
+from tenants.models import Tenant
 
 
 class UserManager(BaseUserManager):
@@ -47,7 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    tenant = models.ForeignKey("tenants.Tenant", on_delete=models.CASCADE, related_name="users")
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="users")
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)  # Hashed password
