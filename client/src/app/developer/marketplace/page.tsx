@@ -102,73 +102,71 @@ const integrations = [
   },
 ]
 
-export default function DeveloperMarketplacePage() {
+export default function Marketplace() {
   const [search, setSearch] = useState("")
 
   return (
-    <DashboardLayout role="developer" navigation={navigation}>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
-          <p className="text-muted-foreground">Browse and manage your merchant product integrations</p>
-        </div>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Integrations</CardTitle>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Input
-                  type="search"
-                  placeholder="Search integrations..."
-                  className="w-full rounded-md border bg-background pl-8 md:w-64 lg:w-80"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Button>Add New Integration</Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Merchant</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>API Usage</TableHead>
-                  <TableHead>Last Used</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {integrations.map((integration) => (
-                  <TableRow key={integration.id}>
-                    <TableCell className="font-medium">{integration.merchant}</TableCell>
-                    <TableCell>{integration.product}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
-                      >
-                        {integration.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{integration.apiUsage}</TableCell>
-                    <TableCell>{integration.lastUsed}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        Manage
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
+        <p className="text-muted-foreground">Browse and manage your merchant product integrations</p>
       </div>
-    </DashboardLayout>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Integrations</CardTitle>
+          <div className="flex gap-2">
+            <div className="relative">
+              <Input
+                type="search"
+                placeholder="Search integrations..."
+                className="w-full rounded-md border bg-background pl-8 md:w-64 lg:w-80"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Button>Add New Integration</Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Merchant</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>API Usage</TableHead>
+                <TableHead>Last Used</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {integrations.map((integration) => (
+                <TableRow key={integration.id}>
+                  <TableCell className="font-medium">{integration.merchant}</TableCell>
+                  <TableCell>{integration.product}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className="bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
+                    >
+                      {integration.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{integration.apiUsage}</TableCell>
+                  <TableCell>{integration.lastUsed}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      Manage
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
