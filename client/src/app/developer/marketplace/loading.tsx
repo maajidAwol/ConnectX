@@ -1,4 +1,22 @@
+<<<<<<< HEAD
+import { Skeleton } from "@/components/ui/skeleton"
+import { DashboardLayout } from "@/components/dashboard-layout"
+import {
+  LayoutDashboard,
+  Compass,
+  Code,
+  Terminal,
+  FileCode,
+  Book,
+  ShieldCheck,
+  Settings,
+  HelpCircle,
+} from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+=======
 "use client"
+>>>>>>> a07d8aa4b4c7b386df6341f4b65234c3f9c2943d
 
 import { Skeleton } from "@/components/ui/skeleton"
 

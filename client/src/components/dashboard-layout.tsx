@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, ChevronDown, LogOut, Menu, Moon, Search, Settings, Sun, User } from "lucide-react"
+import { Bell, ChevronDown, LogOut, Menu, Moon, Search, Settings, Sun, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -34,7 +34,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role, navigation }: DashboardLayoutProps) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const roleNames = {
     admin: "Administrator",
@@ -48,12 +48,69 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar for desktop */}
-      <div
-        className={`fixed inset-y-0 z-50 flex w-64 flex-col border-r bg-card transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
+      {/* Mobile Sidebar */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="fixed left-4 top-4 z-50 h-10 w-10 rounded-full bg-white shadow-md hover:bg-gray-100 lg:hidden"
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[300px] p-0">
+          <div className="flex h-full flex-col">
+            <div className="flex h-14 items-center justify-between border-b px-4">
+              <Link href={`/${role}/dashboard`} className="flex items-center gap-2 font-semibold">
+                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                  E
+                </div>
+                <span>E-Platform</span>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+              {navigation.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${
+                    pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <Badge variant="secondary" className="ml-auto">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Link>
+              ))}
+            </nav>
+            <div className="border-t p-4">
+              <div className="flex items-center gap-4">
+                <Avatar>
+                  <AvatarImage src="" alt={userName} />
+                  <AvatarFallback>{userInitials}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{userName}</span>
+                  <span className="text-xs text-muted-foreground">{roleNames[role]}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:bg-card">
         <div className="flex h-14 items-center border-b px-4">
           <Link href={`/${role}/dashboard`} className="flex items-center gap-2 font-semibold">
             <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
@@ -62,27 +119,25 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
             <span>ConnectX</span>
           </Link>
         </div>
-        <div className="flex-1 overflow-auto py-2">
-          <nav className="grid gap-1 px-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${
-                  pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-                {item.badge && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {item.badge}
-                  </Badge>
-                )}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+          {navigation.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${
+                pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+              }`}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+              {item.badge && (
+                <Badge variant="secondary" className="ml-auto">
+                  {item.badge}
+                </Badge>
+              )}
+            </Link>
+          ))}
+        </nav>
         <div className="border-t p-4">
           <div className="flex items-center gap-4">
             <Avatar>
@@ -99,7 +154,7 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
@@ -119,8 +174,8 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-1 flex-col">
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col lg:pl-64">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
           <Button variant="outline" size="icon" className="lg:hidden" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
             <Menu className="h-5 w-5" />
@@ -186,7 +241,7 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
               <Input
                 type="search"
                 placeholder="Search..."
-                className="w-full rounded-md border bg-background pl-8 md:w-64 lg:w-80"
+                className="w-full rounded-md border bg-background pl-8"
               />
             </div>
           </div>
@@ -210,7 +265,7 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
@@ -228,7 +283,7 @@ export function DashboardLayout({ children, role, navigation }: DashboardLayoutP
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-x-hidden p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

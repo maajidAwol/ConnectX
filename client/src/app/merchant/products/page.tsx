@@ -1,38 +1,46 @@
 "use client"
 
-import { DashboardLayout } from "@/components/dashboard-layout"
+import { useState, useRef } from "react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DashboardLayout } from "@/components/dashboard-layout"
+import productData from '@/data/product-data.json'
 import {
   BarChart3,
   Box,
-  Eye,
-  EyeOff,
-  Filter,
   HelpCircle,
   LayoutDashboard,
   Package,
-  Plus,
-  Search,
   Settings,
   ShoppingCart,
   Tag,
-  Trash,
   Users,
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  EyeOff,
+  Search,
+  Filter,
+  Image as ImageIcon,
+  Upload,
+  X,
+  Info,
+  Calendar,
+  Tag as TagIcon,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Progress } from "@/components/ui/progress"
 
 const navigation = [
   {
@@ -49,7 +57,6 @@ const navigation = [
     title: "Orders",
     href: "/merchant/orders",
     icon: ShoppingCart,
-    badge: 8,
   },
   {
     title: "Customers",
@@ -72,6 +79,11 @@ const navigation = [
     icon: Tag,
   },
   {
+    title: "Account",
+    href: "/merchant/account",
+    icon: Users,
+  },
+  {
     title: "Settings",
     href: "/merchant/settings",
     icon: Settings,
@@ -83,493 +95,787 @@ const navigation = [
   },
 ]
 
-export default function ProductsPage() {
-  return (
-    <DashboardLayout role="merchant" navigation={navigation}>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Product Management</h1>
-          <p className="text-muted-foreground">Manage your product catalog and control product visibility.</p>
-        </div>
+interface ProductImage {
+  url: string
+  alt: string
+}
 
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search products..." className="w-full pl-8" />
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filter
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Category</DropdownMenuItem>
-                <DropdownMenuItem>Price Range</DropdownMenuItem>
-                <DropdownMenuItem>Stock Status</DropdownMenuItem>
-                <DropdownMenuItem>Visibility</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Clear Filters</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <Button className="w-full md:w-auto gap-2">
-            <Plus className="h-4 w-4" />
+interface Promotion {
+  type: string
+  value: number
+  startDate: string
+  endDate: string
+}
+
+interface Product {
+  id: number
+  name: string
+  description: string
+  category: string
+  price: number
+  comparePrice: number
+  stock: number
+  visibility: string
+  status: string
+  images: ProductImage[]
+  features: string[]
+  promotions: Promotion[]
+  createdAt: string
+  updatedAt: string
+  source: string
+  requiredPlan: string
+}
+
+interface FormData {
+  name: string
+  description: string
+  category: string
+  price: string
+  comparePrice: string
+  stock: string
+  visibility: string
+  status: string
+  imageUrl?: string
+}
+
+interface Subscription {
+  currentPlan: string
+  planLimits: {
+    [key: string]: {
+      maxCustomProducts: number | "unlimited"
+      maxCustomCategories: number | "unlimited"
+      features: string[]
+    }
+  }
+}
+
+interface Statistics {
+  totalProducts: number
+  publicProducts: number
+  privateProducts: number
+  lowStock: number
+  activePromotions: number
+  centralProducts: number
+  customProducts: number
+}
+
+export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>(productData.products)
+  const [categories] = useState(productData.categories)
+  const [statistics, setStatistics] = useState<Statistics>(productData.statistics)
+  const [isAddingProduct, setIsAddingProduct] = useState(false)
+  const [isEditingProduct, setIsEditingProduct] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [visibilityFilter, setVisibilityFilter] = useState("all")
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [formData, setFormData] = useState<FormData>({
+    name: "",
+    description: "",
+    category: "",
+    price: "",
+    comparePrice: "",
+    stock: "",
+    visibility: "public",
+    status: "active",
+  })
+  const [subscription, setSubscription] = useState<Subscription>(productData.subscription)
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
+  const [productSource, setProductSource] = useState<"all" | "central" | "custom">("all")
+
+  const handleVisibilityToggle = (productId: number) => {
+    setProducts(products.map(product => 
+      product.id === productId 
+        ? { ...product, visibility: product.visibility === "public" ? "private" : "public" }
+        : product
+    ))
+    updateStatistics()
+  }
+
+  const handleDeleteProduct = (productId: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      setProducts(products.filter(product => product.id !== productId))
+      updateStatistics()
+    }
+  }
+
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product)
+    setFormData({
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      price: product.price.toString(),
+      comparePrice: product.comparePrice?.toString() || "",
+      stock: product.stock.toString(),
+      visibility: product.visibility,
+      status: product.status,
+    })
+    setIsEditingProduct(true)
+  }
+
+  const canAddCustomProducts = () => {
+    const currentPlan = subscription.currentPlan
+    const limits = subscription.planLimits[currentPlan]
+    if (limits.maxCustomProducts === "unlimited") return true
+    
+    const currentCustomProducts = products.filter(p => p.source === "custom").length
+    return currentCustomProducts < limits.maxCustomProducts
+  }
+
+  const handleAddProduct = () => {
+    if (!canAddCustomProducts()) {
+      setShowUpgradeDialog(true)
+      return
+    }
+    setFormData({
+      name: "",
+      description: "",
+      category: "",
+      price: "",
+      comparePrice: "",
+      stock: "",
+      visibility: "public",
+      status: "active",
+    })
+    setIsAddingProduct(true)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('upload_preset', 'connectx_products')
+      formData.append('cloud_name', 'your_cloud_name')
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/your_cloud_name/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
+
+      if (!response.ok) throw new Error('Upload failed')
+
+      const data = await response.json()
+      setUploadedImage(data.secure_url)
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: data.secure_url
+      }))
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Failed to upload image. Please try again.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newProduct: Product = {
+      id: isEditingProduct ? selectedProduct!.id : products.length + 1,
+      name: formData.name,
+      description: formData.description,
+      category: formData.category,
+      price: parseFloat(formData.price),
+      comparePrice: formData.comparePrice ? parseFloat(formData.comparePrice) : 0,
+      stock: parseInt(formData.stock),
+      visibility: formData.visibility,
+      status: formData.status,
+      source: isEditingProduct ? selectedProduct!.source : "custom",
+      requiredPlan: subscription.currentPlan,
+      images: [{
+        url: uploadedImage || "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&h=500&fit=crop",
+        alt: formData.name
+      }],
+      features: isEditingProduct ? selectedProduct!.features : [],
+      promotions: isEditingProduct ? selectedProduct!.promotions : [],
+      createdAt: isEditingProduct ? selectedProduct!.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    if (isEditingProduct) {
+      setProducts(products.map(p => p.id === newProduct.id ? newProduct : p))
+    } else {
+      setProducts([...products, newProduct])
+    }
+
+    setIsAddingProduct(false)
+    setIsEditingProduct(false)
+    setSelectedProduct(null)
+    setUploadedImage(null)
+    updateStatistics()
+  }
+
+  const updateStatistics = () => {
+    setStatistics({
+      totalProducts: products.length,
+      publicProducts: products.filter(p => p.visibility === "public").length,
+      privateProducts: products.filter(p => p.visibility === "private").length,
+      lowStock: products.filter(p => p.stock < 100).length,
+      activePromotions: products.filter(p => p.promotions.length > 0).length,
+      centralProducts: products.filter(p => p.source === "central").length,
+      customProducts: products.filter(p => p.source === "custom").length,
+    })
+  }
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory
+    const matchesVisibility = visibilityFilter === "all" || product.visibility === visibilityFilter
+    const matchesSource = productSource === "all" || product.source === productSource
+    return matchesSearch && matchesCategory && matchesVisibility && matchesSource
+  })
+
+  return (
+    <DashboardLayout navigation={navigation} role="merchant">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+          <Button onClick={handleAddProduct}>
+            <Plus className="mr-2 h-4 w-4" />
             Add Product
           </Button>
         </div>
 
-        <Tabs defaultValue="all">
-          <TabsList>
-            <TabsTrigger value="all">All Products</TabsTrigger>
-            <TabsTrigger value="public">Public</TabsTrigger>
-            <TabsTrigger value="private">Private</TabsTrigger>
-            <TabsTrigger value="out-of-stock">Out of Stock</TabsTrigger>
-          </TabsList>
+        {/* Subscription Alert */}
+        {subscription.currentPlan === "free" && (
+          <Alert>
+            <AlertTitle>Free Plan Active</AlertTitle>
+            <AlertDescription>
+              You are currently on the free plan. Upgrade to add your own custom products and categories.
+            </AlertDescription>
+          </Alert>
+        )}
 
-          <TabsContent value="all" className="space-y-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-center">
-                  <CardTitle>Product Catalog</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Select defaultValue="newest">
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">Newest</SelectItem>
-                        <SelectItem value="oldest">Oldest</SelectItem>
-                        <SelectItem value="price-high">Price: High to Low</SelectItem>
-                        <SelectItem value="price-low">Price: Low to High</SelectItem>
-                        <SelectItem value="name-asc">Name: A to Z</SelectItem>
-                        <SelectItem value="name-desc">Name: Z to A</SelectItem>
-                      </SelectContent>
-                    </Select>
+        {/* Product Statistics */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="p-6">
+            <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
+            <p className="mt-2 text-3xl font-semibold">{statistics.totalProducts}</p>
+          </Card>
+          <Card className="p-6">
+            <h3 className="text-sm font-medium text-gray-500">Central Products</h3>
+            <p className="mt-2 text-3xl font-semibold">{statistics.centralProducts}</p>
+          </Card>
+          <Card className="p-6">
+            <h3 className="text-sm font-medium text-gray-500">Custom Products</h3>
+            <p className="mt-2 text-3xl font-semibold">{statistics.customProducts}</p>
+          </Card>
+          <Card className="p-6">
+            <h3 className="text-sm font-medium text-gray-500">Active Promotions</h3>
+            <p className="mt-2 text-3xl font-semibold">{statistics.activePromotions}</p>
+          </Card>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="flex items-center space-x-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="search"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          <select
+            className="rounded-md border border-gray-200 p-2"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="all">All Categories</option>
+            {categories.map(category => (
+              <option key={category.id} value={category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="rounded-md border border-gray-200 p-2"
+            value={visibilityFilter}
+            onChange={(e) => setVisibilityFilter(e.target.value)}
+          >
+            <option value="all">All Visibility</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </select>
+          <select
+            className="rounded-md border border-gray-200 p-2"
+            value={productSource}
+            onChange={(e) => setProductSource(e.target.value as "all" | "central" | "custom")}
+          >
+            <option value="all">All Products</option>
+            <option value="central">Central Products</option>
+            <option value="custom">Custom Products</option>
+          </select>
+          <Button variant="outline">
+            <Filter className="mr-2 h-4 w-4" />
+            More Filters
+          </Button>
+        </div>
+
+        {/* Products Table */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Visibility</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.map((product) => (
+                  <TableRow key={product.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedProduct(product)}>
+                    <TableCell>
+                      <div className="flex items-center space-x-4">
+                        <div className="h-10 w-10 rounded-md overflow-hidden">
+                          <img
+                            src={product.images[0].url}
+                            alt={product.images[0].alt}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-gray-500">{product.description}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{product.category}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">${product.price}</span>
+                        {product.comparePrice && (
+                          <span className="text-sm text-gray-500 line-through">
+                            ${product.comparePrice}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={product.stock < 100 ? "destructive" : "secondary"}>
+                        {product.stock} units
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleVisibilityToggle(product.id)
+                        }}
+                      >
+                        {product.visibility === "public" ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={product.status === "active" ? "default" : "secondary"}>
+                        {product.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEditProduct(product)
+                          }}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteProduct(product.id)
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Product Form Modal */}
+        {(isAddingProduct || isEditingProduct) && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <Card className="w-full max-w-2xl bg-white">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>{isEditingProduct ? "Edit Product" : "Add New Product"}</CardTitle>
+                  <CardDescription>Fill in the details for your product</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setIsAddingProduct(false)
+                    setIsEditingProduct(false)
+                    setSelectedProduct(null)
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Product Name</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Enter product name"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category</Label>
+                      <select
+                        id="category"
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full rounded-md border border-gray-200 p-2"
+                        required
+                      >
+                        <option value="">Select a category</option>
+                        {categories.map(category => (
+                          <option key={category.id} value={category.name}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Price</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="Enter price"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="comparePrice">Compare Price</Label>
+                      <Input
+                        id="comparePrice"
+                        type="number"
+                        value={formData.comparePrice}
+                        onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
+                        placeholder="Enter compare price"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="stock">Stock</Label>
+                      <Input
+                        id="stock"
+                        type="number"
+                        value={formData.stock}
+                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                        placeholder="Enter stock quantity"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="visibility">Visibility</Label>
+                      <select
+                        id="visibility"
+                        value={formData.visibility}
+                        onChange={(e) => setFormData({ ...formData, visibility: e.target.value })}
+                        className="w-full rounded-md border border-gray-200 p-2"
+                        required
+                      >
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full rounded-md border border-gray-200 p-2"
+                      rows={4}
+                      placeholder="Enter product description"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Product Image</Label>
+                    <div className="flex items-center space-x-4">
+                      <div 
+                        className="h-32 w-32 rounded-md border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {uploadedImage ? (
+                          <img
+                            src={uploadedImage}
+                            alt="Uploaded product"
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center">
+                            <Upload className="h-8 w-8 text-gray-400" />
+                            <span className="text-sm text-gray-500 mt-1">Click to upload</span>
+                          </div>
+                        )}
+                        {isUploading && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 text-white animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                      />
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? "Uploading..." : "Upload Image"}
+                        </Button>
+                        <p className="text-xs text-gray-500">
+                          Recommended: 500x500px, max 2MB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddingProduct(false)
+                        setIsEditingProduct(false)
+                        setSelectedProduct(null)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      {isEditingProduct ? "Update Product" : "Add Product"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Product Details Modal */}
+        {selectedProduct && !isEditingProduct && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <Card className="w-full max-w-2xl bg-white">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Product Details</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedProduct(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-6">
+                    <div className="w-48 h-48 rounded-lg overflow-hidden">
+                      <img
+                        src={selectedProduct.images[0].url}
+                        alt={selectedProduct.images[0].alt}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <h3 className="text-2xl font-semibold">{selectedProduct.name}</h3>
+                        <p className="text-gray-500">{selectedProduct.description}</p>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <Badge variant={selectedProduct.visibility === "public" ? "default" : "secondary"}>
+                          {selectedProduct.visibility}
+                        </Badge>
+                        <Badge variant={selectedProduct.status === "active" ? "default" : "secondary"}>
+                          {selectedProduct.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <span className="text-sm text-gray-500">Price</span>
+                          <p className="text-2xl font-semibold">${selectedProduct.price}</p>
+                          {selectedProduct.comparePrice && (
+                            <p className="text-sm text-gray-500 line-through">
+                              ${selectedProduct.comparePrice}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500">Stock</span>
+                          <p className="text-2xl font-semibold">{selectedProduct.stock} units</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Features</h4>
+                      <ul className="space-y-2">
+                        {selectedProduct.features.map((feature: string, index: number) => (
+                          <li key={index} className="flex items-center space-x-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Promotions</h4>
+                      {selectedProduct.promotions.length > 0 ? (
+                        <ul className="space-y-2">
+                          {selectedProduct.promotions.map((promo: any, index: number) => (
+                            <li key={index} className="flex items-center space-x-2">
+                              <TagIcon className="h-4 w-4 text-blue-500" />
+                              <span>{promo.value}% off until {new Date(promo.endDate).toLocaleDateString()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-500">No active promotions</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedProduct(null)
+                        handleEditProduct(selectedProduct)
+                      }}
+                    >
+                      Edit Product
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this product?")) {
+                          handleDeleteProduct(selectedProduct.id)
+                          setSelectedProduct(null)
+                        }
+                      }}
+                    >
+                      Delete Product
+                    </Button>
                   </div>
                 </div>
-                <CardDescription>Manage your products and their visibility</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]">Image</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Visibility</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Wireless Earbuds Pro</TableCell>
-                      <TableCell>Audio</TableCell>
-                      <TableCell>$129.99</TableCell>
-                      <TableCell>142</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
-                        >
-                          Public
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Smart Watch X2</TableCell>
-                      <TableCell>Wearables</TableCell>
-                      <TableCell>$249.99</TableCell>
-                      <TableCell>98</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
-                        >
-                          Public
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Portable Charger 20000mAh</TableCell>
-                      <TableCell>Accessories</TableCell>
-                      <TableCell>$49.99</TableCell>
-                      <TableCell>87</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
-                        >
-                          Public
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Bluetooth Speaker Mini</TableCell>
-                      <TableCell>Audio</TableCell>
-                      <TableCell>$79.99</TableCell>
-                      <TableCell>76</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-slate-100 text-slate-800 dark:bg-slate-800/20 dark:text-slate-400"
-                        >
-                          Private
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">Make Public</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Ultra HD Camera</TableCell>
-                      <TableCell>Photography</TableCell>
-                      <TableCell>$399.99</TableCell>
-                      <TableCell>32</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
-                        >
-                          Public
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Gaming Headset Pro</TableCell>
-                      <TableCell>Gaming</TableCell>
-                      <TableCell>$129.99</TableCell>
-                      <TableCell>0</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-slate-100 text-slate-800 dark:bg-slate-800/20 dark:text-slate-400"
-                        >
-                          Private
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">Make Public</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="public" className="space-y-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Public Products</CardTitle>
-                <CardDescription>Products visible to developers and customers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]">Image</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Wireless Earbuds Pro</TableCell>
-                      <TableCell>Audio</TableCell>
-                      <TableCell>$129.99</TableCell>
-                      <TableCell>142</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Smart Watch X2</TableCell>
-                      <TableCell>Wearables</TableCell>
-                      <TableCell>$249.99</TableCell>
-                      <TableCell>98</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Portable Charger 20000mAh</TableCell>
-                      <TableCell>Accessories</TableCell>
-                      <TableCell>$49.99</TableCell>
-                      <TableCell>87</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Ultra HD Camera</TableCell>
-                      <TableCell>Photography</TableCell>
-                      <TableCell>$399.99</TableCell>
-                      <TableCell>32</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <EyeOff className="h-4 w-4" />
-                            <span className="sr-only">Make Private</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="private" className="space-y-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Private Products</CardTitle>
-                <CardDescription>Products only visible to you and your team</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]">Image</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Bluetooth Speaker Mini</TableCell>
-                      <TableCell>Audio</TableCell>
-                      <TableCell>$79.99</TableCell>
-                      <TableCell>76</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">Make Public</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Gaming Headset Pro</TableCell>
-                      <TableCell>Gaming</TableCell>
-                      <TableCell>$129.99</TableCell>
-                      <TableCell>0</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">Make Public</span>
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="out-of-stock" className="space-y-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Out of Stock Products</CardTitle>
-                <CardDescription>Products that need stock replenishment</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]">Image</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Visibility</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md bg-muted"></div>
-                      </TableCell>
-                      <TableCell className="font-medium">Gaming Headset Pro</TableCell>
-                      <TableCell>Gaming</TableCell>
-                      <TableCell>$129.99</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-slate-100 text-slate-800 dark:bg-slate-800/20 dark:text-slate-400"
-                        >
-                          Private
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          Restock
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Upgrade Plan Dialog */}
+        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upgrade Your Plan</DialogTitle>
+              <DialogDescription>
+                Upgrade your plan to add custom products and categories to your ecommerce platform.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {Object.entries(subscription.planLimits).map(([plan, limits]) => (
+                <div
+                  key={plan}
+                  className={`p-4 rounded-lg border ${
+                    subscription.currentPlan === plan
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold capitalize">{plan} Plan</h3>
+                    {subscription.currentPlan === plan && (
+                      <Badge>Current Plan</Badge>
+                    )}
+                  </div>
+                  <ul className="mt-2 space-y-1">
+                    {limits.features.map((feature, index) => (
+                      <li key={index} className="flex items-center space-x-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-4">
+                    <Button
+                      className="w-full"
+                      variant={subscription.currentPlan === plan ? "outline" : "default"}
+                      onClick={() => {
+                        setSubscription(prev => ({
+                          ...prev,
+                          currentPlan: plan
+                        }))
+                        setShowUpgradeDialog(false)
+                      }}
+                    >
+                      {subscription.currentPlan === plan ? "Current Plan" : "Upgrade"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   )
