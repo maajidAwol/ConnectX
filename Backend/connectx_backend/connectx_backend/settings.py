@@ -148,21 +148,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",  # Only authenticated users can access
-    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+
+    ),
+
 }
 
 # JWT Token settings
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=24),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    'AUTH_HEADER_TYPES': ('JWT','Bearer'),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "AUTH_HEADER_TYPES": ("Bearer",),  # Authorization: Bearer <token>
 }
 
 # Custom User Model
@@ -177,6 +176,7 @@ SWAGGER_SETTINGS = {
             "name": "Authorization",
             "in": "header",
             "description": 'JWT Authorization header using the Bearer scheme. Example: "Bearer {token}"',
+    
         },
     },
     "USE_SESSION_AUTH": False,

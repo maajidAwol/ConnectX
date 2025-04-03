@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
 from .models import User
 from .serializers import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -10,6 +11,7 @@ from .models import User
 from .serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
@@ -26,16 +28,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {
                     "access": str(refresh.access_token),
                     "refresh": str(refresh),
-                    "user": UserSerializer(user).data
+                    "user": UserSerializer(user).data,
                 }
             )
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(
+            {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+        )
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        """Allow unauthenticated users to create a new user."""
+        print(self.request.headers.get("Authorization"))
+        if self.action == "create":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         """Ensure users can only see users in their own tenant."""
