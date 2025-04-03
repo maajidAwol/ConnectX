@@ -73,7 +73,11 @@ const navigation = [
 
 export default function AdminDashboard() {
   return (
-    <DashboardLayout role="admin" navigation={navigation}>
+    <DashboardLayout 
+      role="admin" 
+      navigation={navigation} 
+      title="Admin Dashboard" 
+      description="Overview of the platform and system metrics">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">System Dashboard</h1>
