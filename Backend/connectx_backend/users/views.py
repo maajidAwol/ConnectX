@@ -12,7 +12,6 @@ from .serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-
 class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
