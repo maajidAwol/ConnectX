@@ -68,8 +68,8 @@ const navigation = [
 ]
 
 export default function AdminSettingsPage() {
-  const [platformName, setPlatformName] = useState("E-Platform")
-  const [supportEmail, setSupportEmail] = useState("support@example.com")
+  const [platformName, setPlatformName] = useState("ConnectX")
+  const [supportEmail, setSupportEmail] = useState("support@connectx.com")
 
   const handleSaveSettings = () => {
     alert("Settings saved!")
@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
               <Label htmlFor="platformName">Platform Name</Label>
               <Input
                 id="platformName"
-                placeholder="E-Platform"
+                placeholder="ConnectX"
                 value={platformName}
                 onChange={(e) => setPlatformName(e.target.value)}
               />
@@ -103,7 +103,7 @@ export default function AdminSettingsPage() {
               <Input
                 id="supportEmail"
                 type="email"
-                placeholder="support@example.com"
+                placeholder="support@connectx.com"
                 value={supportEmail}
                 onChange={(e) => setSupportEmail(e.target.value)}
               />

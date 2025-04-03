@@ -1,5 +1,6 @@
+"use client"
 import { Skeleton } from "@/components/ui/skeleton"
-import DashboardLayout from "@/components/dashboard-layout"
+import { DashboardLayout } from "@/components/dashboard-layout"
 import { LayoutDashboard, Package, ShoppingCart, Users, Box, BarChart3, Tag, Settings, HelpCircle } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"

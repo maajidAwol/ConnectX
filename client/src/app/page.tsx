@@ -9,9 +9,9 @@ export default function Home() {
       <header className="container mx-auto py-6 px-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-            E
+            C
           </div>
-          <span className="font-bold text-xl">E-Platform</span>
+          <span className="font-bold text-xl">ConnectX</span>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/auth/login">
@@ -99,9 +99,9 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-                E
+                C
               </div>
-              <span className="font-bold">E-Platform</span>
+              <span className="font-bold">ConnectX</span>
             </div>
             <div className="flex gap-8">
               <Link href="/about" className="text-muted-foreground hover:text-foreground">
@@ -119,7 +119,7 @@ export default function Home() {
             </div>
           </div>
           <div className="text-center mt-8 text-sm text-muted-foreground">
-            © {new Date().getFullYear()} E-Platform. All rights reserved.
+            © {new Date().getFullYear()} ConnectX. All rights reserved.
           </div>
         </div>
       </footer>

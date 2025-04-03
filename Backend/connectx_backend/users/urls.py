@@ -1,17 +1,17 @@
-from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-from .views import UserCreate, UserList, UserDetail
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import UserViewSet, CustomTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
+
+# Create a router for UserViewSet
+router = DefaultRouter()
+router.register(r"users", UserViewSet, basename="user")
 
 urlpatterns = [
-    # User management endpoints
-    path('user/', UserList.as_view(), name='user_list'),
-    path('user/create/', UserCreate.as_view(), name='user_create'),
-    path('user/<uuid:pk>/', UserDetail.as_view(), name='user_detail'),
+    # JWT Authentication Routes
+    path("auth/login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     
-    # JWT Authentication endpoints
-    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # User API Endpoints
+    path("", include(router.urls)),
 ]
