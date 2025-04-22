@@ -48,4 +48,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Ensure users can only see users in their own tenant."""
-        return User.objects.filter(tenant=self.request.user.tenant)
+        if self.request.user.is_authenticated:
+            return User.objects.filter(tenant=self.request.user.tenant)
+        return User.objects.none()
