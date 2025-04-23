@@ -11,6 +11,7 @@ gunicorn = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
 graphviz = "*"
+django-extensions = "*"
 
 [dev-packages]
 
