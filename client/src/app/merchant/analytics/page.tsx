@@ -1,469 +1,558 @@
 "use client"
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { DashboardLayout } from "@/components/dashboard-layout"
 import {
-  BarChart3,
-  Box,
-  DollarSign,
+  ArrowRight,
+  ArrowUp,
+  Calendar,
   Download,
-  HelpCircle,
-  LayoutDashboard,
-  Package,
-  Settings,
-  ShoppingBag,
-  ShoppingCart,
-  Tag,
-  Truck,
-  Users,
-  TrendingUp,
-  BarChart,
-  PieChart,
   LineChart,
-  AlertCircle,
+  PieChart,
+  ShoppingBag,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  DollarSign,
 } from "lucide-react"
+import { salesData, products } from "@/lib/data"
 
-const navigation = [
-  {
-    title: "Dashboard",
-    href: "/merchant/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Products",
-    href: "/merchant/products",
-    icon: Package,
-  },
-  {
-    title: "Orders",
-    href: "/merchant/orders",
-    icon: ShoppingCart,
-    badge: 8,
-  },
-  {
-    title: "Customers",
-    href: "/merchant/customers",
-    icon: Users,
-  },
-  {
-    title: "Stock",
-    href: "/merchant/stock",
-    icon: Box,
-  },
-  {
-    title: "Analytics",
-    href: "/merchant/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Marketing",
-    href: "/merchant/marketing",
-    icon: Tag,
-  },
-  {
-    title: "Settings",
-    href: "/merchant/settings",
-    icon: Settings,
-  },
-  {
-    title: "Help",
-    href: "/merchant/help",
-    icon: HelpCircle,
-  },
-]
+export default function AnalyticsDashboard() {
+  const [dateRange, setDateRange] = useState("30d")
 
-export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState("30d")
-  const [selectedChannel, setSelectedChannel] = useState("all")
+  // Calculate total sales and revenue
+  const totalSales = products.reduce((sum, product) => sum + product.sales, 0)
+  const totalRevenue = products.reduce((sum, product) => {
+    const revenue = Number.parseFloat(product.revenue.replace("$", "").replace(",", ""))
+    return sum + revenue
+  }, 0)
 
-  // Mock data - replace with real data from API
-  const salesData = {
-    totalRevenue: 125000,
-    growth: 12.5,
-    averageOrderValue: 85.50,
-    totalOrders: 1462,
-    topProducts: [
-      { name: "Premium Wireless Headphones", revenue: 25000, units: 250 },
-      { name: "Smart Fitness Watch", revenue: 18000, units: 180 },
-      { name: "Classic Denim Jacket", revenue: 15000, units: 150 },
-    ],
-    salesByChannel: [
-      { channel: "Website", revenue: 75000, percentage: 60 },
-      { channel: "Mobile App", revenue: 37500, percentage: 30 },
-      { channel: "Marketplace", revenue: 12500, percentage: 10 },
-    ],
-  }
+  // Calculate average order value
+  const averageOrderValue = totalRevenue / totalSales
 
-  const customerData = {
-    totalCustomers: 2500,
-    newCustomers: 150,
-    retentionRate: 85,
-    customerSegments: [
-      { segment: "High Value", count: 500, revenue: 75000 },
-      { segment: "Medium Value", count: 1500, revenue: 40000 },
-      { segment: "Low Value", count: 500, revenue: 10000 },
-    ],
-    demographics: [
-      { category: "Age 18-24", percentage: 25 },
-      { category: "Age 25-34", percentage: 35 },
-      { category: "Age 35-44", percentage: 20 },
-      { category: "Age 45+", percentage: 20 },
-    ],
-  }
-
-  const stockData = {
-    totalProducts: 150,
-    lowStock: 12,
-    outOfStock: 3,
-    stockValue: 75000,
-    turnoverRate: 4.2,
-    reorderRecommendations: [
-      { product: "Premium Wireless Headphones", currentStock: 15, reorderPoint: 20 },
-      { product: "Smart Fitness Watch", currentStock: 8, reorderPoint: 25 },
-      { product: "Classic Denim Jacket", currentStock: 5, reorderPoint: 15 },
-    ],
-  }
+  // Calculate month-over-month growth (simulated)
+  const salesGrowth = 12.5
+  const revenueGrowth = 15.2
+  const customerGrowth = 8.7
 
   return (
-    <DashboardLayout navigation={navigation} role="merchant">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Analytics & Reporting</h1>
-            <p className="text-muted-foreground">Track your business performance and make data-driven decisions</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select time range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export Report
-            </Button>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Analytics Dashboard</h2>
+          <p className="text-muted-foreground">Track your e-commerce performance and insights</p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <div className="flex items-center rounded-md border bg-background p-1 text-sm">
+            <button
+              className={`px-3 py-1 rounded-sm ${
+                dateRange === "7d" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+              onClick={() => setDateRange("7d")}
+            >
+              7D
+            </button>
+            <button
+              className={`px-3 py-1 rounded-sm ${
+                dateRange === "30d" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+              onClick={() => setDateRange("30d")}
+            >
+              30D
+            </button>
+            <button
+              className={`px-3 py-1 rounded-sm ${
+                dateRange === "90d" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+              onClick={() => setDateRange("90d")}
+            >
+              90D
+            </button>
+            <button
+              className={`px-3 py-1 rounded-sm ${
+                dateRange === "1y" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+              onClick={() => setDateRange("1y")}
+            >
+              1Y
+            </button>
+          </div>
+          <Button variant="outline" className="gap-2">
+            <Calendar className="h-4 w-4" />
+            <span>Custom Range</span>
+          </Button>
+          <Button variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            <span>Export</span>
+          </Button>
+        </div>
+      </div>
 
-        <Tabs defaultValue="sales" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="sales">Sales Performance</TabsTrigger>
-            <TabsTrigger value="channels">Channel Analytics</TabsTrigger>
-            <TabsTrigger value="customers">Customer Insights</TabsTrigger>
-            <TabsTrigger value="stock">Stock Reports</TabsTrigger>
-          </TabsList>
-
-          {/* Sales Performance Tab */}
-          <TabsContent value="sales" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${salesData.totalRevenue.toLocaleString()}</div>
-                  <div className="flex items-center text-xs text-green-500">
-                    <TrendingUp className="mr-1 h-4 w-4" />
-                    {salesData.growth}% from last period
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
-                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${salesData.averageOrderValue}</div>
-                  <p className="text-xs text-muted-foreground">Per order</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                  <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{salesData.totalOrders}</div>
-                  <p className="text-xs text-muted-foreground">Orders this period</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Top Product</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${salesData.topProducts[0].revenue.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">{salesData.topProducts[0].name}</p>
-                </CardContent>
-              </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+            <div className="flex items-center pt-1">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <TrendingUp className="mr-1 h-3 w-3" />
+                <span>+{revenueGrowth}%</span>
+              </Badge>
+              <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
             </div>
+          </CardContent>
+        </Card>
 
-            <Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalSales}</div>
+            <div className="flex items-center pt-1">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <TrendingUp className="mr-1 h-3 w-3" />
+                <span>+{salesGrowth}%</span>
+              </Badge>
+              <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+            <LineChart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${averageOrderValue.toFixed(2)}</div>
+            <div className="flex items-center pt-1">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <TrendingUp className="mr-1 h-3 w-3" />
+                <span>+2.4%</span>
+              </Badge>
+              <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+124</div>
+            <div className="flex items-center pt-1">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <TrendingUp className="mr-1 h-3 w-3" />
+                <span>+{customerGrowth}%</span>
+              </Badge>
+              <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="products">Product Performance</TabsTrigger>
+          <TabsTrigger value="channels">Channel Insights</TabsTrigger>
+          <TabsTrigger value="customers">Customer Behavior</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="lg:col-span-4">
               <CardHeader>
-                <CardTitle>Top Performing Products</CardTitle>
+                <CardTitle>Revenue Overview</CardTitle>
+                <CardDescription>
+                  Revenue breakdown for the past{" "}
+                  {dateRange === "7d"
+                    ? "7 days"
+                    : dateRange === "30d"
+                      ? "30 days"
+                      : dateRange === "90d"
+                        ? "90 days"
+                        : "year"}
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Units Sold</TableHead>
-                      <TableHead>Trend</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {salesData.topProducts.map((product) => (
-                      <TableRow key={product.name}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>${product.revenue.toLocaleString()}</TableCell>
-                        <TableCell>{product.units}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-green-500">
-                            <TrendingUp className="mr-1 h-4 w-4" />
-                            <span>+8.2%</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Channel Analytics Tab */}
-          <TabsContent value="channels" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {salesData.salesByChannel.map((channel) => (
-                <Card key={channel.channel}>
-                  <CardHeader>
-                    <CardTitle className="text-sm font-medium">{channel.channel}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">${channel.revenue.toLocaleString()}</div>
-                    <div className="mt-2">
-                      <Progress value={channel.percentage} className="h-2" />
+              <CardContent className="h-[300px]">
+                <div className="h-full w-full rounded-md border p-4">
+                  <div className="flex h-full w-full items-center justify-center">
+                    <div className="text-center">
+                      <LineChart className="mx-auto h-8 w-8 text-muted-foreground" />
+                      <p className="mt-2 text-sm font-medium">Revenue Chart</p>
+                      <p className="text-xs text-muted-foreground">
+                        Showing data for{" "}
+                        {dateRange === "7d"
+                          ? "last 7 days"
+                          : dateRange === "30d"
+                            ? "last 30 days"
+                            : dateRange === "90d"
+                              ? "last 90 days"
+                              : "last year"}
+                      </p>
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {channel.percentage}% of total revenue
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Channel Performance</CardTitle>
-                <CardDescription>Revenue breakdown by sales channel</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                  Chart visualization would go here
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          {/* Customer Insights Tab */}
-          <TabsContent value="customers" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{customerData.totalCustomers}</div>
-                  <p className="text-xs text-muted-foreground">Active customers</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">New Customers</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{customerData.newCustomers}</div>
-                  <p className="text-xs text-muted-foreground">This period</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Retention Rate</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{customerData.retentionRate}%</div>
-                  <p className="text-xs text-muted-foreground">Customer retention</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Customer Segments</CardTitle>
-                  <PieChart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{customerData.customerSegments.length}</div>
-                  <p className="text-xs text-muted-foreground">Active segments</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Segments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Segment</TableHead>
-                        <TableHead>Customers</TableHead>
-                        <TableHead>Revenue</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {customerData.customerSegments.map((segment) => (
-                        <TableRow key={segment.segment}>
-                          <TableCell className="font-medium">{segment.segment}</TableCell>
-                          <TableCell>{segment.count}</TableCell>
-                          <TableCell>${segment.revenue.toLocaleString()}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Demographics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {customerData.demographics.map((demo) => (
-                      <div key={demo.category}>
+            <Card className="lg:col-span-3">
+              <CardHeader>
+                <CardTitle>Sales Channels</CardTitle>
+                <CardDescription>Revenue by sales channel</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <div className="h-full w-full rounded-md border p-4">
+                  <div className="flex h-full flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span>{demo.category}</span>
-                          <span>{demo.percentage}%</span>
+                          <span>Direct Sales</span>
+                          <span className="font-medium">${salesData.direct.toLocaleString()}</span>
                         </div>
-                        <Progress value={demo.percentage} className="h-2" />
+                        <div className="h-2 rounded-full bg-gray-100">
+                          <div className="h-full w-[65%] rounded-full bg-blue-500"></div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Marketplace</span>
+                          <span className="font-medium">${salesData.marketplace.toLocaleString()}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100">
+                          <div className="h-full w-[35%] rounded-full bg-green-500"></div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Affiliate</span>
+                          <span className="font-medium">${salesData.affiliate.toLocaleString()}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100">
+                          <div className="h-full w-[25%] rounded-full bg-yellow-500"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-center">
+                      <PieChart className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="products">
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Performance</CardTitle>
+              <CardDescription>Sales and revenue by product</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                  <div className="col-span-5">Product</div>
+                  <div className="col-span-2 text-center">Units Sold</div>
+                  <div className="col-span-2 text-center">Revenue</div>
+                  <div className="col-span-2 text-center">Growth</div>
+                  <div className="col-span-1 text-right">Trend</div>
+                </div>
+                <div className="divide-y">
+                  {products
+                    .sort((a, b) => b.sales - a.sales)
+                    .slice(0, 5)
+                    .map((product, index) => {
+                      // Generate random growth percentage for demo
+                      const growth = Math.floor(Math.random() * 30) - 5
+                      const isPositive = growth > 0
+
+                      return (
+                        <div key={product.id} className="grid grid-cols-12 items-center p-3">
+                          <div className="col-span-5">
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-xs text-muted-foreground">{product.sku}</div>
+                          </div>
+                          <div className="col-span-2 text-center">{product.sales}</div>
+                          <div className="col-span-2 text-center">{product.revenue}</div>
+                          <div className="col-span-2 text-center">
+                            <span
+                              className={isPositive ? "text-green-600" : "text-red-600"}
+                            >{`${isPositive ? "+" : ""}${growth}%`}</span>
+                          </div>
+                          <div className="col-span-1 flex justify-end">
+                            {isPositive ? (
+                              <TrendingUp className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <TrendingDown className="h-4 w-4 text-red-600" />
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Button variant="outline" className="gap-2">
+                  <ArrowRight className="h-4 w-4" />
+                  <span>View All Products</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="channels">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Channel Performance</CardTitle>
+                <CardDescription>Sales and conversion by channel</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                    <div className="col-span-4">Channel</div>
+                    <div className="col-span-2 text-center">Traffic</div>
+                    <div className="col-span-2 text-center">Orders</div>
+                    <div className="col-span-2 text-center">Revenue</div>
+                    <div className="col-span-2 text-center">Conversion</div>
+                  </div>
+                  <div className="divide-y">
+                    {[
+                      {
+                        name: "Direct",
+                        traffic: "12,450",
+                        orders: "542",
+                        revenue: "$24,331",
+                        conversion: "4.35%",
+                      },
+                      {
+                        name: "Organic Search",
+                        traffic: "8,294",
+                        orders: "312",
+                        revenue: "$15,762",
+                        conversion: "3.76%",
+                      },
+                      {
+                        name: "Social Media",
+                        traffic: "6,352",
+                        orders: "195",
+                        revenue: "$9,842",
+                        conversion: "3.07%",
+                      },
+                      {
+                        name: "Email",
+                        traffic: "4,129",
+                        orders: "247",
+                        revenue: "$12,458",
+                        conversion: "5.98%",
+                      },
+                      {
+                        name: "Referral",
+                        traffic: "2,845",
+                        orders: "132",
+                        revenue: "$8,442",
+                        conversion: "4.64%",
+                      },
+                    ].map((channel, index) => (
+                      <div key={index} className="grid grid-cols-12 items-center p-3">
+                        <div className="col-span-4 font-medium">{channel.name}</div>
+                        <div className="col-span-2 text-center">{channel.traffic}</div>
+                        <div className="col-span-2 text-center">{channel.orders}</div>
+                        <div className="col-span-2 text-center">{channel.revenue}</div>
+                        <div className="col-span-2 text-center">{channel.conversion}</div>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Stock Reports Tab */}
-          <TabsContent value="stock" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stockData.totalProducts}</div>
-                  <p className="text-xs text-muted-foreground">Active products</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-                  <AlertCircle className="h-4 w-4 text-yellow-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stockData.lowStock}</div>
-                  <p className="text-xs text-muted-foreground">Items below threshold</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stockData.outOfStock}</div>
-                  <p className="text-xs text-muted-foreground">Items to restock</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${stockData.stockValue.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">Total inventory value</p>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Reorder Recommendations</CardTitle>
-                <CardDescription>Products that need to be reordered soon</CardDescription>
+                <CardTitle>Traffic Sources</CardTitle>
+                <CardDescription>Where your visitors are coming from</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Current Stock</TableHead>
-                      <TableHead>Reorder Point</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {stockData.reorderRecommendations.map((product) => (
-                      <TableRow key={product.product}>
-                        <TableCell className="font-medium">{product.product}</TableCell>
-                        <TableCell>{product.currentStock}</TableCell>
-                        <TableCell>{product.reorderPoint}</TableCell>
-                        <TableCell>
-                          <Badge variant={product.currentStock <= product.reorderPoint ? "destructive" : "warning"}>
-                            {product.currentStock <= product.reorderPoint ? "Critical" : "Low"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="outline" size="sm">
-                            Reorder
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <CardContent className="h-[350px]">
+                <div className="h-full w-full rounded-md border p-4">
+                  <div className="flex h-full flex-col justify-between">
+                    <div className="space-y-4">
+                      {[
+                        { name: "Direct", percentage: 36, color: "bg-blue-500" },
+                        { name: "Organic Search", percentage: 24, color: "bg-green-500" },
+                        { name: "Social Media", percentage: 18, color: "bg-yellow-500" },
+                        { name: "Email", percentage: 12, color: "bg-purple-500" },
+                        { name: "Referral", percentage: 8, color: "bg-red-500" },
+                        { name: "Other", percentage: 2, color: "bg-gray-500" },
+                      ].map((source, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>{source.name}</span>
+                            <span className="font-medium">{source.percentage}%</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-gray-100">
+                            <div
+                              className={`h-full rounded-full ${source.color}`}
+                              style={{ width: `${source.percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-center">
+                      <PieChart className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DashboardLayout>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="customers">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Demographics</CardTitle>
+                <CardDescription>Age and gender distribution</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <div className="h-full w-full rounded-md border p-4">
+                  <div className="flex h-full w-full items-center justify-center">
+                    <div className="text-center">
+                      <PieChart className="mx-auto h-8 w-8 text-muted-foreground" />
+                      <p className="mt-2 text-sm font-medium">Demographics Chart</p>
+                      <p className="text-xs text-muted-foreground">Age and gender distribution</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Retention</CardTitle>
+                <CardDescription>New vs returning customers</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <div className="h-full w-full rounded-md border p-4">
+                  <div className="flex h-full flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>New Customers</span>
+                          <span className="font-medium">42%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100">
+                          <div className="h-full w-[42%] rounded-full bg-blue-500"></div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Returning Customers</span>
+                          <span className="font-medium">58%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100">
+                          <div className="h-full w-[58%] rounded-full bg-green-500"></div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium">Customer Lifetime Value</div>
+                            <div className="text-2xl font-bold">$245.81</div>
+                          </div>
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <ArrowUp className="mr-1 h-3 w-3" />
+                            <span>+12.3%</span>
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-center">
+                      <Users className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Satisfaction</CardTitle>
+                <CardDescription>Ratings and reviews</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <div className="h-full w-full rounded-md border p-4">
+                  <div className="flex h-full flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="text-2xl font-bold">4.8/5</div>
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          <ArrowUp className="mr-1 h-3 w-3" />
+                          <span>+0.2</span>
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        {[
+                          { stars: 5, percentage: 85 },
+                          { stars: 4, percentage: 10 },
+                          { stars: 3, percentage: 3 },
+                          { stars: 2, percentage: 1 },
+                          { stars: 1, percentage: 1 },
+                        ].map((rating) => (
+                          <div key={rating.stars} className="flex items-center gap-2">
+                            <div className="text-sm font-medium w-3">{rating.stars}</div>
+                            <div className="h-2 flex-1 rounded-full bg-gray-100">
+                              <div
+                                className="h-full rounded-full bg-yellow-400"
+                                style={{ width: `${rating.percentage}%` }}
+                              ></div>
+                            </div>
+                            <div className="text-xs text-muted-foreground w-8">{rating.percentage}%</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-2">
+                        <div className="text-sm font-medium">Total Reviews</div>
+                        <div className="text-2xl font-bold">1,248</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-center">
+                      <Button variant="outline" className="gap-2">
+                        <ArrowRight className="h-4 w-4" />
+                        <span>View All Reviews</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
-
