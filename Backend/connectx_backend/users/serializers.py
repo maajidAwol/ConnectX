@@ -8,8 +8,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'password', 'role', 'is_active', 'is_staff']
-        read_only_fields = ['id', 'is_active', 'is_staff']
+        fields = ["id", "tenant", "name", "email", "password", "role", "is_verified", "avatar_url", "created_at", "updated_at"]
+        extra_kwargs = {"password": {"write_only": True}}
+        read_only_fields = ['id', 'is_staff']
 
     def create(self, validated_data):
         # Use set_password to securely hash passwords

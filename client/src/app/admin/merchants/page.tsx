@@ -1,408 +1,295 @@
-"use client";
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CheckCircle, Clock, ExternalLink, Filter, MoreHorizontal, Search, ShieldCheck, User } from "lucide-react"
+import { verificationRequests } from "@/lib/data"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Building2,
-  Code2,
-  HelpCircle,
-  LayoutDashboard,
-  Settings,
-  ShieldAlert,
-  Users,
-  BarChart3,
-  Activity,
-  CheckCircle,
-  XCircle,
-  MoreHorizontal,
-} from "lucide-react";
-import { DashboardLayout } from "@/components/dashboard-layout";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/components/ui/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const navigation = [
-  { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "Merchants", href: "/admin/merchants", icon: Building2, badge: 3 },
-  { title: "Developers", href: "/admin/developers", icon: Code2 },
-  { title: "Users", href: "/admin/users", icon: Users },
-  { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { title: "System Health", href: "/admin/system-health", icon: Activity },
-  { title: "Security", href: "/admin/security", icon: ShieldAlert },
-  { title: "Settings", href: "/admin/settings", icon: Settings },
-  { title: "Help", href: "/admin/help", icon: HelpCircle },
-];
-
-// Mock data with additional pending merchant
-const initialMerchants = [
-  {
-    id: 1,
-    name: "Acme Corp",
-    email: "acme@example.com",
-    products: 128,
-    revenue: "$45,289",
-    joined: "Jan 12, 2023",
-    status: "Active",
-    isSuspended: false,
-    registrationDetails: { businessType: "Retail", documents: "Verified" },
-  },
-  {
-    id: 2,
-    name: "Global Gadgets",
-    email: "global@example.com",
-    products: 256,
-    revenue: "$98,546",
-    joined: "Mar 5, 2022",
-    status: "Active",
-    isSuspended: false,
-    registrationDetails: { businessType: "Electronics", documents: "Verified" },
-  },
-  {
-    id: 3,
-    name: "Tech Innovations",
-    email: "tech@example.com",
-    products: 0,
-    revenue: "$0",
-    joined: "Today",
-    status: "Pending",
-    isSuspended: false,
-    registrationDetails: { businessType: "Tech", documents: "Pending Verification" },
-  },
-  {
-    id: 4,
-    name: "Future Tech",
-    email: "future@example.com",
-    products: 45,
-    revenue: "$12,300",
-    joined: "Feb 10, 2024",
-    status: "Suspended",
-    isSuspended: true,
-    registrationDetails: { businessType: "Tech", documents: "Verified" },
-  },
-  {
-    id: 5,
-    name: "New Vendor Co",
-    email: "newvendor@example.com",
-    products: 0,
-    revenue: "$0",
-    joined: "Apr 01, 2025",
-    status: "Pending",
-    isSuspended: false,
-    registrationDetails: { businessType: "Wholesale", documents: "Pending Verification" },
-  },
-];
-
-export default function AdminMerchantsPage() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [merchants, setMerchants] = useState(initialMerchants);
-  const [selectedMerchants, setSelectedMerchants] = useState<number[]>([]);
-
-  // Filter pending merchants for approval section
-  const pendingMerchants = merchants.filter((m) => m.status === "Pending");
-
-  // Filter main merchant table
-  const filteredMerchants = merchants.filter((merchant) => {
-    const matchesSearch =
-      merchant.name.toLowerCase().includes(search.toLowerCase()) ||
-      merchant.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || merchant.status === statusFilter;
-    return matchesSearch && matchesStatus && merchant.status !== "Pending"; // Exclude pending from main table
-  });
-
-  // Handle merchant approval
-  const handleApprove = (id: number) => {
-    const merchant = merchants.find((m) => m.id === id);
-    if (merchant && merchant.status === "Pending") {
-      setMerchants((prev) =>
-        prev.map((m) =>
-          m.id === id
-            ? { ...m, status: "Active", registrationDetails: { ...m.registrationDetails, documents: "Verified" } }
-            : m
-        )
-      );
-      toast({
-        title: "Merchant Approved",
-        description: `${merchant.name} has been approved after review.`,
-      });
-    }
-  };
-
-  // Handle merchant rejection
-  const handleReject = (id: number) => {
-    const merchant = merchants.find((m) => m.id === id);
-    if (merchant && merchant.status === "Pending") {
-      setMerchants((prev) => prev.filter((m) => m.id !== id));
-      toast({
-        title: "Merchant Rejected",
-        description: `${merchant.name} has been rejected after review.`,
-      });
-    }
-  };
-
-  // Handle suspend/restore
-  const handleToggleSuspend = (id: number) => {
-    setMerchants((prev) =>
-      prev.map((m) =>
-        m.id === id ? { ...m, isSuspended: !m.isSuspended, status: m.isSuspended ? "Active" : "Suspended" } : m
-      )
-    );
-    toast({
-      title: `Merchant ${merchants.find((m) => m.id === id)?.isSuspended ? "Restored" : "Suspended"}`,
-      description: `The merchant has been ${merchants.find((m) => m.id === id)?.isSuspended ? "restored" : "suspended"}.`,
-    });
-  };
-
-  // Handle bulk operations
-  const handleBulkAction = (action: "suspend" | "restore" | "delete") => {
-    if (selectedMerchants.length === 0) {
-      toast({ title: "No Selection", description: "Please select at least one merchant.", variant: "destructive" });
-      return;
-    }
-
-    setMerchants((prev) =>
-      prev.map((m) => {
-        if (selectedMerchants.includes(m.id)) {
-          switch (action) {
-            case "suspend":
-              return { ...m, isSuspended: true, status: "Suspended" };
-            case "restore":
-              return { ...m, isSuspended: false, status: "Active" };
-            case "delete":
-              return null;
-            default:
-              return m;
-          }
-        }
-        return m;
-      }).filter((m) => m !== null) as typeof prev
-    );
-
-    setSelectedMerchants([]);
-    toast({
-      title: `Bulk ${action.charAt(0).toUpperCase() + action.slice(1)}`,
-      description: `${selectedMerchants.length} merchant(s) have been ${action}ed.`,
-    });
-  };
-
-  // Handle checkbox selection
-  const toggleSelectMerchant = (id: number) => {
-    setSelectedMerchants((prev) =>
-      prev.includes(id) ? prev.filter((mId) => mId !== id) : [...prev, id]
-    );
-  };
-
-  // Select all merchants
-  const toggleSelectAll = () => {
-    if (selectedMerchants.length === filteredMerchants.length) {
-      setSelectedMerchants([]);
-    } else {
-      setSelectedMerchants(filteredMerchants.map((m) => m.id));
-    }
-  };
-
+export default function MerchantManagement() {
   return (
-    <DashboardLayout
-      title="Merchant Management"
-      description="View and manage all merchants on the platform"
-      role="admin"
-      navigation={navigation}
-    >
-      <div className="container mx-auto py-6">
-        {/* Pending Merchants Section */}
-        {pendingMerchants.length > 0 && (
-          <Card className="mb-6">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Merchant Management</h2>
+        <p className="text-muted-foreground">Manage merchant accounts and verification requests</p>
+      </div>
+
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="relative w-full md:w-96">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input type="search" placeholder="Search merchants..." className="pl-8 w-full" />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-10 w-10">
+            <Filter className="h-4 w-4" />
+            <span className="sr-only">Filter</span>
+          </Button>
+          <select className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background">
+            <option value="all">All Merchants</option>
+            <option value="verified">Verified</option>
+            <option value="unverified">Unverified</option>
+          </select>
+        </div>
+      </div>
+
+      <Tabs defaultValue="verification" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="merchants">All Merchants</TabsTrigger>
+          <TabsTrigger value="verification">Verification Requests</TabsTrigger>
+          {/* <TabsTrigger value="accounts">Account Management</TabsTrigger> */}
+        </TabsList>
+
+        <TabsContent value="verification">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Pending Merchant Registrations</CardTitle>
+              <CardTitle>Merchant Verification Requests</CardTitle>
+              <CardDescription>Review and approve merchant verification requests</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Merchant</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Business Type</TableHead>
-                    <TableHead>Documents</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingMerchants.map((merchant) => (
-                    <TableRow key={merchant.id}>
-                      <TableCell className="font-medium">{merchant.name}</TableCell>
-                      <TableCell>{merchant.email}</TableCell>
-                      <TableCell>{merchant.registrationDetails.businessType}</TableCell>
-                      <TableCell>{merchant.registrationDetails.documents}</TableCell>
-                      <TableCell>{merchant.joined}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleApprove(merchant.id)}
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleReject(merchant.id)}
-                          >
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Reject
-                          </Button>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                  <div className="col-span-3">Merchant</div>
+                  <div className="col-span-2">Request ID</div>
+                  <div className="col-span-2">Submitted</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-2">Documents</div>
+                  <div className="col-span-1 text-right">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {verificationRequests.map((request) => (
+                    <div key={request.id} className="grid grid-cols-12 items-center p-3">
+                      <div className="col-span-3 flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
+                          <User className="h-4 w-4 text-blue-700" />
                         </div>
-                      </TableCell>
-                    </TableRow>
+                        <div>
+                          <div className="font-medium">{request.merchantName}</div>
+                          <div className="text-sm text-muted-foreground">ID: {request.merchantId}</div>
+                        </div>
+                      </div>
+                      <div className="col-span-2">{request.id}</div>
+                      <div className="col-span-2">{request.submittedDate}</div>
+                      <div className="col-span-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            request.status === "Pending"
+                              ? "bg-amber-50 text-amber-700 border-amber-200"
+                              : request.status === "Under Review"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : request.status === "Approved"
+                                  ? "bg-green-50 text-green-700 border-green-200"
+                                  : "bg-red-50 text-red-700 border-red-200"
+                          }
+                        >
+                          {request.status}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="flex items-center gap-1">
+                          {request.documents.filter((doc) => doc.status === "Verified").length} /{" "}
+                          {request.documents.length}
+                          <span className="text-sm text-muted-foreground">verified</span>
+                        </div>
+                      </div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/admin/merchants/verification/${request.id}`}>
+                            <ExternalLink className="h-4 w-4" />
+                            <span className="sr-only">View Details</span>
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
 
-        {/* Main Merchant Directory */}
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Merchants</CardTitle>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-              <Input
-                type="search"
-                placeholder="Search merchants..."
-                className="w-full sm:w-64 rounded-md border bg-background pl-8"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent className="bg-black">
-                  <SelectItem value="All">All</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-              {selectedMerchants.length > 0 && (
-                <div className="flex gap-2 mt-2 sm:mt-0">
-                  <Button variant="outline" onClick={() => handleBulkAction("suspend")}>
-                    Suspend Selected
-                  </Button>
-                  <Button variant="outline" onClick={() => handleBulkAction("restore")}>
-                    Restore Selected
-                  </Button>
-                  <Button variant="destructive" onClick={() => handleBulkAction("delete")}>
-                    Delete Selected
+        <TabsContent value="merchants">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Merchants</CardTitle>
+              <CardDescription>View and manage all merchant accounts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                  <div className="col-span-3">Merchant</div>
+                  <div className="col-span-2">Business Type</div>
+                  <div className="col-span-2">Joined</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-2">Revenue</div>
+                  <div className="col-span-1 text-right">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {/* Sample merchant data - in a real app, this would be fetched from an API */}
+                  {[
+                    {
+                      id: 1,
+                      name: "TechGadgets Store",
+                      email: "contact@techgadgets.com",
+                      businessType: "Corporation",
+                      joined: "Jan 15, 2023",
+                      status: "Verified",
+                      revenue: "$42,582",
+                    },
+                    {
+                      id: 2,
+                      name: "Fashion Forward",
+                      email: "info@fashionforward.com",
+                      businessType: "LLC",
+                      joined: "Mar 22, 2023",
+                      status: "Verified",
+                      revenue: "$38,103",
+                    },
+                    {
+                      id: 3,
+                      name: "Example Merchant",
+                      email: "merchant@example.com",
+                      businessType: "Sole Proprietorship",
+                      joined: "Apr 10, 2023",
+                      status: "Unverified",
+                      revenue: "$0",
+                    },
+                    {
+                      id: 4,
+                      name: "New Merchant LLC",
+                      email: "contact@newmerchant.com",
+                      businessType: "LLC",
+                      joined: "Apr 15, 2023",
+                      status: "Under Review",
+                      revenue: "$0",
+                    },
+                  ].map((merchant) => (
+                    <div key={merchant.id} className="grid grid-cols-12 items-center p-3">
+                      <div className="col-span-3 flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
+                          <User className="h-4 w-4 text-blue-700" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{merchant.name}</div>
+                          <div className="text-sm text-muted-foreground">{merchant.email}</div>
+                        </div>
+                      </div>
+                      <div className="col-span-2">{merchant.businessType}</div>
+                      <div className="col-span-2">{merchant.joined}</div>
+                      <div className="col-span-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            merchant.status === "Unverified"
+                              ? "bg-amber-50 text-amber-700 border-amber-200"
+                              : merchant.status === "Under Review"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-green-50 text-green-700 border-green-200"
+                          }
+                        >
+                          {merchant.status}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2">{merchant.revenue}</div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">More</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="accounts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Management</CardTitle>
+              <CardDescription>Manage merchant account settings and permissions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="rounded-md border p-4">
+                  <h3 className="text-lg font-semibold mb-2">Account Approval Workflow</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Configure the merchant approval process and verification requirements
+                  </p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-md border p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="font-medium">Automatic Approval</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Automatically approve merchants that meet basic requirements
+                      </p>
+                      <div className="flex items-center mt-2">
+                        <input type="checkbox" id="auto-approve" className="mr-2" />
+                        <label htmlFor="auto-approve" className="text-sm">
+                          Enable automatic approval
+                        </label>
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-5 w-5 text-amber-600" />
+                        <span className="font-medium">Review Period</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Set the maximum time for merchant verification review
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Input type="number" defaultValue={3} className="w-20" />
+                        <span className="text-sm">business days</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border p-4">
+                  <h3 className="text-lg font-semibold mb-2">Required Verification Documents</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Configure which documents are required for merchant verification
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      "Business Registration Certificate",
+                      "Tax Identification Number (TIN)",
+                      "Bank Account Verification",
+                      "ID of Business Owner/Representative",
+                    ].map((doc, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                      >
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="h-4 w-4 text-blue-600" />
+                          <span>{doc}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" id={`required-${index}`} defaultChecked className="mr-1" />
+                          <label htmlFor={`required-${index}`} className="text-sm">
+                            Required
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button className="mt-4" variant="outline">
+                    Save Requirements
                   </Button>
                 </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                      checked={selectedMerchants.length === filteredMerchants.length && filteredMerchants.length > 0}
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Merchant</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Products</TableHead>
-                  <TableHead>Revenue</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMerchants.map((merchant) => (
-                  <TableRow key={merchant.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedMerchants.includes(merchant.id)}
-                        onCheckedChange={() => toggleSelectMerchant(merchant.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{merchant.name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          merchant.status === "Active"
-                            ? "bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400"
-                        }
-                      >
-                        {merchant.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{merchant.products}</TableCell>
-                    <TableCell>{merchant.revenue}</TableCell>
-                    <TableCell>{merchant.joined}</TableCell>
-                    <TableCell>{merchant.registrationDetails.businessType}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleToggleSuspend(merchant.id)}>
-                            {merchant.isSuspended ? (
-                              <>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Restore
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="mr-2 h-4 w-4" />
-                                Suspend
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Settings className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-    </DashboardLayout>
-  );
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
 }

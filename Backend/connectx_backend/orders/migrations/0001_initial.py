@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('products', '0001_initial'),
+        ('tenants', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -20,20 +21,47 @@ class Migration(migrations.Migration):
             name='Order',
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('total_price', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('order_number', models.CharField(max_length=50, unique=True)),
+                ('status', models.CharField(choices=[('pending', 'Pending'), ('processing', 'Processing'), ('shipped', 'Shipped'), ('delivered', 'Delivered')], default='pending', max_length=20)),
+                ('subtotal', models.DecimalField(decimal_places=2, max_digits=8)),
+                ('taxes', models.DecimalField(decimal_places=2, default=0.0, max_digits=8)),
+                ('shipping', models.DecimalField(decimal_places=2, default=0.0, max_digits=8)),
+                ('discount', models.DecimalField(decimal_places=2, default=0.0, max_digits=8)),
+                ('total_amount', models.DecimalField(decimal_places=2, max_digits=8)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('status', models.CharField(default='Pending', max_length=50)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to=settings.AUTH_USER_MODEL)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('tenant', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='tenants.tenant')),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to=settings.AUTH_USER_MODEL)),
             ],
+            options={
+                'ordering': ['-created_at'],
+            },
         ),
         migrations.CreateModel(
-            name='OrderItem',
+            name='OrderHistory',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('name', models.CharField(max_length=100)),
+                ('description', models.TextField()),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='history', to='orders.order')),
+            ],
+            options={
+                'ordering': ['-created_at'],
+            },
+        ),
+        migrations.CreateModel(
+            name='OrderProductItem',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('quantity', models.IntegerField()),
-                ('price', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('price', models.DecimalField(decimal_places=2, max_digits=8)),
+                ('custom_profit_percentage', models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True)),
+                ('custom_selling_price', models.DecimalField(blank=True, decimal_places=2, max_digits=8, null=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='orders.order')),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='products.product')),
+                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='order_items', to='products.product')),
             ],
         ),
     ]

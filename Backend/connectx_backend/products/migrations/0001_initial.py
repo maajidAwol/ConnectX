@@ -11,32 +11,39 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('categories', '__first__'),
+        ('tenants', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Category',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True, default='No description')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-            ],
-        ),
-        migrations.CreateModel(
             name='Product',
             fields=[
-                ('product_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('sku', models.CharField(max_length=50, unique=True)),
                 ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(default='No description')),
-                ('price', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('stock_quantity', models.IntegerField()),
-                ('shared_inventory', models.BooleanField(default=False)),
+                ('base_price', models.DecimalField(decimal_places=2, default=0.0, max_digits=8)),
+                ('profit_percentage', models.DecimalField(decimal_places=2, default=0.0, max_digits=5)),
+                ('selling_price', models.DecimalField(decimal_places=2, default=0.0, max_digits=8)),
+                ('quantity', models.IntegerField(default=0)),
+                ('is_public', models.BooleanField(default=False)),
+                ('description', models.TextField(blank=True, default='')),
+                ('cover_url', models.CharField(blank=True, default='', max_length=255)),
+                ('images', models.JSONField(blank=True, default=list)),
+                ('colors', models.JSONField(blank=True, default=list)),
+                ('sizes', models.JSONField(blank=True, default=list)),
+                ('total_sold', models.IntegerField(default=0)),
+                ('total_ratings', models.IntegerField(default=0)),
+                ('total_reviews', models.IntegerField(default=0)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='products.category')),
-                ('seller', models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='products', to=settings.AUTH_USER_MODEL)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='products', to='categories.category')),
+                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='owned_products', to=settings.AUTH_USER_MODEL)),
+                ('tenant', models.ManyToManyField(related_name='products_set', to='tenants.tenant')),
             ],
+            options={
+                'ordering': ['-created_at'],
+            },
         ),
     ]

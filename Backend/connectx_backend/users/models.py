@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Permission
+from tenants.models import Tenant
 
 
 class UserManager(BaseUserManager):
@@ -37,26 +38,27 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     ADMIN = 'admin'
-    ENTREPRENEUR = 'entrepreneur'
     CUSTOMER = 'customer'
     OWNER = 'owner'  
     
     ROLE_CHOICES = [
         (ADMIN, 'Admin'),
-        (ENTREPRENEUR, 'Entrepreneur'),
         (CUSTOMER, 'Customer'),
         (OWNER, 'Owner'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="users")
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default=CUSTOMER)
+    password = models.CharField(max_length=255)  # Hashed password
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=CUSTOMER)
+    is_verified = models.BooleanField(default=False)
+    avatar_url = models.URLField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    password = models.CharField(max_length=128)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -69,7 +71,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.email})"
 
     class Meta:
         db_table = 'users'

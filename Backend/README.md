@@ -47,7 +47,69 @@ ConnectX is a Django-based backend application designed to manage users, product
    ```bash
    python manage.py runserver
    ```
+## Database Schema Visualization in Django
 
+### 📌 Prerequisites
+To visualize your Django models as a database schema diagram, you need to install `django-extensions` and `Graphviz`.
+
+### 🛠 Installation
+Run the following command to install the required dependencies:
+
+```bash
+pipenv install django-extensions graphviz
+```
+
+### 🔧 Configuration
+
+#### 1️⃣ Enable `django-extensions`
+Edit your **`settings.py`** file and add `django_extensions` to `INSTALLED_APPS`:
+
+```python
+INSTALLED_APPS = [
+    ...
+    'django_extensions',  # Enable Django Extensions
+]
+```
+
+#### 2️⃣ Generate the Schema Diagram
+Run the following command to generate a database schema diagram for **all apps**:
+
+```bash
+python manage.py graph_models -a -o schema.png
+```
+
+- `-a` → Generates a diagram for **all apps**.
+- `-o schema.png` → Saves the output as `schema.png` in your project directory.
+
+#### 3️⃣ View the Schema Diagram
+Once the command runs successfully, open the `schema.png` file in your project directory to view the generated database schema.
+
+### 🎯 Generate a Diagram for a Specific App
+To generate a schema diagram for a **single app** (e.g., `reviews`), use:
+
+```bash
+python manage.py graph_models reviews -o reviews_schema.png
+```
+
+### 🚀 Additional Options
+- To display **field types** in the diagram:
+
+  ```bash
+  python manage.py graph_models -a -g -o schema.png
+  ```
+  
+  `-g` → Includes field types in the diagram.
+
+- To show **relations only**:
+
+  ```bash
+  python manage.py graph_models -a -o schema.png --arrow-shape crow
+  ```
+## Database Schema
+
+The generated database schema diagram is saved as `schema.png` in the project directory. Below is a preview of the schema:
+
+![Database Schema](schema.png)
 ## Usage
 
 Once the server is running, you can access the API at `http://127.0.0.1:8000/`. You can use tools like Postman or cURL to interact with the API endpoints.

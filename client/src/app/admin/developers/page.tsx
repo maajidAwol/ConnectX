@@ -1,256 +1,492 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Building2,
-  Code2,
-  HelpCircle,
-  LayoutDashboard,
-  Settings,
-  ShieldAlert,
-  Users,
-  BarChart3,
-  Activity,
-  CheckCircle,
-  XCircle,
-} from "lucide-react"; // Replaced Edit with CheckCircle and XCircle for suspend/restore
-import { DashboardLayout } from "@/components/dashboard-layout";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AlertCircle,
+  ArrowUpRight,
+  Code,
+  Download,
+  ExternalLink,
+  Filter,
+  MoreHorizontal,
+  Search,
+  Shield,
+} from "lucide-react"
 
-// Define the Developer interface
-interface Developer {
-  id: number;
-  name: string;
-  email: string;
-  apiKey: string;
-  apiCalls: number;
-  rateLimit: number;
-  integrations: {
-    merchantId: number;
-    merchantName: string;
-    productCount: number;
-  }[];
-  status: "Active" | "Suspended";
-}
-
-// Navigation data (unchanged)
-const navigation = [
-  { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "Merchants", href: "/admin/merchants", icon: Building2, badge: 3 },
-  { title: "Developers", href: "/admin/developers", icon: Code2 },
-  { title: "Users", href: "/admin/users", icon: Users },
-  { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { title: "System Health", href: "/admin/system-health", icon: Activity },
-  { title: "Security", href: "/admin/security", icon: ShieldAlert },
-  { title: "Settings", href: "/admin/settings", icon: Settings },
-  { title: "Help", href: "/admin/help", icon: HelpCircle },
-];
-
-// Mock JSON data for developers with type annotation
-const initialDevelopers: Developer[] = [
-  {
-    id: 1,
-    name: "Alice Smith",
-    email: "alice@example.com",
-    apiKey: "abc123",
-    apiCalls: 1500,
-    rateLimit: 2000,
-    integrations: [
-      { merchantId: 1, merchantName: "Acme Corp", productCount: 50 },
-      { merchantId: 2, merchantName: "Global Gadgets", productCount: 30 },
-    ],
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Bob Johnson",
-    email: "bob@example.com",
-    apiKey: "xyz789",
-    apiCalls: 3000,
-    rateLimit: 5000,
-    integrations: [{ merchantId: 2, merchantName: "Global Gadgets", productCount: 100 }],
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Charlie Brown",
-    email: "charlie@example.com",
-    apiKey: "def456",
-    apiCalls: 800,
-    rateLimit: 1000,
-    integrations: [],
-    status: "Active",
-  },
-];
-
-export default function AdminDevelopersPage() {
-  const [developers, setDevelopers] = useState<Developer[]>(() => {
-    const storedDevelopers = localStorage.getItem("developers");
-    return storedDevelopers ? JSON.parse(storedDevelopers) : initialDevelopers;
-  });
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
-
-  // Save developers to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem("developers", JSON.stringify(developers));
-  }, [developers]);
-
-  // Filter developers
-  const filteredDevelopers = developers.filter((developer: Developer) => {
-    const matchesSearch =
-      developer.name.toLowerCase().includes(search.toLowerCase()) ||
-      developer.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || developer.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Handle rate limit update
-  const handleUpdateRateLimit = (id: number, newLimit: number) => {
-    setDevelopers((prev: Developer[]) =>
-      prev.map((dev: Developer) =>
-        dev.id === id ? { ...dev, rateLimit: newLimit } : dev
-      )
-    );
-    toast({
-      title: "Rate Limit Updated",
-      description: `Rate limit for ${developers.find((d) => d.id === id)?.name} set to ${newLimit} calls/day.`,
-    });
-  };
-
-  // Handle suspend/restore developer
-  const handleToggleSuspend = (id: number) => {
-    setDevelopers((prev: Developer[]) =>
-      prev.map((dev: Developer) =>
-        dev.id === id
-          ? { ...dev, status: dev.status === "Active" ? "Suspended" : "Active" }
-          : dev
-      )
-    );
-    const developer = developers.find((d) => d.id === id);
-    toast({
-      title: `Developer ${developer?.status === "Active" ? "Suspended" : "Restored"}`,
-      description: `${developer?.name} has been ${developer?.status === "Active" ? "suspended" : "restored"}.`,
-    });
-  };
-
+export default function DeveloperDirectory() {
   return (
-    <DashboardLayout
-      title="Developer Oversight"
-      description="Manage registered developers and their API usage"
-      role="admin"
-      navigation={navigation}
-    >
-      <div className="container mx-auto py-6">
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Developers</CardTitle>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-              <Input
-                type="search"
-                placeholder="Search developers..."
-                className="w-full sm:w-64 rounded-md border bg-background pl-8"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent className="bg-black">
-                  <SelectItem value="All">All</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Developer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>API Calls</TableHead>
-                  <TableHead>Rate Limit</TableHead>
-                  <TableHead>Integrations</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDevelopers.map((developer: Developer) => (
-                  <TableRow key={developer.id}>
-                    <TableCell className="font-medium">{developer.name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          developer.status === "Active"
-                            ? "bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400"
-                        }
-                      >
-                        {developer.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{developer.apiCalls}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          value={developer.rateLimit}
-                          onChange={(e) =>
-                            handleUpdateRateLimit(developer.id, parseInt(e.target.value) || 0)
-                          }
-                          className="w-24"
-                        />
-                        <span>calls/day</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {developer.integrations.length > 0
-                        ? developer.integrations.map((int) => int.merchantName).join(", ")
-                        : "None"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleSuspend(developer.id)}
-                      >
-                        {developer.status === "Active" ? (
-                          <XCircle className="h-4 w-4" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Developer Directory</h2>
+        <p className="text-muted-foreground">Manage developer accounts and API access</p>
       </div>
-    </DashboardLayout>
-  );
+
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="relative w-full md:w-96">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input type="search" placeholder="Search developers..." className="pl-8 w-full" />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-10 w-10">
+            <Filter className="h-4 w-4" />
+            <span className="sr-only">Filter</span>
+          </Button>
+          <select className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background">
+            <option value="all">All Developers</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="new">New</option>
+          </select>
+          <Button variant="outline" size="sm" className="ml-auto">
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="developers" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="developers">Developer Accounts</TabsTrigger>
+          <TabsTrigger value="applications">API Applications</TabsTrigger>
+          <TabsTrigger value="activity">API Activity</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="developers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Developer Accounts</CardTitle>
+              <CardDescription>Manage developer accounts and access</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                  <div className="col-span-3">Developer</div>
+                  <div className="col-span-2">Account Type</div>
+                  <div className="col-span-2">API Usage</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-2">Last Activity</div>
+                  <div className="col-span-1 text-right">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {[
+                    {
+                      id: 1,
+                      name: "Alex Johnson",
+                      email: "alex@devteam.com",
+                      type: "Individual",
+                      apiUsage: "12,450 calls/day",
+                      status: "Active",
+                      lastActivity: "2 hours ago",
+                    },
+                    {
+                      id: 2,
+                      name: "TechSolutions Inc.",
+                      email: "api@techsolutions.com",
+                      type: "Organization",
+                      apiUsage: "156,230 calls/day",
+                      status: "Active",
+                      lastActivity: "5 minutes ago",
+                    },
+                    {
+                      id: 3,
+                      name: "Sarah Williams",
+                      email: "sarah@integrations.io",
+                      type: "Individual",
+                      apiUsage: "5,120 calls/day",
+                      status: "Active",
+                      lastActivity: "1 day ago",
+                    },
+                    {
+                      id: 4,
+                      name: "DataSync Solutions",
+                      email: "dev@datasync.co",
+                      type: "Organization",
+                      apiUsage: "78,900 calls/day",
+                      status: "Suspended",
+                      lastActivity: "5 days ago",
+                    },
+                    {
+                      id: 5,
+                      name: "Michael Chen",
+                      email: "michael@appdev.com",
+                      type: "Individual",
+                      apiUsage: "0 calls/day",
+                      status: "New",
+                      lastActivity: "Just registered",
+                    },
+                  ].map((developer) => (
+                    <div key={developer.id} className="grid grid-cols-12 items-center p-3">
+                      <div className="col-span-3 flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Code className="h-4 w-4 text-purple-700" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{developer.name}</div>
+                          <div className="text-sm text-muted-foreground">{developer.email}</div>
+                        </div>
+                      </div>
+                      <div className="col-span-2">{developer.type}</div>
+                      <div className="col-span-2">{developer.apiUsage}</div>
+                      <div className="col-span-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            developer.status === "Active"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : developer.status === "Suspended"
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : "bg-blue-50 text-blue-700 border-blue-200"
+                          }
+                        >
+                          {developer.status}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2">{developer.lastActivity}</div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/admin/developers/${developer.id}`}>
+                            <ExternalLink className="h-4 w-4" />
+                            <span className="sr-only">View Details</span>
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Developer Verification Status</CardTitle>
+              <CardDescription>Developers requiring verification or review</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  {
+                    id: 1,
+                    name: "Michael Chen",
+                    email: "michael@appdev.com",
+                    status: "Pending Verification",
+                    date: "Today",
+                    issue: null,
+                  },
+                  {
+                    id: 2,
+                    name: "EcomTools Ltd.",
+                    email: "developers@ecomtools.net",
+                    status: "Document Review",
+                    date: "Yesterday",
+                    issue: null,
+                  },
+                  {
+                    id: 3,
+                    name: "DataSync Solutions",
+                    email: "dev@datasync.co",
+                    status: "Suspended",
+                    date: "5 days ago",
+                    issue: "Rate limit violations",
+                  },
+                ].map((developer) => (
+                  <div
+                    key={developer.id}
+                    className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-purple-100 flex items-center justify-center">
+                        <Code className="h-4 w-4 text-purple-700" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{developer.name}</div>
+                        <div className="text-sm text-muted-foreground">{developer.email}</div>
+                        <div className="flex items-center mt-1">
+                          <Badge
+                            variant="outline"
+                            className={
+                              developer.status === "Suspended"
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : "bg-amber-50 text-amber-700 border-amber-200"
+                            }
+                          >
+                            {developer.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground ml-2">{developer.date}</span>
+                          {developer.issue && (
+                            <div className="flex items-center ml-2 text-xs text-red-600">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              {developer.issue}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm">
+                        Review
+                      </Button>
+                      {developer.status === "Suspended" && (
+                        <Button variant="outline" size="sm">
+                          Reinstate
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="applications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>API Applications</CardTitle>
+              <CardDescription>Manage registered API applications</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                  <div className="col-span-3">Application</div>
+                  <div className="col-span-2">Developer</div>
+                  <div className="col-span-2">API Version</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-2">Created</div>
+                  <div className="col-span-1 text-right">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {[
+                    {
+                      id: 1,
+                      name: "ShopSync",
+                      description: "Inventory management integration",
+                      developer: "TechSolutions Inc.",
+                      apiVersion: "v2",
+                      status: "Approved",
+                      created: "Jan 15, 2023",
+                    },
+                    {
+                      id: 2,
+                      name: "OrderBot",
+                      description: "Order automation system",
+                      developer: "Sarah Williams",
+                      apiVersion: "v2",
+                      status: "Approved",
+                      created: "Mar 22, 2023",
+                    },
+                    {
+                      id: 3,
+                      name: "DataHarvester",
+                      description: "Analytics and reporting tool",
+                      developer: "DataSync Solutions",
+                      apiVersion: "v1",
+                      status: "Suspended",
+                      created: "Apr 10, 2023",
+                    },
+                    {
+                      id: 4,
+                      name: "MobileShop",
+                      description: "Mobile shopping application",
+                      developer: "Alex Johnson",
+                      apiVersion: "v2",
+                      status: "Approved",
+                      created: "May 5, 2023",
+                    },
+                    {
+                      id: 5,
+                      name: "EcomTools",
+                      description: "E-commerce toolkit",
+                      developer: "Michael Chen",
+                      apiVersion: "v2",
+                      status: "Pending Review",
+                      created: "Today",
+                    },
+                  ].map((app) => (
+                    <div key={app.id} className="grid grid-cols-12 items-center p-3">
+                      <div className="col-span-3 flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Shield className="h-4 w-4 text-blue-700" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{app.name}</div>
+                          <div className="text-sm text-muted-foreground">{app.description}</div>
+                        </div>
+                      </div>
+                      <div className="col-span-2">{app.developer}</div>
+                      <div className="col-span-2">{app.apiVersion}</div>
+                      <div className="col-span-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            app.status === "Approved"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : app.status === "Suspended"
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : "bg-amber-50 text-amber-700 border-amber-200"
+                          }
+                        >
+                          {app.status}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2">{app.created}</div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">More</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>API Activity Overview</CardTitle>
+              <CardDescription>Recent API activity and usage patterns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="rounded-md border p-4">
+                  <h3 className="font-medium mb-2">Top API Consumers</h3>
+                  <div className="space-y-4">
+                    {[
+                      {
+                        developer: "TechSolutions Inc.",
+                        application: "ShopSync",
+                        calls: "156,230",
+                        change: "+12%",
+                      },
+                      {
+                        developer: "DataSync Solutions",
+                        application: "DataHarvester",
+                        calls: "78,900",
+                        change: "-5%",
+                      },
+                      {
+                        developer: "Alex Johnson",
+                        application: "MobileShop",
+                        calls: "12,450",
+                        change: "+8%",
+                      },
+                      {
+                        developer: "Sarah Williams",
+                        application: "OrderBot",
+                        calls: "5,120",
+                        change: "+3%",
+                      },
+                    ].map((consumer, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                      >
+                        <div>
+                          <div className="font-medium">{consumer.developer}</div>
+                          <div className="text-sm text-muted-foreground">{consumer.application}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{consumer.calls} calls/day</div>
+                          <div
+                            className={
+                              consumer.change.startsWith("+") ? "text-sm text-green-600" : "text-sm text-red-600"
+                            }
+                          >
+                            {consumer.change} from last week
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-md border p-4">
+                  <h3 className="font-medium mb-2">Most Used Endpoints</h3>
+                  <div className="space-y-4">
+                    {[
+                      {
+                        endpoint: "/api/v2/products",
+                        method: "GET",
+                        calls: "245,678",
+                        change: "+15%",
+                      },
+                      {
+                        endpoint: "/api/v2/orders",
+                        method: "GET",
+                        calls: "198,321",
+                        change: "+10%",
+                      },
+                      {
+                        endpoint: "/api/v2/customers",
+                        method: "GET",
+                        calls: "156,432",
+                        change: "+8%",
+                      },
+                      {
+                        endpoint: "/api/v2/products",
+                        method: "POST",
+                        calls: "87,654",
+                        change: "+5%",
+                      },
+                      {
+                        endpoint: "/api/v2/orders",
+                        method: "POST",
+                        calls: "76,543",
+                        change: "+7%",
+                      },
+                    ].map((endpoint, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                      >
+                        <div>
+                          <div className="font-medium">
+                            <span
+                              className={
+                                endpoint.method === "GET"
+                                  ? "text-green-600"
+                                  : endpoint.method === "POST"
+                                    ? "text-blue-600"
+                                    : endpoint.method === "PUT"
+                                      ? "text-amber-600"
+                                      : "text-red-600"
+                              }
+                            >
+                              {endpoint.method}
+                            </span>{" "}
+                            {endpoint.endpoint}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{endpoint.calls} calls/day</div>
+                          <div className="text-sm text-green-600">{endpoint.change} from last week</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/developers/api-limits">
+                      View Detailed Analytics
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
 }
