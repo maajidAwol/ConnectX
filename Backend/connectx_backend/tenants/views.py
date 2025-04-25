@@ -42,8 +42,7 @@ class TenantViewSet(viewsets.ModelViewSet):
             email=tenant.email,
             password=tenant.password,
             tenant=tenant,
-            role="admin",
-            # Add other required fields if necessary
+            role="merichant",
         )
 
         headers = self.get_success_headers(serializer.data)
