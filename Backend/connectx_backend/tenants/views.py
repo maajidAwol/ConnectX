@@ -40,9 +40,9 @@ class TenantViewSet(viewsets.ModelViewSet):
         User.objects.create(
             name=data.get("fullname"),
             email=tenant.email,
-            password=tenant.password,
+            password=data.get("password"),
             tenant=tenant,
-            role="merichant",
+            role="owner",
         )
 
         headers = self.get_success_headers(serializer.data)

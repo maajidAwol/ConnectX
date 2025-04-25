@@ -42,9 +42,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     OWNER = 'owner'  
     
     ROLE_CHOICES = [
-        (ADMIN, 'Admin'),
-        (CUSTOMER, 'Customer'),
-        (OWNER, 'Owner'),
+        (ADMIN, 'admin'),
+        (CUSTOMER, 'customer'),
+        (OWNER, 'owner'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
