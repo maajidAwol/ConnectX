@@ -9,6 +9,11 @@ class Tenant(models.Model):
     api_key = models.CharField(max_length=100, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)  # Store hashed passwords
+    logo = models.ImageField(upload_to='tenant_logos/', null=True, blank=True)
+    business_type = models.CharField(max_length=255, null=True, blank=True)
+    business_bio = models.TextField(null=True, blank=True)
+    website_url = models.URLField(max_length=500, null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def save(self, *args, **kwargs):
@@ -19,3 +24,5 @@ class Tenant(models.Model):
 
     def __str__(self):
         return self.name
+    class Meta:
+        db_table = 'tenants'
