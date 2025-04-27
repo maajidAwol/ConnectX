@@ -7,11 +7,11 @@ export default function MerchantLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-background dark:bg-background">
       <MerchantSidebar />
       <div className="flex-1 flex flex-col md:ml-64">
-        <header className="h-14 border-b bg-white flex items-center px-4">
-          <h1 className="text-lg font-semibold">Merchant Portal</h1>
+        <header className="h-14 border-b border-border bg-background flex items-center px-4 shadow-sm">
+          <h1 className="text-lg font-semibold text-foreground">Merchant Portal</h1>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
