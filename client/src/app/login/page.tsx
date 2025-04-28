@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
+import { Toaster } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -25,10 +26,16 @@ export default function LoginPage() {
 
     try {
       await login(formData)
-      toast.success("Logged in successfully!")
-      router.push("/merchant")
+      toast.success("Welcome back! Redirecting to dashboard...", {
+        className: "bg-[#02569B] text-white",
+      })
+      setTimeout(() => {
+        router.push("/merchant")
+      }, 2000)
     } catch (error) {
-      toast.error("Invalid email or password")
+      toast.error("Invalid email or password. Please try again.", {
+        className: "bg-red-500 text-white",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -41,6 +48,7 @@ export default function LoginPage() {
 
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <Toaster position="top-center" richColors />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
@@ -74,13 +82,13 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button className="w-full" type="submit" disabled={isLoading}>
+            <Button className="w-full bg-[#02569B] hover:bg-[#02569B]/90" type="submit" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-primary hover:underline">
+            <Link href="/signup" className="text-[#02569B] hover:underline">
               Sign up
             </Link>
           </div>

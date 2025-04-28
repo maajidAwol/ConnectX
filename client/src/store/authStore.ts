@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       })
 
       if (!response.ok) {
-        throw new Error('Login failed')
+        throw new Error('Invalid credentials')
       }
 
       const { access, refresh, user } = await response.json()
