@@ -255,7 +255,7 @@ export default function DocsPage() {
 
       <DocsPager
         next={{
-          title: "Installation",
+          label: "Installation",
           href: "/docs/installation",
         }}
       />
