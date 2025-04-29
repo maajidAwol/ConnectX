@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header"
 const HeaderWrapper = () => {
   const pathname = usePathname()
   
-  if (pathname === "/" || pathname === "/docs" || pathname === "/templates" || pathname === "/pricing") {
+  if (pathname === "/" || pathname?.startsWith("/docs") || pathname === "/templates" || pathname === "/pricing") {
       return  <SiteHeader />
     }
     
