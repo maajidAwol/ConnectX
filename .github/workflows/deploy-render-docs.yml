@@ -30,6 +30,7 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
         run: |
           cd Backend/
+          python connectx_backend/manage.py migrate --noinput
           python connectx_backend/manage.py test users products orders tenants categories payments shipping analytics reviews --noinput
       - name: Trigger Render Deploy Hook
         if: success()
