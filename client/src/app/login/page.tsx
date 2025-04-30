@@ -24,21 +24,22 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    try {
-      await login(formData)
+    const result = await login(formData)
+    
+    if (result.success) {
       toast.success("Welcome back! Redirecting to dashboard...", {
         className: "bg-[#02569B] text-white",
       })
       setTimeout(() => {
         router.push("/merchant")
       }, 2000)
-    } catch (error) {
-      toast.error("Invalid email or password. Please try again.", {
+    } else {
+      toast.error(result.error || "Invalid email or password. Please try again.", {
         className: "bg-red-500 text-white",
       })
-    } finally {
-      setIsLoading(false)
     }
+    
+    setIsLoading(false)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
