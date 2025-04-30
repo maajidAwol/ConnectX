@@ -14,6 +14,7 @@ import { Toaster } from "sonner"
 export default function LoginPage() {
   const router = useRouter()
   const login = useAuthStore((state) => state.login)
+  const getRedirectPath = useAuthStore((state) => state.getRedirectPath)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
@@ -26,11 +27,21 @@ export default function LoginPage() {
 
     try {
       await login(formData)
-      toast.success("Welcome back! Redirecting to dashboard...", {
+      const user = useAuthStore.getState().user
+      
+      // Create custom success message based on role
+      const successMessage = user?.role === 'admin' 
+        ? 'Welcome admin! Redirecting to admin dashboard...' 
+        : 'Welcome back! Redirecting to dashboard...'
+      
+      toast.success(successMessage, {
         className: "bg-[#02569B] text-white",
       })
+      
+      // Get redirect path based on user role
       setTimeout(() => {
-        router.push("/merchant")
+        const redirectPath = getRedirectPath()
+        router.push(redirectPath)
       }, 2000)
     } catch (error) {
       toast.error("Invalid email or password. Please try again.", {

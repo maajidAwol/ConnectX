@@ -3,10 +3,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, ChevronDown, Database, Home, Menu, Settings, Shield, Users, X } from "lucide-react"
+import { BarChart2, ChevronDown, Database, Home, LogOut, Menu, Settings, Shield, Users, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { useAuthStore } from "@/store/authStore"
 
 interface SidebarProps {
   className?: string
@@ -15,7 +16,8 @@ interface SidebarProps {
 export function AdminSidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-
+  const logout = useAuthStore((state) => state.logout)
+  
   const routes = [
     {
       title: "Dashboard",
@@ -157,15 +159,14 @@ export function AdminSidebar({ className }: SidebarProps) {
               </nav>
             </div>
             <div className="border-t border-border p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-primary font-medium">A</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Admin User</p>
-                  <p className="text-xs text-muted-foreground">admin@connectx.com</p>
-                </div>
-              </div>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                onClick={logout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </Button>
             </div>
           </div>
         </SheetContent>
@@ -240,15 +241,14 @@ export function AdminSidebar({ className }: SidebarProps) {
           </nav>
         </div>
         <div className="border-t border-border p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-medium">A</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">Admin User</p>
-              <p className="text-xs text-muted-foreground">admin@connectx.com</p>
-            </div>
-          </div>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            onClick={logout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
     </>

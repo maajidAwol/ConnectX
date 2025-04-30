@@ -35,8 +35,8 @@ export default function Home() {
                   <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-white h-11">
                     Get Started Free
                   </Button>
-                  <Link href="/docs">
-                    <Button variant="outline" className="border-[#02569B] text-[#02569B] hover:bg-[#02569B]/10 h-11">
+                  <Link href="/docs" className="">
+                    <Button variant="outline" className="border-[#02569B] text-[#02569B] hover:bg-[#02569B]/10 h-11 w-full">
                       View Documentation
                     </Button>
                   </Link>
