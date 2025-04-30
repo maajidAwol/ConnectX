@@ -11,6 +11,20 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "tenant", "name", "email", "password", "role", "is_verified", "avatar_url", "created_at", "updated_at"]
         extra_kwargs = {"password": {"write_only": True}}
         read_only_fields = ['id', 'is_staff']
+        swagger_schema_fields = {
+            "example": {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "tenant": "tenant-uuid",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "password": "yourpassword",
+                "role": "customer",
+                "is_verified": True,
+                "avatar_url": "https://example.com/avatar.jpg",
+                "created_at": "2025-04-30T12:00:00Z",
+                "updated_at": "2025-04-30T12:00:00Z"
+            }
+        }
 
     def create(self, validated_data):
         # Use set_password to securely hash passwords
