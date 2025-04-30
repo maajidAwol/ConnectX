@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "tenant", "name", "email", "password", "role", "is_verified", "avatar_url", "created_at", "updated_at"]
+        fields = ["id", "tenant", "name", "email", "password", "role", "is_verified", "avatar_url", "created_at", "updated_at","is_active","is_staff"]
         extra_kwargs = {"password": {"write_only": True}}
         read_only_fields = ['id', 'is_staff']
         swagger_schema_fields = {

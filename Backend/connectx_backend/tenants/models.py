@@ -14,6 +14,7 @@ class Tenant(models.Model):
     business_bio = models.TextField(null=True, blank=True)
     website_url = models.URLField(max_length=500, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def save(self, *args, **kwargs):
