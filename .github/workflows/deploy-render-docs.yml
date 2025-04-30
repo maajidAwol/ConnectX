@@ -8,9 +8,25 @@ on:
       - connectX.backend.refactor_the_model.adane
 
 jobs:
-  deploy-render-docs:
+  test-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render Deploy Hook
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
         run: |
-            curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
+          cd Backend
+          pipenv install --dev
+          pip install -r requirements.txt
+      - name: Run Django tests
+        run: |
+          cd Backend/
+          python connectx_backend/manage.py test 
+      - name: Trigger Render Deploy Hook
+        if: success()
+        run: |
+          curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
