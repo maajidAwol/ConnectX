@@ -1,0 +1,198 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Premium Wireless Headphones",
+      "description": "High-quality wireless headphones with noise cancellation and premium sound quality",
+      "category": "Electronics",
+      "price": 299.99,
+      "comparePrice": 399.99,
+      "stock": 1000,
+      "visibility": "public",
+      "status": "active",
+      "source": "central",
+      "requiredPlan": "free",
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop",
+          "alt": "Premium Wireless Headphones"
+        }
+      ],
+      "features": [
+        "Active noise cancellation",
+        "40-hour battery life",
+        "Bluetooth 5.0",
+        "Touch controls",
+        "Premium build quality"
+      ],
+      "promotions": [],
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Smart Fitness Watch",
+      "description": "Advanced fitness tracker with heart rate monitoring and GPS",
+      "category": "Electronics",
+      "price": 199.99,
+      "comparePrice": 249.99,
+      "stock": 500,
+      "visibility": "public",
+      "status": "active",
+      "source": "central",
+      "requiredPlan": "pro",
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500&h=500&fit=crop",
+          "alt": "Smart Fitness Watch"
+        }
+      ],
+      "features": [
+        "Heart rate monitoring",
+        "GPS tracking",
+        "Water resistant",
+        "Sleep tracking",
+        "Mobile notifications"
+      ],
+      "promotions": [],
+      "createdAt": "2024-01-02T00:00:00Z",
+      "updatedAt": "2024-01-02T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "Classic Denim Jacket",
+      "description": "Timeless denim jacket with modern fit and premium quality",
+      "category": "Clothing",
+      "price": 89.99,
+      "comparePrice": 129.99,
+      "stock": 2000,
+      "visibility": "public",
+      "status": "active",
+      "source": "central",
+      "requiredPlan": "free",
+      "images": [
+        {
+          "url": "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&h=500&fit=crop",
+          "alt": "Classic Denim Jacket"
+        }
+      ],
+      "features": [
+        "Premium denim material",
+        "Classic fit",
+        "Multiple pockets",
+        "Machine washable",
+        "Unisex design"
+      ],
+      "promotions": [],
+      "createdAt": "2024-01-03T00:00:00Z",
+      "updatedAt": "2024-01-03T00:00:00Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Electronics",
+      "description": "Electronic devices and accessories",
+      "icon": "smartphone",
+      "productCount": 2,
+      "source": "central"
+    },
+    {
+      "id": 2,
+      "name": "Clothing",
+      "description": "Fashion and apparel items",
+      "icon": "shirt",
+      "productCount": 1,
+      "source": "central"
+    },
+    {
+      "id": 3,
+      "name": "Home & Living",
+      "description": "Home decor and furniture",
+      "icon": "home",
+      "productCount": 0,
+      "source": "central"
+    },
+    {
+      "id": 4,
+      "name": "Beauty & Health",
+      "description": "Cosmetics and health products",
+      "icon": "heart",
+      "productCount": 0,
+      "source": "central"
+    },
+    {
+      "id": 5,
+      "name": "Sports & Outdoors",
+      "description": "Sports equipment and outdoor gear",
+      "icon": "activity",
+      "productCount": 0,
+      "source": "central"
+    },
+    {
+      "id": 6,
+      "name": "Books & Media",
+      "description": "Books, movies, and music",
+      "icon": "book",
+      "productCount": 0,
+      "source": "central"
+    },
+    {
+      "id": 7,
+      "name": "Toys & Games",
+      "description": "Toys, games, and entertainment",
+      "icon": "gamepad",
+      "productCount": 0,
+      "source": "central"
+    },
+    {
+      "id": 8,
+      "name": "Food & Beverages",
+      "description": "Food items and drinks",
+      "icon": "coffee",
+      "productCount": 0,
+      "source": "central"
+    }
+  ],
+  "statistics": {
+    "totalProducts": 3,
+    "publicProducts": 3,
+    "privateProducts": 0,
+    "lowStock": 0,
+    "activePromotions": 0,
+    "centralProducts": 3,
+    "customProducts": 0
+  },
+  "subscription": {
+    "currentPlan": "free",
+    "planLimits": {
+      "free": {
+        "maxCustomProducts": 0,
+        "maxCustomCategories": 0,
+        "features": ["Central products access"]
+      },
+      "pro": {
+        "maxCustomProducts": 100,
+        "maxCustomCategories": 10,
+        "features": [
+          "Central products access",
+          "Custom products",
+          "Custom categories",
+          "Advanced analytics"
+        ]
+      },
+      "enterprise": {
+        "maxCustomProducts": 999999,
+        "maxCustomCategories": 999999,
+        "features": [
+          "Central products access",
+          "Custom products",
+          "Custom categories",
+          "Advanced analytics",
+          "Priority support",
+          "Custom branding"
+        ]
+      }
+    }
+  }
+} 

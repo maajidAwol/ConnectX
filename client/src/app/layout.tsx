@@ -1,25 +1,33 @@
 import type React from "react"
-import "./globals.css"
+import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+// import { SiteHeader } from "@/components/site-header"
+import HeaderWrapper from "@/components/header-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
-  title: "ConnectX - The E-commerce Backend That Powers Your Growth",
+export const metadata: Metadata = {
+  title: "ConnectX - Your Plug-and-Play E-Commerce Backend",
   description:
-    "ConnectX is a centralized backend framework that democratizes e-commerce for entrepreneurs, startups, and students.",
+    "A centralized, multi-tenant backend framework for e-commerce, empowering entrepreneurs to build without barriers.",
 }
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        {/* <div>Top value</div> */}
-        <div className="bg-gradient-to-b from-blue-600 to-blue-700 ">{children}</div>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <div className="relative flex min-h-screen flex-col">
+            <HeaderWrapper />
+            <div className="flex-1">{children}</div>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )
