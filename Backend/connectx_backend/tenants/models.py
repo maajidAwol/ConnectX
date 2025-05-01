@@ -11,6 +11,18 @@ class Tenant(models.Model):
     password = models.CharField(max_length=255)  # Store hashed passwords
     logo = models.ImageField(upload_to='tenant_logos/', null=True, blank=True)
     business_type = models.CharField(max_length=255, null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+    mobileapp_url = models.URLField(max_length=500, null=True, blank=True)
+    mobileapp_name = models.CharField(max_length=255, null=True, blank=True)
+    licence_registration_date = models.DateField(null=True, blank=True)
+    tenant_verification_status = models.CharField(max_length=50, choices=[ 
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected')
+    ], default='pending')
+    tenant_verification_date = models.DateField(null=True, blank=True)
+    
     business_bio = models.TextField(null=True, blank=True)
     website_url = models.URLField(max_length=500, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
