@@ -8,30 +8,9 @@ on:
       - connectX.backend.refactor_the_model.adane
 
 jobs:
-  test-and-deploy:
+  deploy-render-docs:
     runs-on: ubuntu-latest
-    env:
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-      - name: Install dependencies
-        run: |
-          cd Backend
-          pip install -r requirements.txt
-      - name: Run Django tests
-        run: |
-          cd Backend/
-          python connectx_backend/manage.py test users products orders tenants categories payments shipping analytics reviews --noinput
       - name: Trigger Render Deploy Hook
-        if: success()
         run: |
-          curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
+            curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
