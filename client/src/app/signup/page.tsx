@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-
+import { Logo } from "@/components/logo"
 export default function SignUpPage() {
   const router = useRouter()
   const signup = useAuthStore((state) => state.signup)
@@ -43,6 +43,9 @@ export default function SignUpPage() {
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <Card className="w-full max-w-md">
+      <div className="flex justify-center items-center py-4">
+          <Logo />
+        </div>
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription>

@@ -9,10 +9,17 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.has('accessToken') && request.cookies.has('refreshToken')
   
   // Define public paths that don't require authentication
-  const isPublicPath = path === '/login' || path === '/signup' || path === '/' || 
-                      path.startsWith('/_next') || path.startsWith('/api') ||
-                      path.startsWith('/static') || path.startsWith('/images') || 
-                      path.startsWith('/favicon')
+  const isPublicPath = path === '/login' || 
+                       path === '/signup' || 
+                       path === '/' || 
+                       path.startsWith('/docs') || 
+                       path.startsWith('/templates') || 
+                       path.startsWith('/pricing') || 
+                       path.startsWith('/_next') || 
+                       path.startsWith('/api') ||
+                       path.startsWith('/static') || 
+                       path.startsWith('/images') || 
+                       path.startsWith('/favicon')
   
   // Check for role-specific paths
   const isMerchantPath = path.startsWith('/merchant')
