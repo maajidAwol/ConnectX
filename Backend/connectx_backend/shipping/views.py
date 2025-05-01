@@ -1,20 +1,18 @@
 from rest_framework import viewsets, permissions
-from .models import OrderShippingAddress
-from .serializers import OrderShippingAddressSerializer
-from users.permissions import IsTenantAdmin
+from .models import ShippingAddress
+from .serializers import ShippingAddressSerializer
 
-class OrderShippingAddressViewSet(viewsets.ModelViewSet):
-    serializer_class = OrderShippingAddressSerializer
-    permission_classes = [permissions.IsAuthenticated, IsTenantAdmin]
+class ShippingAddressViewSet(viewsets.ModelViewSet):
+    serializer_class = ShippingAddressSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """Ensure tenants can only access their own orders' shipping addresses."""
+        """Ensure users can only access their own shipping addresses."""
         if getattr(self, 'swagger_fake_view', False):
-            return OrderShippingAddress.objects.none()
-        if not self.request.user.is_authenticated:
-            return OrderShippingAddress.objects.none()
-        return OrderShippingAddress.objects.filter(order__tenant=self.request.user.tenant)
+            return ShippingAddress.objects.none()
+        return ShippingAddress.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        """Ensure shipping address is linked to a tenant's order."""
-        serializer.save()
+        """Automatically associate the address with the authenticated user."""
+        serializer.save(user=self.request.user)
+    

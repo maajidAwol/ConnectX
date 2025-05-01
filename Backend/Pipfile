@@ -12,6 +12,8 @@ psycopg2-binary = "*"
 python-dotenv = "*"
 graphviz = "*"
 django-extensions = "*"
+django-cors-headers = "*"
+pillow = "*"
 
 [dev-packages]
 
