@@ -36,28 +36,23 @@ export function AdminSidebar({ className }: SidebarProps) {
         // { title: "Account Management", href: "/admin/merchants/accounts" },
       ],
     },
-    // {
-    //   title: "Developer Oversight",
-    //   href: "/admin/developers",
-    //   icon: Shield,
-    //   isActive: pathname.startsWith("/admin/developers"),
-    //   submenu: [
-    //     { title: "Developer Directory", href: "/admin/developers" },
-    //     { title: "API Rate Limits", href: "/admin/developers/api-limits" },
-    //     { title: "Product Linkage", href: "/admin/developers/products" },
-    //   ],
-    // },
-    // {
-    //   title: "Platform Settings",
-    //   href: "/admin/settings",
-    //   icon: Settings,
-    //   isActive: pathname.startsWith("/admin/settings"),
-    //   submenu: [
-    //     { title: "Global Config", href: "/admin/settings" },
-    //     { title: "Feature Toggles", href: "/admin/settings/features" },
-    //     { title: "Notifications", href: "/admin/settings/notifications" },
-    //   ],
-    // },
+    {
+      title: "Add Admin",
+      href: "/admin/add-admin",
+      icon: Shield,
+      isActive: pathname.startsWith("/admin/add-admin"),
+    },
+    {
+      title: "Platform Settings",
+      href: "/admin/settings",
+      icon: Settings,
+      isActive: pathname.startsWith("/admin/settings"),
+      submenu: [
+        { title: "Global Config", href: "/admin/settings" },
+        { title: "Feature Toggles", href: "/admin/settings/features" },
+        { title: "Notifications", href: "/admin/settings/notifications" },
+      ],
+    },
     {
       title: "Analytics",
       href: "/admin/analytics",
