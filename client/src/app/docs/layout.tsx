@@ -1,8 +1,10 @@
 import type React from "react"
 import Link from "next/link"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Menu } from "lucide-react"
 import { DocSidebarNav } from "@/components/doc-sidebar-nav"
 import { docsConfig } from "@/config/docs"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 interface DocsLayoutProps {
   children: React.ReactNode
@@ -12,12 +14,33 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <div className="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+        {/* Mobile sidebar trigger */}
+        <div className="sticky top-14 z-30 flex h-14 items-center md:hidden border-b w-full bg-background">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="mr-2">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle sidebar</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[240px] sm:w-[280px] pt-10">
+              <DocSidebarNav items={docsConfig.sidebarNav} />
+            </SheetContent>
+          </Sheet>
+          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+            <div className="overflow-hidden text-ellipsis whitespace-nowrap">Docs</div>
+            <ChevronRight className="h-4 w-4" />
+            <div className="font-medium text-foreground">Introduction</div>
+          </div>
+        </div>
+
+        {/* Desktop sidebar */}
         <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 md:sticky md:block overflow-y-auto py-6 pr-2 md:py-10">
           <DocSidebarNav items={docsConfig.sidebarNav} />
         </aside>
         <main className="relative py-6 lg:gap-10 lg:py-10 xl:grid xl:grid-cols-[1fr_200px]">
           <div className="mx-auto w-full min-w-0">
-            <div className="mb-4 flex items-center space-x-1 text-sm text-muted-foreground">
+            <div className="mb-4 hidden md:flex items-center space-x-1 text-sm text-muted-foreground">
               <div className="overflow-hidden text-ellipsis whitespace-nowrap">Docs</div>
               <ChevronRight className="h-4 w-4" />
               <div className="font-medium text-foreground">Introduction</div>

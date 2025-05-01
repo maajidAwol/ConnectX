@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Logo } from "@/components/logo"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/authStore"
 
@@ -128,10 +129,11 @@ export function MerchantSidebar({ className }: SidebarProps) {
         <SheetContent side="left" className="w-[280px] p-0 h-full">
           <div className="flex h-full flex-col bg-background border-r border-border">
             <div className="flex h-14 items-center border-b border-border px-4">
-              <div className="flex items-center gap-2 font-semibold text-foreground">
+              {/* <div className="flex items-center gap-2 font-semibold text-foreground">
                 <Box className="h-5 w-5 text-primary" />
                 <span>ConnectX Merchant</span>
-              </div>
+              </div> */}
+              <Logo />
               <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setIsOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>
@@ -215,10 +217,11 @@ export function MerchantSidebar({ className }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div className={cn("hidden fixed top-0 left-0 h-screen w-64 flex-col border-r border-border bg-background md:flex z-10", className)}>
         <div className="flex h-14 items-center border-b border-border px-4">
-          <div className="flex items-center gap-2 font-semibold text-foreground">
+          {/* <div className="flex items-center gap-2 font-semibold text-foreground">
             <Box className="h-5 w-5 text-primary" />
             <span>ConnectX Merchant</span>
-          </div>
+          </div> */}
+          <Logo />
         </div>
         <div className="flex-1 overflow-auto py-2">
           <nav className="grid gap-1 px-2">
