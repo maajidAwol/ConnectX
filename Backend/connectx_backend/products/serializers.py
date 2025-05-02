@@ -1,12 +1,11 @@
-from rest_framework import serializers
+from rest_framework import serializers,filters
 from .models import Product
-from .models import Category
+from categories.serializers import CategorySerializer
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = serializers.SlugRelatedField(
-        slug_field="name",
-        queryset=Category.objects.all()
-    )
+    category = CategorySerializer(read_only=True)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'sku', 'description', 'short_description', 'brand', 'category__name']
     class Meta:
         model = Product
         fields = "__all__"

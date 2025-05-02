@@ -22,10 +22,16 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
             return Product.objects.none()
+        
+        tenant = self.request.user.tenant
+        filter_type = self.request.query_params.get("filter_type", "public_owned")
 
-        queryset = Product.objects.filter(
-            Q(owner=self.request.user.tenant) | Q(is_public=True)
-        )
+        if filter_type == "listed":
+            queryset = Product.objects.filter(tenant=tenant)
+        elif filter_type == "owned":
+            queryset = Product.objects.filter(owner=tenant)
+        else:  # "public_owned"
+            queryset = Product.objects.filter(Q(owner=tenant) | Q(is_public=True))
 
         # Optional filters from query params
         tenant_id = self.request.query_params.get("tenant")
@@ -47,10 +53,14 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
     @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('filter_type', openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                          enum=['listed', 'owned', 'public_owned'], 
+                          description='Filter products by type. Options: "listed", "owned", "public_owned". Defaults to "public_owned".'),
         openapi.Parameter('tenant', openapi.IN_QUERY, description="Tenant UUID", type=openapi.TYPE_STRING),
         openapi.Parameter('min_price', openapi.IN_QUERY, description="Min price", type=openapi.TYPE_NUMBER),
         openapi.Parameter('max_price', openapi.IN_QUERY, description="Max price", type=openapi.TYPE_NUMBER),
         openapi.Parameter('category', openapi.IN_QUERY, description="Category name", type=openapi.TYPE_STRING),
+        openapi.Parameter('search', openapi.IN_QUERY, type=openapi.TYPE_STRING,description="Search across name, SKU, description, etc."),
     ])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
