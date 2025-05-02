@@ -12,7 +12,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         """Ensure tenants can only access their own orders."""
         if getattr(self, "swagger_fake_view", False):
             return Order.objects.none()
-        if IsTenantOwner.has_permission(self, self.request, None):
+        tenant_owner_permission = IsTenantOwner()
+        if tenant_owner_permission.has_permission(self, self.request, None):
             # Allow tenant owners to see all orders
             return Order.objects.filter(tenant=self.request.user.tenant)
        
