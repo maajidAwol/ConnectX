@@ -68,7 +68,7 @@ class Command(BaseCommand):
         )
 
         # Create 15 mock products
-        for i in range(15):
+        for i in range(30):
             sku = f"MOCKSKU{i+1:03d}"
             name = f"Mock Product {i+1}"
             base_price = Decimal("10.00") + i
@@ -87,7 +87,7 @@ class Command(BaseCommand):
                     "owner": owner,
                     "description": description,
                     "cover_url": cover_url,
-                    "is_public": True,
+                    "is_public": False,
                     "images": [cover_url],
                     "colors": ["red", "blue"],
                     "sizes": ["S", "M", "L"],

@@ -9,6 +9,7 @@ class Tenant(models.Model):
     legal_name = models.CharField(max_length=255, null=True, blank=True)
     business_registration_number = models.CharField(max_length=255, null=True, blank=True)
     
+
     api_key = models.CharField(max_length=100, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)  # Store hashed passwords

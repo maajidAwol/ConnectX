@@ -1,8 +1,12 @@
 from rest_framework import serializers
 from .models import Product
-
+from .models import Category
 
 class ProductSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        slug_field="name",
+        queryset=Category.objects.all()
+    )
     class Meta:
         model = Product
         fields = "__all__"
@@ -30,7 +34,5 @@ class ProductSerializer(serializers.ModelSerializer):
                 "total_sold": 50,
                 "total_ratings": 40,
                 "total_reviews": 30,
-                "created_at": "2025-04-30T12:00:00Z",
-                "updated_at": "2025-04-30T12:00:00Z",
             }
         }

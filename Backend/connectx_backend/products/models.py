@@ -6,8 +6,8 @@ from categories.models import Category
 
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    tenant = models.ManyToManyField(Tenant, related_name="products_set")
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_products")
+    tenant = models.ManyToManyField(Tenant, related_name="listed_products")
+    owner = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="owned_products")
     sku = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=255)
     base_price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
