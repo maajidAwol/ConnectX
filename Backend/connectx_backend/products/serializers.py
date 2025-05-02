@@ -6,6 +6,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'sku', 'description', 'short_description', 'brand', 'category__name']
+
     class Meta:
         model = Product
         fields = "__all__"

@@ -84,17 +84,18 @@ class Command(BaseCommand):
                     "profit_percentage": profit_percentage,
                     "quantity": quantity,
                     "category": category,
-                    "owner": owner,
+                    "owner": tenant,
                     "description": description,
                     "cover_url": cover_url,
-                    "is_public": False,
+                    "is_public": i%2,
                     "images": [cover_url],
                     "colors": ["red", "blue"],
                     "sizes": ["S", "M", "L"],
                 },
             )
-            if created:
-                product.tenant.set([tenant])  # Correct way for ManyToManyField
+            if created :
+                if i%2:
+                    product.tenant.set([tenant])  # Correct way for ManyToManyField
                 self.stdout.write(self.style.SUCCESS(f"Created product: {name}"))
             else:
                 self.stdout.write(f"Product already exists: {name}")

@@ -1014,3 +1014,128 @@ LINE 1: ..."tenants"."website_url", "tenants"."is_verified", "tenants"....
                                                              ^
 
 "GET /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 29478
+Internal Server Error: /api/products/07ff985e-04a6-45d5-9229-34d905e9afda/list-to-tenant/
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/related_descriptors.py", line 240, in __get__
+    rel_obj = self.field.get_cached_value(instance)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/mixins.py", line 37, in get_cached_value
+    return instance._state.fields_cache[self.cache_name]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'owner'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 49, in list_to_tenant
+    if product.owner != tenant and not product.is_public:
+       ^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/related_descriptors.py", line 258, in __get__
+    rel_obj = self.get_object(instance)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/related_descriptors.py", line 221, in get_object
+    return qs.get(self.field.get_reverse_related_filter(instance))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+tenants.models.Tenant.DoesNotExist: Tenant matching query does not exist.
+"GET /api/products/07ff985e-04a6-45d5-9229-34d905e9afda/list-to-tenant/ HTTP/1.1" 500 26980
+Internal Server Error: /api/products/07ff985e-04a6-45d5-9229-34d905e9afda/list-to-tenant/
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/related_descriptors.py", line 240, in __get__
+    rel_obj = self.field.get_cached_value(instance)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/mixins.py", line 37, in get_cached_value
+    return instance._state.fields_cache[self.cache_name]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'owner'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 49, in list_to_tenant
+    if product.owner != tenant and not product.is_public:
+       ^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/related_descriptors.py", line 258, in __get__
+    rel_obj = self.get_object(instance)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/fields/related_descriptors.py", line 221, in get_object
+    return qs.get(self.field.get_reverse_related_filter(instance))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+tenants.models.Tenant.DoesNotExist: Tenant matching query does not exist.
+"GET /api/products/07ff985e-04a6-45d5-9229-34d905e9afda/list-to-tenant/ HTTP/1.1" 500 26980
+Internal Server Error: /api/products/8909efe6-5614-4fb3-9ca0-2c4adb27a0f5/list-to-tenant/
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 55, in list_to_tenant
+    status=status.HTTP_400_BAD_REQUEST
+           ^^^^^^
+NameError: name 'status' is not defined
+"GET /api/products/8909efe6-5614-4fb3-9ca0-2c4adb27a0f5/list-to-tenant/ HTTP/1.1" 500 25534

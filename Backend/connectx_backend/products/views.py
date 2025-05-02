@@ -1,23 +1,67 @@
-from rest_framework import viewsets, permissions, generics
+from rest_framework import viewsets, permissions,status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from .models import Product
 from .serializers import ProductSerializer
 from users.permissions import IsTenantOwner
-
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied
+from core.pagination import CustomPagination
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
+    pagination_class = CustomPagination
+
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated(), IsTenantOwner()]
+    @swagger_auto_schema(
+    operation_summary="List product under current tenant",
+    operation_description="""
+    Associates a product with the current user's tenant.
+    
+    Allowed if:
+    - The tenant is the owner of the product
+    - OR the product is marked as public
+    
+    Returns 400 if already listed.
+    """,
+    request_body=None,
+    responses={
+        200: openapi.Response(description="Product listed successfully"),
+        400: openapi.Response(description="Already listed"),
+        403: openapi.Response(description="Permission denied"),
+    }
+        )
+    @action(detail=True, methods=['get'], url_path='list-to-tenant')
+    def list_to_tenant(self, request, pk=None):
+        """Associate this product with the current user's tenant."""
+        product = self.get_object()
+        user = request.user
+        tenant = user.tenant
+
+        if product.owner != tenant and not product.is_public:
+            raise PermissionDenied("You are not allowed to list this product.")
+
+        if tenant in product.tenant.all():
+            return Response(
+                {"detail": "Product already listed under this tenant."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        product.tenant.add(tenant)
+        product.save()
+
+        return Response(
+            {"detail": f"Product listed under tenant '{tenant.name}'."},
+            status=status.HTTP_200_OK
+        )
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
@@ -57,12 +101,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('filter_type', openapi.IN_QUERY, type=openapi.TYPE_STRING,
                           enum=['listed', 'owned', 'public','all'], 
-                          description='Filter products by type. Options: "listed", "owned", "public_owned". Defaults to "all".'),
+                          description='Filter products by type. Options: "listed", "owned", "public", "all". Defaults to "all".'),
         openapi.Parameter('tenant', openapi.IN_QUERY, description="Tenant UUID", type=openapi.TYPE_STRING),
         openapi.Parameter('min_price', openapi.IN_QUERY, description="Min price", type=openapi.TYPE_NUMBER),
         openapi.Parameter('max_price', openapi.IN_QUERY, description="Max price", type=openapi.TYPE_NUMBER),
         openapi.Parameter('category', openapi.IN_QUERY, description="Category name", type=openapi.TYPE_STRING),
         openapi.Parameter('search', openapi.IN_QUERY, type=openapi.TYPE_STRING,description="Search across name, SKU, description, etc."),
+        openapi.Parameter('size', openapi.IN_QUERY, description="Page Size", type=openapi.TYPE_NUMBER),
+
+
     ])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
