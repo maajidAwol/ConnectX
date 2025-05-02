@@ -18,7 +18,11 @@ class ProductViewSet(viewsets.ModelViewSet):
             return Product.objects.none()
         if not self.request.user.is_authenticated:
             return Product.objects.none()
-        return Product.objects.filter(tenant=self.request.user.tenant)
+        from django.db.models import Q
+
+        return Product.objects.filter(
+            Q(tenant=self.request.user.tenant) | Q(is_public=True)
+        )
 
     def perform_create(self, serializer):
         if not self.request.user.is_authenticated:

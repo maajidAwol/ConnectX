@@ -9,27 +9,57 @@ from decimal import Decimal
 
 
 class Command(BaseCommand):
-    help = "Create at least 15 mock products with required dependencies."
+    help = "Create at least 15 mock products with required dependencies or flush them."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--flush",
+            action="store_true",
+            help="Delete all mock products, mock tenant, user, and category.",
+        )
 
     def handle(self, *args, **options):
+        if options.get("flush"):
+            # Delete mock products
+            deleted_products, _ = Product.objects.filter(
+                sku__startswith="MOCKSKU"
+            ).delete()
+            # Delete mock category
+            Category.objects.filter(name="MockCategory").delete()
+            # Delete mock user
+            User.objects.filter(email="user@example.com").delete()
+            # Delete mock tenant
+            Tenant.objects.filter(name="MockTenant").delete()
+            self.stdout.write(
+                self.style.SUCCESS("Flushed all mock products and related mock data.")
+            )
+            return
+
         # Ensure at least one tenant
         tenant, _ = Tenant.objects.get_or_create(
-            name="MockTenant",
+            name="string",
             defaults={
-                "email": "mocktenant@example.com",
+                "email": "user@example.com",
                 "password": "mockpass123",
             },
         )
         # Ensure at least one owner user
-        owner, _ = User.objects.get_or_create(
-            email="mockowner@example.com",
+        owner, created = User.objects.get_or_create(
+            email="user@example.com",
             defaults={
                 "name": "Mock Owner",
-                "password": "mockownerpass",
+                "password": "string",
                 "tenant": tenant,
                 "role": User.OWNER,
             },
         )
+        if created:
+            self.stdout.write(
+                f"user is not created when tenant create: {owner.password}"
+            )
+        else:
+            self.stdout.write(f"user is created when tenant create: {owner.password}")
+
         # Ensure at least one category
         category, _ = Category.objects.get_or_create(
             name="MockCategory",
