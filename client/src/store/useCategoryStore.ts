@@ -38,7 +38,7 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
   searchQuery: '',
   currentPage: 1,
   totalPages: 1,
-  itemsPerPage: 15,
+  itemsPerPage: 10,
   totalItems: 0,
   
   fetchCategories: async (options = {}) => {
@@ -78,13 +78,13 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
       // The API returns { count, next, previous, results }
       const { count, next, previous, results } = response.data
       
-      // Calculate total pages
-      const pages = Math.ceil((count || 0) / state.itemsPerPage)
+      // Calculate total pages based on count and itemsPerPage
+      const totalPages = Math.ceil((count || 0) / state.itemsPerPage)
       
       set({ 
         categories: results || [], 
         totalItems: count || 0,
-        totalPages: pages || 1,
+        totalPages: totalPages || 1,
         currentPage: page,
         isLoading: false 
       })

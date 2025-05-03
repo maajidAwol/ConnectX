@@ -73,23 +73,52 @@ export default function ProductCategories() {
     }
   }
   
-  // Generate pagination range
+  // Generate pagination range with ellipsis for larger page sets
   const getPaginationRange = () => {
-    const range = []
-    const showPages = 5 // Number of page links to show
+    if (totalPages <= 1) return [];
+
+    // Maximum number of page links to show (excluding ellipsis)
+    const maxVisiblePages = 5;
+    const range = [];
     
-    let startPage = Math.max(1, currentPage - Math.floor(showPages / 2))
-    const endPage = Math.min(totalPages, startPage + showPages - 1)
+    // Always show first page
+    range.push(1);
     
-    // Adjust start page if needed to ensure we show the correct number of pages
-    startPage = Math.max(1, endPage - showPages + 1)
-    
-    for (let i = startPage; i <= endPage; i++) {
-      range.push(i)
+    if (totalPages <= maxVisiblePages) {
+      // If we have fewer pages than our max, show all of them
+      for (let i = 2; i <= totalPages; i++) {
+        range.push(i);
+      }
+    } else {
+      // We have more pages than we can display, need to use ellipsis
+      // Always try to show current page with neighbors
+      
+      const leftBound = Math.max(2, currentPage - 1);
+      const rightBound = Math.min(totalPages - 1, currentPage + 1);
+      
+      // Add ellipsis marker if needed on left side
+      if (leftBound > 2) {
+        range.push('...');
+      }
+      
+      // Add visible page numbers around current page
+      for (let i = leftBound; i <= rightBound; i++) {
+        range.push(i);
+      }
+      
+      // Add ellipsis marker if needed on right side
+      if (rightBound < totalPages - 1) {
+        range.push('...');
+      }
+      
+      // Always show last page if we have more than 1 page
+      if (totalPages > 1) {
+        range.push(totalPages);
+      }
     }
     
-    return range
-  }
+    return range;
+  };
 
   if (!isAuthenticated) {
     return (
@@ -206,18 +235,22 @@ export default function ProductCategories() {
               />
             </PaginationItem>
             
-            {getPaginationRange().map((page) => (
-              <PaginationItem key={page}>
-                <PaginationLink 
-                  href="#" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentPage(page);
-                  }}
-                  isActive={page === currentPage}
-                >
-                  {page}
-                </PaginationLink>
+            {getPaginationRange().map((page, index) => (
+              <PaginationItem key={index}>
+                {page === '...' ? (
+                  <span className="px-3 py-2">...</span>
+                ) : (
+                  <PaginationLink 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage(Number(page));
+                    }}
+                    isActive={page === currentPage}
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
               </PaginationItem>
             ))}
             

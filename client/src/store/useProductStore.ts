@@ -62,7 +62,7 @@ const useProductStore = create<ProductState>((set, get) => ({
   searchQuery: '',
   currentPage: 1,
   totalPages: 1,
-  itemsPerPage: 15,
+  itemsPerPage: 10,
   totalItems: 0,
   category: '',
   filterType: 'all',
@@ -111,13 +111,16 @@ const useProductStore = create<ProductState>((set, get) => ({
         }
       })
       
-      // Assuming the API returns { results: Product[], count: number, pages: number }
-      const { results, count, pages } = response.data
+      // The API returns { results: Product[], count: number }
+      const { results, count, next, previous } = response.data
+      
+      // Calculate total pages based on count and itemsPerPage
+      const totalPages = Math.ceil((count || 0) / state.itemsPerPage)
       
       set({ 
         products: results || [], 
         totalItems: count || 0,
-        totalPages: pages || 1,
+        totalPages: totalPages || 1,
         currentPage: page,
         isLoading: false 
       })
