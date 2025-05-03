@@ -86,7 +86,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         category = self.request.query_params.get("category")
 
         if tenant_id:
-            queryset = queryset.filter(tenants__id=tenant_id)
+            queryset = queryset.filter(tenant__id=tenant_id)
 
         if min_price:
             queryset = queryset.filter(selling_price__gte=min_price)
@@ -102,7 +102,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         openapi.Parameter('filter_type', openapi.IN_QUERY, type=openapi.TYPE_STRING,
                           enum=['listed', 'owned', 'public','all'], 
                           description='Filter products by type. Options: "listed", "owned", "public", "all". Defaults to "all".'),
-        openapi.Parameter('tenant', openapi.IN_QUERY, description="Tenant UUID", type=openapi.TYPE_STRING),
+        openapi.Parameter('tenant', openapi.IN_QUERY, description="Tenant UUID to find the listed product by the tenant", type=openapi.TYPE_STRING),
         openapi.Parameter('min_price', openapi.IN_QUERY, description="Min price", type=openapi.TYPE_NUMBER),
         openapi.Parameter('max_price', openapi.IN_QUERY, description="Max price", type=openapi.TYPE_NUMBER),
         openapi.Parameter('category', openapi.IN_QUERY, description="Category name", type=openapi.TYPE_STRING),
