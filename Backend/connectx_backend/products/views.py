@@ -8,6 +8,9 @@ from users.permissions import IsTenantOwner
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied
 from core.pagination import CustomPagination
+from rest_framework.filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
+
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -15,6 +18,9 @@ from drf_yasg import openapi
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['name', 'sku', 'description']
+    filterset_fields = ['category__name', 'owner', 'is_public']
 
 
     def get_permissions(self):
