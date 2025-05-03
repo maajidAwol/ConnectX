@@ -122,26 +122,26 @@ export default function ProductManagement() {
     setCategory(value === 'all' ? '' : value);
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="space-y-6">
-        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Authentication Required</AlertTitle>
-          <AlertDescription>
-            You need to login to view and manage products.
-            <div className="mt-2">
-              <Link href="/login">
-                <Button variant="outline" className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100">
-                  Login to Your Account
-                </Button>
-              </Link>
-            </div>
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
+  // if (!isAuthenticated) {
+  //   return (
+  //     <div className="space-y-6">
+  //       <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+  //         <AlertCircle className="h-4 w-4" />
+  //         <AlertTitle>Authentication Required</AlertTitle>
+  //         <AlertDescription>
+  //           You need to login to view and manage products.
+  //           <div className="mt-2">
+  //             <Link href="/login">
+  //               <Button variant="outline" className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100">
+  //                 Login to Your Account
+  //               </Button>
+  //             </Link>
+  //           </div>
+  //         </AlertDescription>
+  //       </Alert>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="space-y-6">
