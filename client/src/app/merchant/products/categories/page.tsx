@@ -1,50 +1,108 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
-import { productCategories } from "@/lib/data"
 import { CategoryListItem } from "@/components/categories/category-list-item"
 import { CategoryTips } from "@/components/categories/category-tips"
 import { AddCategoryDialog } from "@/components/categories/add-category-dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+import useCategoryStore from "@/store/useCategoryStore"
+import { useAuthStore } from "@/store/authStore"
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 
 export default function ProductCategories() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [categories, setCategories] = useState(productCategories)
+  const { 
+    categories, 
+    isLoading, 
+    error,
+    searchQuery,
+    currentPage,
+    totalPages,
+    setSearchQuery,
+    setCurrentPage,
+    fetchCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory
+  } = useCategoryStore()
+  
+  const { isAuthenticated, user } = useAuthStore()
+  const isVerified = user?.is_verified || false
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Filter categories based on search
-  const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  // Handle search change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
 
   // Add a new category
-  const handleAddCategory = (name: string, description: string, parent: string) => {
+  const handleAddCategory = async (categoryData: Omit<typeof categories[0], 'id'>) => {
     setIsSubmitting(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      const newId = Math.max(...categories.map((c) => c.id)) + 1
-      setCategories([...categories, { id: newId, name, count: 0 }])
+    try {
+      await addCategory(categoryData)
+    } finally {
       setIsSubmitting(false)
-    }, 1000)
+    }
   }
 
   // Update an existing category
-  const handleUpdateCategory = (id: number, name: string) => {
+  const handleUpdateCategory = async (id: string, data: Partial<Omit<typeof categories[0], 'id'>>) => {
     setIsSubmitting(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setCategories(categories.map((category) => (category.id === id ? { ...category, name } : category)))
+    try {
+      await updateCategory(id, data)
+    } finally {
       setIsSubmitting(false)
-    }, 1000)
+    }
   }
 
   // Delete a category
-  const handleDeleteCategory = (id: number) => {
-    setCategories(categories.filter((category) => category.id !== id))
+  const handleDeleteCategory = async (id: string) => {
+    setIsSubmitting(true)
+    try {
+      await deleteCategory(id)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+  
+  // Generate pagination range
+  const getPaginationRange = () => {
+    const range = []
+    const showPages = 5 // Number of page links to show
+    
+    let startPage = Math.max(1, currentPage - Math.floor(showPages / 2))
+    const endPage = Math.min(totalPages, startPage + showPages - 1)
+    
+    // Adjust start page if needed to ensure we show the correct number of pages
+    startPage = Math.max(1, endPage - showPages + 1)
+    
+    for (let i = startPage; i <= endPage; i++) {
+      range.push(i)
+    }
+    
+    return range
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6">
+        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication Required</AlertTitle>
+          <AlertDescription>
+            You need to login to view and manage categories.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   return (
@@ -55,8 +113,32 @@ export default function ProductCategories() {
           <p className="text-muted-foreground">Organize your products with categories</p>
         </div>
 
-        <AddCategoryDialog categories={categories} onAddCategory={handleAddCategory} isSubmitting={isSubmitting} />
+        {isVerified && (
+          <AddCategoryDialog 
+            categories={categories} 
+            onAddCategory={handleAddCategory} 
+            isSubmitting={isSubmitting} 
+          />
+        )}
       </div>
+
+      {!isVerified && (
+        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Verification Required</AlertTitle>
+          <AlertDescription>
+            Your business is not verified yet. Only verified merchants can manage categories.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:w-96">
@@ -66,7 +148,7 @@ export default function ProductCategories() {
             placeholder="Search categories..."
             className="pl-8 w-full"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
       </div>
@@ -77,31 +159,81 @@ export default function ProductCategories() {
           <CardDescription>Manage your product categories</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
-              <div className="col-span-5">Category Name</div>
-              <div className="col-span-3">Products</div>
-              <div className="col-span-2">Parent</div>
-              <div className="col-span-2 text-right">Actions</div>
+          {isLoading ? (
+            <div className="p-8 flex justify-center">
+              <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
             </div>
-            <div className="divide-y">
-              {filteredCategories.length > 0 ? (
-                filteredCategories.map((category) => (
-                  <CategoryListItem
-                    key={category.id}
-                    category={category}
-                    onDelete={handleDeleteCategory}
-                    onUpdate={handleUpdateCategory}
-                    isSubmitting={isSubmitting}
-                  />
-                ))
-              ) : (
-                <div className="p-4 text-center text-muted-foreground">No categories found matching your search.</div>
-              )}
+          ) : (
+            <div className="rounded-md border">
+              <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                <div className="col-span-5">Category Name</div>
+                <div className="col-span-3">Products</div>
+                <div className="col-span-2">Parent</div>
+                <div className="col-span-2 text-right">Actions</div>
+              </div>
+              <div className="divide-y">
+                {categories.length > 0 ? (
+                  categories.map((category) => (
+                    <CategoryListItem
+                      key={category.id}
+                      category={category}
+                      onDelete={handleDeleteCategory}
+                      onUpdate={handleUpdateCategory}
+                      isSubmitting={isSubmitting}
+                      productCount={0} // In a real app, this would be a count from the API
+                    />
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground">No categories found matching your search.</div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
+
+      {totalPages > 1 && (
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage > 1) setCurrentPage(currentPage - 1);
+                }}
+                className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
+            
+            {getPaginationRange().map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(page);
+                  }}
+                  isActive={page === currentPage}
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                }}
+                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
 
       <CategoryTips />
     </div>
