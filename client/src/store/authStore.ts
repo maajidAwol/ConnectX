@@ -134,7 +134,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false 
-    })
+    });
+    
+    // Redirect to home page after logout
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   },
   getRedirectPath: () => {
     const { user } = get()

@@ -19,23 +19,28 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from "lucide-react"
 import { useState } from "react"
+import { Category } from "@/store/useCategoryStore"
 
 interface CategoryListItemProps {
-  category: {
-    id: number
-    name: string
-    count: number
-  }
-  onDelete: (id: number) => void
-  onUpdate: (id: number, name: string) => void
+  category: Category
+  onDelete: (id: string) => void
+  onUpdate: (id: string, data: Partial<Omit<Category, 'id'>>) => void
   isSubmitting: boolean
+  productCount?: number
 }
 
-export function CategoryListItem({ category, onDelete, onUpdate, isSubmitting }: CategoryListItemProps) {
+export function CategoryListItem({ category, onDelete, onUpdate, isSubmitting, productCount = 0 }: CategoryListItemProps) {
   const [editedCategory, setEditedCategory] = useState({
     name: category.name,
-    description: "", // In a real app, you would have description here
+    description: category.description || "",
   })
+
+  const handleUpdate = () => {
+    onUpdate(category.id, {
+      name: editedCategory.name,
+      description: editedCategory.description
+    })
+  }
 
   return (
     <div className="grid grid-cols-12 items-center p-3">
@@ -45,7 +50,7 @@ export function CategoryListItem({ category, onDelete, onUpdate, isSubmitting }:
       </div>
       <div className="col-span-3">
         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          {category.count} Products
+          {productCount} Products
         </Badge>
       </div>
       <div className="col-span-2 text-sm text-muted-foreground">
@@ -100,7 +105,7 @@ export function CategoryListItem({ category, onDelete, onUpdate, isSubmitting }:
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
               <Button
-                onClick={() => onUpdate(category.id, editedCategory.name)}
+                onClick={handleUpdate}
                 disabled={!editedCategory.name || isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700"
               >
