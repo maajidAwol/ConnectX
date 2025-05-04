@@ -11,6 +11,7 @@ from .models import User
 from .serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import action
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
@@ -51,3 +52,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             return User.objects.filter(tenant=self.request.user.tenant)
         return User.objects.none()
+
+    @action(detail=False, methods=["get"], url_path="me")
+    def me(self, request):
+        """Return the current authenticated user's data."""
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)

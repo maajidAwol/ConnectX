@@ -69,6 +69,42 @@ class ProductViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
+    @swagger_auto_schema(
+        operation_summary="Unlist product from current tenant",
+        operation_description="""
+        Removes the association of this product with the current user's tenant.\n\nAllowed if:\n- The tenant is the owner of the product\n- OR the product is currently listed under the tenant\n\nReturns 400 if not listed.
+        """,
+        request_body=None,
+        responses={
+            200: openapi.Response(description="Product unlisted successfully"),
+            400: openapi.Response(description="Product not listed under this tenant"),
+            403: openapi.Response(description="Permission denied"),
+        }
+    )
+    @action(detail=True, methods=['get'], url_path='unlist-from-tenant')
+    def unlist_from_tenant(self, request, pk=None):
+        """Remove this product from the current user's tenant."""
+        product = self.get_object()
+        user = request.user
+        tenant = user.tenant
+
+        if product.owner != tenant and tenant not in product.tenant.all():
+            raise PermissionDenied("You are not allowed to unlist this product.")
+
+        if tenant not in product.tenant.all():
+            return Response(
+                {"detail": "Product is not listed under this tenant."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        product.tenant.remove(tenant)
+        product.save()
+
+        return Response(
+            {"detail": f"Product unlisted from tenant '{tenant.name}'."},
+            status=status.HTTP_200_OK
+        )
+
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
             return Product.objects.none()
