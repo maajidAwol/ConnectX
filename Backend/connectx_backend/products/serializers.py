@@ -42,6 +42,11 @@ class ProductSerializer(serializers.ModelSerializer):
             "category_id",
             "is_public",
             "description",
+            "short_description",
+            "tag",
+            "brand",
+            "additional_info",
+            "warranty",
             "cover_url",
             "images",
             "colors",
@@ -49,6 +54,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "total_sold",
             "total_ratings",
             "total_reviews",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = [
             "id",
@@ -58,18 +65,25 @@ class ProductSerializer(serializers.ModelSerializer):
             "total_sold",
             "total_ratings",
             "total_reviews",
+            "created_at",
+            "updated_at",
         ]
         swagger_schema_fields = {
-            "example":{
+            "example": {
                 "sku": "SKU-001",
                 "name": "Smartphone X",
-                "base_price": "500.00", 
+                "base_price": "500.00",
                 "profit_percentage": "20.00",
                 "selling_price": "600.00",
                 "quantity": 100,
                 "category_id": "uuid-of-category",
                 "is_public": True,
                 "description": "Latest model with advanced features.",
+                "short_description": "Compact and powerful.",
+                "tag": ["electronics", "smartphone"],
+                "brand": "BrandX",
+                "additional_info": {"battery": "4000mAh", "processor": "Octa-core"},
+                "warranty": "1 year",
                 "cover_url": "https://example.com/image.jpg",
                 "images": [
                     "https://example.com/image1.jpg",

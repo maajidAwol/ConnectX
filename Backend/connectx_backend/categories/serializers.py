@@ -5,12 +5,13 @@ from .models import Category
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields =['id', 'name', 'description']
+        fields = '__all__'
+        read_only_fields = ['id', 'tenant', 'created_at', 'updated_at']
         swagger_schema_fields = {
             "example": {
-                "id": "c1d2e3f4-5678-90ab-cdef-1234567890ab",
-                "tenant": "tenant-uuid",
                 "name": "Electronics",
+                "description": "All electronic items",
+                "icon": "icon-url",
                 "parent": None,
             }
         }
