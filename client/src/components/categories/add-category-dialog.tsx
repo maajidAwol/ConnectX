@@ -16,15 +16,25 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { useState } from "react"
+import { Category } from "@/store/useCategoryStore"
 
 interface AddCategoryDialogProps {
-  categories: Array<{ id: number; name: string; count: number }>
-  onAddCategory: (name: string, description: string, parent: string) => void
+  categories: Category[]
+  onAddCategory: (data: Omit<Category, 'id'>) => void
   isSubmitting: boolean
 }
 
 export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: AddCategoryDialogProps) {
   const [newCategory, setNewCategory] = useState({ name: "", description: "", parent: "" })
+
+  const handleAddCategory = () => {
+    onAddCategory({
+      name: newCategory.name,
+      description: newCategory.description
+    })
+    // Reset form fields
+    setNewCategory({ name: "", description: "", parent: "" })
+  }
 
   return (
     <Dialog>
@@ -69,7 +79,7 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
             >
               <option value="">None (Top Level)</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id.toString()}>
+                <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
               ))}
@@ -81,7 +91,7 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
             <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button
-            onClick={() => onAddCategory(newCategory.name, newCategory.description, newCategory.parent)}
+            onClick={handleAddCategory}
             disabled={!newCategory.name || isSubmitting}
             className="bg-blue-600 hover:bg-blue-700"
           >

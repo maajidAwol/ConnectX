@@ -3,13 +3,16 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from .models import Product
 from .serializers import ProductSerializer
-from users.permissions import IsTenantAdmin
+from users.permissions import IsTenantOwner
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated, IsTenantAdmin]
-
+    def get_permissions(self):
+        """Allow all authenticated users to read, but only tenant owners can write."""
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), IsTenantOwner()]
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return Product.objects.none()
