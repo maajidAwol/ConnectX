@@ -35,6 +35,12 @@ class _EntryPointState extends State<EntryPoint> {
     context.read<ProfileBloc>().add(LoadProfile());
   }
 
+  // Helper to get initials (can be moved to a utils file)
+  String getInitials(String name) =>
+      name.isNotEmpty
+          ? name.trim().split(' ').map((l) => l[0]).take(2).join().toUpperCase()
+          : '';
+
   @override
   Widget build(BuildContext context) {
     // Get the arguments if passed through route
@@ -65,6 +71,42 @@ class _EntryPointState extends State<EntryPoint> {
     double width = MediaQuery.of(context).size.width;
     return BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
+        // Determine avatar display based on profile state
+        Widget avatarWidget = const CircleAvatar(
+          radius: 14,
+        ); // Default placeholder
+        String userName = "User";
+        String userEmail = "";
+        String avatarUrl = "";
+
+        if (state is ProfileLoaded) {
+          userName = state.user.name;
+          userEmail = state.user.email;
+          avatarUrl = state.user.avatar_url ?? '';
+          final initials = getInitials(userName);
+          final hasImage = avatarUrl.isNotEmpty;
+
+          avatarWidget = CircleAvatar(
+            radius: 14,
+            backgroundColor:
+                hasImage
+                    ? Colors.transparent
+                    : Theme.of(context).primaryColor.withOpacity(0.1),
+            backgroundImage: hasImage ? NetworkImage(avatarUrl) : null,
+            child:
+                !hasImage && initials.isNotEmpty
+                    ? Text(
+                      initials,
+                      style: TextStyle(
+                        fontSize: 12, // Smaller font for AppBar
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    )
+                    : null,
+          );
+        }
+
         return Scaffold(
           appBar: AppBar(
             surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
@@ -75,8 +117,8 @@ class _EntryPointState extends State<EntryPoint> {
             leading: const SizedBox(),
             leadingWidth: 0,
             centerTitle: false,
-            title: SvgPicture.asset(
-              "assets/koricha/text_logo.svg",
+            title: Image.asset(
+              "assets/connectx/transparent_logo.png",
 
               // color: Theme.of(context).iconTheme.color,
               height: height * 0.09,
@@ -109,27 +151,19 @@ class _EntryPointState extends State<EntryPoint> {
               // ),
               PopupMenuButton<String>(
                 shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  side: BorderSide(color: Theme.of(context).primaryColor),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 borderRadius: BorderRadius.circular(10),
                 color: Theme.of(context).scaffoldBackgroundColor,
-                
-                offset: const Offset(0, 30),
+
+                offset: const Offset(0, 40), // Adjust offset if needed
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child:
-                      state is ProfileLoaded
-                          ? CircleAvatar(
-                            radius: 14,
-                            backgroundImage: NetworkImage(state.user.avatarUrl),
-                          )
-                          : const CircleAvatar(
-                            radius: 14,
-                            
-                          ),
+                  padding: const EdgeInsets.only(
+                    right: defaultPadding,
+                    left: 8.0,
+                  ), // Adjust padding
+                  child: avatarWidget, // Use the determined avatar widget
                 ),
                 onSelected: (value) {
                   switch (value) {
@@ -149,44 +183,50 @@ class _EntryPointState extends State<EntryPoint> {
                 },
                 itemBuilder:
                     (BuildContext context) => <PopupMenuEntry<String>>[
+                      // Conditionally show user info if loaded
                       if (state is ProfileLoaded)
                         PopupMenuItem<String>(
                           enabled: false,
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundImage: NetworkImage(
-                                  state.user.avatarUrl,
-                                ),
-                              ),
+                              // Use the same avatarWidget logic here for consistency
+                              avatarWidget, // Display the same avatar
                               const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    state.user.firstName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                              Expanded(
+                                // Use Expanded to prevent overflow
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      userName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow:
+                                          TextOverflow
+                                              .ellipsis, // Handle long names
                                     ),
-                                  ),
-                                  Text(
-                                    state.user.email,
-                                    style: TextStyle(
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall?.color,
-                                      fontSize: 12,
+                                    Text(
+                                      userEmail,
+                                      style: TextStyle(
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall?.color,
+                                        fontSize: 12,
+                                      ),
+                                      overflow:
+                                          TextOverflow
+                                              .ellipsis, // Handle long emails
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      const PopupMenuDivider(),
+                      if (state is ProfileLoaded) const PopupMenuDivider(),
                       const PopupMenuItem<String>(
                         value: 'profile',
                         child: Row(

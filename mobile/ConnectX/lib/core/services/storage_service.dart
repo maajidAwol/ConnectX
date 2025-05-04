@@ -9,6 +9,7 @@ class StorageService {
   StorageService(this._prefs);
 
   static const String ACCESS_TOKEN_KEY = 'access_token';
+  static const String REFRESH_TOKEN_KEY = 'refresh_token';
   static const String USER_EMAIL_KEY = 'user_email';
   static const String USER_PASSWORD_KEY = 'user_password';
   static const String HAS_SEEN_ONBOARDING_KEY = 'has_seen_onboarding';
@@ -21,6 +22,15 @@ class StorageService {
 
   String? getAccessToken() {
     return _prefs.getString(ACCESS_TOKEN_KEY);
+  }
+
+  // Refresh Token
+  Future<void> saveRefreshToken(String token) async {
+    await _prefs.setString(REFRESH_TOKEN_KEY, token);
+  }
+
+  String? getRefreshToken() {
+    return _prefs.getString(REFRESH_TOKEN_KEY);
   }
 
   // User Credentials
@@ -44,31 +54,7 @@ class StorageService {
 
   Future<void> saveUser(UserModel user) async {
     final userJson = user.toJson();
-    // Create a base map with empty strings for required fields
-    final Map<String, dynamic> defaultData = {
-      'id': '',
-      'email': '',
-      'firstName': '',
-      'lastName': '',
-      'phoneNumber': '',
-      'sex': '',
-      'address': '',
-      'role': 'customer',
-      'status': 'pending',
-      'avatarUrl': '',
-      'country': '',
-      'city': '',
-      'zipCode': '',
-      'state': null,
-      'about': null,
-      'birthdate': null,
-      'company': null,
-      'isVerified': false,
-    };
-
-    // Merge with actual user data
-    final Map<String, dynamic> mergedData = {...defaultData, ...userJson};
-    await _prefs.setString(USER_KEY, jsonEncode(mergedData));
+    await _prefs.setString(USER_KEY, jsonEncode(userJson));
   }
 
   UserModel? getUser() {
@@ -76,8 +62,9 @@ class StorageService {
     if (userJson == null) return null;
 
     try {
-      final Map<String, dynamic> data =
-          Map<String, dynamic>.from(jsonDecode(userJson));
+      final Map<String, dynamic> data = Map<String, dynamic>.from(
+        jsonDecode(userJson),
+      );
       return UserModel.fromJson(data);
     } catch (e) {
       print("Error parsing user JSON: $e");
@@ -88,6 +75,7 @@ class StorageService {
   // Clear auth data on logout
   Future<void> clearAuthData() async {
     await _prefs.remove(ACCESS_TOKEN_KEY);
+    await _prefs.remove(REFRESH_TOKEN_KEY);
     await _prefs.remove(USER_EMAIL_KEY);
     await _prefs.remove(USER_PASSWORD_KEY);
     await _prefs.remove(USER_KEY);
