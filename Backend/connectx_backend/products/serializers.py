@@ -5,6 +5,12 @@ from categories.serializers import CategorySerializer
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Product._meta.get_field("category").related_model.objects.all(),
+        write_only=True,
+        required=True,
+        source="category",
+    )
     filter_backends = [filters.SearchFilter]
     search_fields = [
         "name",
@@ -19,6 +25,7 @@ class ProductSerializer(serializers.ModelSerializer):
         ret = super().to_representation(instance)
         ret["category"] = CategorySerializer(instance.category).data
         return ret
+
     class Meta:
         model = Product
         fields = [
@@ -32,6 +39,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "selling_price",
             "quantity",
             "category",
+            "category_id",
             "is_public",
             "description",
             "cover_url",
@@ -46,19 +54,20 @@ class ProductSerializer(serializers.ModelSerializer):
             "id",
             "tenant",
             "owner",
+            "category",
             "total_sold",
             "total_ratings",
             "total_reviews",
         ]
         swagger_schema_fields = {
-            "example": {
+            "example":{
                 "sku": "SKU-001",
                 "name": "Smartphone X",
-                "base_price": "500.00",
+                "base_price": "500.00", 
                 "profit_percentage": "20.00",
                 "selling_price": "600.00",
                 "quantity": 100,
-                "category": {"id": "uuid-of-category", "name": "Category Name"},
+                "category_id": "uuid-of-category",
                 "is_public": True,
                 "description": "Latest model with advanced features.",
                 "cover_url": "https://example.com/image.jpg",
@@ -70,4 +79,3 @@ class ProductSerializer(serializers.ModelSerializer):
                 "sizes": ["64GB", "128GB"],
             }
         }
-    

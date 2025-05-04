@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import OrderPayment
 
+
 class OrderPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderPayment
@@ -21,6 +22,6 @@ class OrderPaymentSerializer(serializers.ModelSerializer):
                 "order": "order-uuid",
                 "payment_method": "chapa",
                 "payment_id": "chapa-tx-123456",
-                "status": "approved"
+                "status": "approved",
             }
         }

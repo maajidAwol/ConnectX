@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Order, OrderProductItem
 
+
 class OrderProductItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderProductItem
@@ -22,9 +23,10 @@ class OrderProductItemSerializer(serializers.ModelSerializer):
                 "quantity": 2,
                 "price": "299.99",
                 "custom_profit_percentage": 10.0,
-                "custom_selling_price": "329.99"
+                "custom_selling_price": "329.99",
             }
         }
+
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderProductItemSerializer(many=True)
@@ -65,9 +67,9 @@ class OrderSerializer(serializers.ModelSerializer):
                         "quantity": 2,
                         "price": "299.99",
                         "custom_profit_percentage": 10.0,
-                        "custom_selling_price": "329.99"
+                        "custom_selling_price": "329.99",
                     }
-                ]
+                ],
             }
         }
 
