@@ -10,26 +10,14 @@ class LoginRequested extends AuthEvent {
 }
 
 class SignUpRequested extends AuthEvent {
+  final String name;
   final String email;
   final String password;
-  final String confirmPassword;
-  final String firstName;
-  final String lastName;
-  final String phoneNumber;
-  final String sex;
-  final String address;
-  final bool agreement;
 
   SignUpRequested({
+    required this.name,
     required this.email,
     required this.password,
-    required this.confirmPassword,
-    required this.firstName,
-    required this.lastName,
-    required this.phoneNumber,
-    required this.sex,
-    required this.address,
-    required this.agreement,
   });
 }
 
