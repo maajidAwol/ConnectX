@@ -29,7 +29,10 @@ export default function ProductManagement() {
     setCurrentPage,
     currentPage,
     totalPages,
-    filterType
+    filterType,
+    listProduct,
+    unlistProduct,
+    deleteProduct
   } = useProductStore()
   const { isAuthenticated, user } = useAuthStore()
   const isVerified = user?.is_verified || false
@@ -445,7 +448,7 @@ function ProductListCard({
   const [loadingProducts, setLoadingProducts] = useState<Record<string, boolean>>({});
   const { user } = useAuthStore();
   const currentTenantId = user?.tenant;
-  const { listProduct, unlistProduct } = useProductStore();
+  const { listProduct, unlistProduct, deleteProduct } = useProductStore();
 
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
@@ -459,10 +462,10 @@ function ProductListCard({
     try {
       setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
       const data = await listProduct(product.id);
-      toast.success(data.detail || 'Product listed successfully');
+      toast.success(data.detail || 'Product listed successfully', { className: 'bg-[#02569B] text-white' });
     } catch (error) {
       console.error('Error listing product:', error);
-      toast.error('Failed to list product. Please try again.');
+      toast.error('Failed to list product. Please try again.', { className: 'bg-red-500 text-white' });
     } finally {
       setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
     }
@@ -472,10 +475,23 @@ function ProductListCard({
     try {
       setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
       const data = await unlistProduct(product.id);
-      toast.success(data.detail || 'Product unlisted successfully');
+      toast.success(data.detail || 'Product unlisted successfully', { className: 'bg-[#02569B] text-white' });
     } catch (error) {
       console.error('Error unlisting product:', error);
-      toast.error('Failed to unlist product. Please try again.');
+      toast.error('Failed to unlist product. Please try again.', { className: 'bg-red-500 text-white' });
+    } finally {
+      setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
+    }
+  };
+
+  const handleDeleteProduct = async (product: any) => {
+    try {
+      setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
+      const data = await deleteProduct(product.id);
+      toast.success(data.detail || 'Product deleted successfully', { className: 'bg-[#02569B] text-white' });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product. Please try again.', { className: 'bg-red-500 text-white' });
     } finally {
       setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
     }
@@ -483,6 +499,10 @@ function ProductListCard({
 
   const isProductListed = (product: any) => {
     return product.tenant?.includes(currentTenantId);
+  };
+
+  const isProductOwned = (product: any) => {
+    return product.owner === user?.tenant;
   };
 
   return (
@@ -515,6 +535,7 @@ function ProductListCard({
 
                   const isListed = isProductListed(product);
                   const isLoading = loadingProducts[product.id];
+                  const isOwned = isProductOwned(product);
 
                   return (
                     <div key={product.id} className="grid grid-cols-12 items-center p-3">
@@ -551,11 +572,22 @@ function ProductListCard({
                           <span>{product.total_sold || 0} units</span>
                         )}
                       </div>
-                      <div className="col-span-1 flex justify-end">
+                      <div className="col-span-1 flex justify-between gap-2">
+                        {isOwned && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleDeleteProduct(product)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        )}
                         {isListed ? (
                           <Button 
                             variant="ghost" 
-                            size="sm"
+                            size="lg"
                             onClick={() => handleUnlistProduct(product)}
                             className="text-red-600 hover:text-red-800"
                             disabled={isLoading}

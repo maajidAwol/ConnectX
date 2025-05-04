@@ -51,6 +51,7 @@ interface ProductState {
   setCurrentPage: (page: number) => void
   listProduct: (productId: string) => Promise<{ detail: string }>
   unlistProduct: (productId: string) => Promise<{ detail: string }>
+  deleteProduct: (productId: string) => Promise<{ detail: string }>
 }
 
 // In a production environment, this would be loaded from environment variables
@@ -222,6 +223,34 @@ const useProductStore = create<ProductState>((set, get) => ({
       return data;
     } catch (error) {
       console.error('Error unlisting product:', error);
+      throw error;
+    }
+  },
+
+  deleteProduct: async (productId: string) => {
+    try {
+      const { accessToken } = useAuthStore.getState();
+      if (!accessToken) throw new Error('Authentication required');
+      const response = await fetch(
+        `${API_URL}/products/${productId}/`,
+        {
+          method: 'DELETE',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+      const data = await response.json().catch(() => ({ detail: 'Product deleted successfully.' }));
+      // Refresh products with current filter type
+      const { filterType } = get();
+      await get().fetchProducts({ filterType });
+      return data;
+    } catch (error) {
+      console.error('Error deleting product:', error);
       throw error;
     }
   }
