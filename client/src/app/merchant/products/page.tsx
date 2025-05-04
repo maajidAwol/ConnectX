@@ -34,8 +34,8 @@ export default function ProductManagement() {
     unlistProduct,
     deleteProduct
   } = useProductStore()
-  const { isAuthenticated, user } = useAuthStore()
-  const isVerified = user?.is_verified || false
+  const { isAuthenticated, user, isTenantVerified } = useAuthStore()
+  const isVerified = isTenantVerified()
   const [selectedTab, setSelectedTab] = useState<FilterType>("all")
 
   // Helper function to safely get category name
