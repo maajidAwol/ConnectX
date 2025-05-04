@@ -114,7 +114,11 @@ class ProductViewSet(viewsets.ModelViewSet):
             return Product.objects.none()
 
         tenant = self.request.user.tenant
+        user = self.request.user    
         filter_type = self.request.query_params.get("filter_type", "public_owned")
+        # If the user is a customer, only show products listed in their tenant
+        if user.role == "customer":
+            filter_type = "listed"
 
         if filter_type == "listed":
             queryset = Product.objects.filter(tenant=tenant)
