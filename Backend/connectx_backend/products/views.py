@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions,status
+from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
@@ -15,21 +15,22 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['name', 'sku', 'description']
-    filterset_fields = ['category__name', 'owner', 'is_public']
-
+    search_fields = ["name", "sku", "description"]
+    filterset_fields = ["category__name", "owner", "is_public"]
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ["list", "retrieve"]:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated(), IsTenantOwner()]
+
     @swagger_auto_schema(
-    operation_summary="List product under current tenant",
-    operation_description="""
+        operation_summary="List product under current tenant",
+        operation_description="""
     Associates a product with the current user's tenant.
     
     Allowed if:
@@ -38,14 +39,14 @@ class ProductViewSet(viewsets.ModelViewSet):
     
     Returns 400 if already listed.
     """,
-    request_body=None,
-    responses={
-        200: openapi.Response(description="Product listed successfully"),
-        400: openapi.Response(description="Already listed"),
-        403: openapi.Response(description="Permission denied"),
-    }
-        )
-    @action(detail=True, methods=['get'], url_path='list-to-tenant')
+        request_body=None,
+        responses={
+            200: openapi.Response(description="Product listed successfully"),
+            400: openapi.Response(description="Already listed"),
+            403: openapi.Response(description="Permission denied"),
+        },
+    )
+    @action(detail=True, methods=["get"], url_path="list-to-tenant")
     def list_to_tenant(self, request, pk=None):
         """Associate this product with the current user's tenant."""
         product = self.get_object()
@@ -58,7 +59,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         if tenant in product.tenant.all():
             return Response(
                 {"detail": "Product already listed under this tenant."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         product.tenant.add(tenant)
@@ -66,7 +67,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return Response(
             {"detail": f"Product listed under tenant '{tenant.name}'."},
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
     @swagger_auto_schema(
@@ -79,9 +80,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             200: openapi.Response(description="Product unlisted successfully"),
             400: openapi.Response(description="Product not listed under this tenant"),
             403: openapi.Response(description="Permission denied"),
-        }
+        },
     )
-    @action(detail=True, methods=['get'], url_path='unlist-from-tenant')
+    @action(detail=True, methods=["get"], url_path="unlist-from-tenant")
     def unlist_from_tenant(self, request, pk=None):
         """Remove this product from the current user's tenant."""
         product = self.get_object()
@@ -94,7 +95,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         if tenant not in product.tenant.all():
             return Response(
                 {"detail": "Product is not listed under this tenant."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         product.tenant.remove(tenant)
@@ -102,13 +103,16 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return Response(
             {"detail": f"Product unlisted from tenant '{tenant.name}'."},
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
     def get_queryset(self):
-        if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
+        if (
+            getattr(self, "swagger_fake_view", False)
+            or not self.request.user.is_authenticated
+        ):
             return Product.objects.none()
-        
+
         tenant = self.request.user.tenant
         filter_type = self.request.query_params.get("filter_type", "public_owned")
 
@@ -122,13 +126,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = Product.objects.filter(Q(owner=tenant) | Q(is_public=True))
 
         # Optional filters from query params
-        tenant_id = self.request.query_params.get("tenant")
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
         category = self.request.query_params.get("category")
-
-        if tenant_id:
-            queryset = queryset.filter(tenant__id=tenant_id)
 
         if min_price:
             queryset = queryset.filter(selling_price__gte=min_price)
@@ -140,19 +140,48 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(category__name__icontains=category)
 
         return queryset.distinct()
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('filter_type', openapi.IN_QUERY, type=openapi.TYPE_STRING,
-                          enum=['listed', 'owned', 'public','all'], 
-                          description='Filter products by type. Options: "listed", "owned", "public", "all". Defaults to "all".'),
-        openapi.Parameter('tenant', openapi.IN_QUERY, description="Tenant UUID to find the listed product by the tenant", type=openapi.TYPE_STRING),
-        openapi.Parameter('min_price', openapi.IN_QUERY, description="Min price", type=openapi.TYPE_NUMBER),
-        openapi.Parameter('max_price', openapi.IN_QUERY, description="Max price", type=openapi.TYPE_NUMBER),
-        openapi.Parameter('category', openapi.IN_QUERY, description="Category name", type=openapi.TYPE_STRING),
-        openapi.Parameter('search', openapi.IN_QUERY, type=openapi.TYPE_STRING,description="Search across name, SKU, description, etc."),
-        openapi.Parameter('size', openapi.IN_QUERY, description="Page Size", type=openapi.TYPE_NUMBER),
 
-
-    ])
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                "filter_type",
+                openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                enum=["listed", "owned", "public", "all"],
+                description='Filter products by type. Options: "listed", "owned", "public", "all". Defaults to "all".',
+            ),
+            openapi.Parameter(
+                "min_price",
+                openapi.IN_QUERY,
+                description="Min price",
+                type=openapi.TYPE_NUMBER,
+            ),
+            openapi.Parameter(
+                "max_price",
+                openapi.IN_QUERY,
+                description="Max price",
+                type=openapi.TYPE_NUMBER,
+            ),
+            openapi.Parameter(
+                "category",
+                openapi.IN_QUERY,
+                description="Category name",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "search",
+                openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Search across name, SKU, description, etc.",
+            ),
+            openapi.Parameter(
+                "size",
+                openapi.IN_QUERY,
+                description="Page Size",
+                type=openapi.TYPE_NUMBER,
+            ),
+        ]
+    )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
