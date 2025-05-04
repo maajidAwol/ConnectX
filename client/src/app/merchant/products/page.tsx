@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ChevronLeft, ChevronRight, Edit, Filter, Info, MoreHorizontal, Package, Plus, Search, Trash } from "lucide-react"
+import { AlertCircle, ChevronLeft, ChevronRight, Edit, Filter, Info, MoreHorizontal, Package, Plus, Search, Trash, Loader2 } from "lucide-react"
 import useProductStore, { FilterType } from "@/store/useProductStore"
 import { useAuthStore } from "@/store/authStore"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { toast } from "sonner"
 
 export default function ProductManagement() {
   const { 
@@ -441,12 +442,47 @@ function ProductListCard({
   showSales = false,
   showActions = false
 }: ProductListCardProps) {
+  const [loadingProducts, setLoadingProducts] = useState<Record<string, boolean>>({});
+  const { user } = useAuthStore();
+  const currentTenantId = user?.tenant;
+  const { listProduct, unlistProduct } = useProductStore();
+
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
     if (!category) return "Uncategorized";
     if (typeof category === "string") return category;
     if (typeof category === "object" && category.name) return category.name;
     return "Uncategorized";
+  };
+
+  const handleListProduct = async (product: any) => {
+    try {
+      setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
+      const data = await listProduct(product.id);
+      toast.success(data.detail || 'Product listed successfully');
+    } catch (error) {
+      console.error('Error listing product:', error);
+      toast.error('Failed to list product. Please try again.');
+    } finally {
+      setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
+    }
+  };
+
+  const handleUnlistProduct = async (product: any) => {
+    try {
+      setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
+      const data = await unlistProduct(product.id);
+      toast.success(data.detail || 'Product unlisted successfully');
+    } catch (error) {
+      console.error('Error unlisting product:', error);
+      toast.error('Failed to unlist product. Please try again.');
+    } finally {
+      setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
+    }
+  };
+
+  const isProductListed = (product: any) => {
+    return product.tenant?.includes(currentTenantId);
   };
 
   return (
@@ -473,10 +509,12 @@ function ProductListCard({
             <div className="divide-y">
               {products.length > 0 ? (
                 products.map((product) => {
-                  // Ensure we're working with a valid product object
                   if (!product || typeof product !== 'object') {
                     return null;
                   }
+
+                  const isListed = isProductListed(product);
+                  const isLoading = loadingProducts[product.id];
 
                   return (
                     <div key={product.id} className="grid grid-cols-12 items-center p-3">
@@ -514,37 +552,41 @@ function ProductListCard({
                         )}
                       </div>
                       <div className="col-span-1 flex justify-end">
-                        <div className="flex items-center gap-2">
-                          {showActions ? (
-                            <>
-                              <Button variant="ghost" size="icon">
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Trash className="h-4 w-4" />
-                                <span className="sr-only">Delete</span>
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button variant="ghost" size="icon" disabled={!isVerified && product.owner !== getUserId()}>
-                                {product.owner !== getUserId() ? (
-                                  <Package className="h-4 w-4" />
-                                ) : (
-                                  <Edit className="h-4 w-4" />
-                                )}
-                                <span className="sr-only">
-                                  {product.owner !== getUserId() ? "Add to Store" : "Edit"}
-                                </span>
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Info className="h-4 w-4" />
-                                <span className="sr-only">Details</span>
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                        {isListed ? (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleUnlistProduct(product)}
+                            className="text-red-600 hover:text-red-800"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Unlisting...
+                              </>
+                            ) : (
+                              'Unlist'
+                            )}
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleListProduct(product)}
+                            className="text-blue-600 hover:text-blue-800"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Listing...
+                              </>
+                            ) : (
+                              'List'
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
