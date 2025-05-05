@@ -5,19 +5,15 @@ import '../entities/address.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, User>> login(String email, String password);
-  Future<Either<Failure, bool>> signup({
+  Future<Either<Failure, User>> signup({
+    required String tenant,
+    required String name,
     required String email,
     required String password,
-    required String confirmPassword,
-    required String firstName,
-    required String lastName,
-    required String phoneNumber,
-    required String sex,
-    required String address,
-    required bool agreement,
+    required String role,
   });
   Future<Either<Failure, void>> logout();
-    // Future<Either<Failure, User>> getUserProfile();
+  // Future<Either<Failure, User>> getUserProfile();
   Future<Either<Failure, void>> verifyEmail(String email, String otp);
   Future<Either<Failure, void>> resendVerification(String email);
   Future<Either<Failure, User>> getUserProfile();

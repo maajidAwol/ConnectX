@@ -29,11 +29,13 @@ class AuthRepositoryImpl implements AuthRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message));
       } on VerificationRequiredException catch (e) {
-        return Left(VerificationRequiredFailure(
-          message: e.message,
-          email: e.email,
-          accessToken: e.accessToken,
-        ));
+        return Left(
+          VerificationRequiredFailure(
+            message: e.message,
+            email: e.email,
+            accessToken: e.accessToken,
+          ),
+        );
       }
     } else {
       return Left(NetworkFailure());
@@ -41,39 +43,35 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> signup({
+  // Updated signup implementation
+  Future<Either<Failure, User>> signup({
+    required String tenant,
+    required String name,
     required String email,
     required String password,
-    required String confirmPassword,
-    required String firstName,
-    required String lastName,
-    required String phoneNumber,
-    required String sex,
-    required String address,
-    required bool agreement,
+    required String role,
   }) async {
     if (await networkInfo.isConnected) {
       try {
-        final result = await remoteDataSource.signup(
-          email,
-          password,
-          confirmPassword,
-          firstName,
-          lastName,
-          phoneNumber,
-          sex,
-          address,
-          agreement,
+        // Call remote data source with new parameters
+        final user = await remoteDataSource.signup(
+          tenant: tenant,
+          name: name,
+          email: email,
+          password: password,
+          role: role,
         );
-        if (result == true) {
-          return Right(true);
-        } else {
-          return Left(ServerFailure(message: 'Signup failed'));
-        }
+        // Return the user object on success
+        return Right(user);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message));
       } on ValidationException catch (e) {
-        return Left(ValidationFailure( e.message));
+        return Left(ValidationFailure(e.message));
+      } catch (e) {
+        // Catch any other unexpected exceptions
+        return Left(
+          ServerFailure(message: 'An unexpected error occurred during signup.'),
+        );
       }
     } else {
       return Left(NetworkFailure());
@@ -109,13 +107,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, void>> addAddress(Address address) async {
     if (await networkInfo.isConnected) {
       try {
-        await remoteDataSource.addAddress(AddressModel(
-          id: address.id,
-          fullAddress: address.fullAddress,
-          primary: address.primary,
-          phoneNumber: address.phoneNumber,
-          addressType: address.addressType,
-        ));
+        await remoteDataSource.addAddress(
+          AddressModel(
+            id: address.id,
+            fullAddress: address.fullAddress,
+            primary: address.primary,
+            phoneNumber: address.phoneNumber,
+            addressType: address.addressType,
+          ),
+        );
         return const Right(null);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message));
@@ -129,13 +129,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, void>> updateAddress(Address address) async {
     if (await networkInfo.isConnected) {
       try {
-        await remoteDataSource.updateAddress(AddressModel(
-          id: address.id,
-          fullAddress: address.fullAddress,
-          primary: address.primary,
-          phoneNumber: address.phoneNumber,
-          addressType: address.addressType,
-        ));
+        await remoteDataSource.updateAddress(
+          AddressModel(
+            id: address.id,
+            fullAddress: address.fullAddress,
+            primary: address.primary,
+            phoneNumber: address.phoneNumber,
+            addressType: address.addressType,
+          ),
+        );
         return const Right(null);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message));

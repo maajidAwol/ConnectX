@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback } from "react"
-import { User } from "lucide-react"
+import { LogOut, User } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ export function UserHeader() {
   
   // Memoize the logout function to prevent rerenders
   const logout = useCallback(() => {
+    // The redirection to home page happens in the store's logout function
     logoutFn()
   }, [logoutFn])
 
@@ -41,7 +42,7 @@ export function UserHeader() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           {/* <Button variant="ghost" className="relative h-12 w-12 rounded-full"> */}
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer">
               <span className="text-primary font-medium">{userInitials}</span>
             </div>
           {/* </Button> */}
@@ -60,6 +61,7 @@ export function UserHeader() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer" onClick={logout}>
+            <LogOut className="mr-2 h-4 w-4" />
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>

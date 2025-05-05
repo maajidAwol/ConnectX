@@ -14,6 +14,9 @@ graphviz = "*"
 django-extensions = "*"
 django-cors-headers = "*"
 pillow = "*"
+djangorestframework-simplejwt = "*"
+cloudinary = "*"
+django-cloudinary-storage = "*"
 
 [dev-packages]
 

@@ -6,7 +6,7 @@ import '../../../constants.dart';
 class BannerMStyle1 extends StatelessWidget {
   const BannerMStyle1({
     super.key,
-    this.image = "assets/koricha/banners/2.png",
+    this.image = "assets/connectx/banners/2.png",
     required this.text,
     required this.press,
   });
