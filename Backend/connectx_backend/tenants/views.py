@@ -26,7 +26,7 @@ class TenantViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if self.action in ["list", "retrieve", "destroy", "update", "partial_update"]:
-            if user.role == "admin":
+            if user.is_authenticated and user.role == "admin":
                 return Tenant.objects.all()
             return Tenant.objects.filter(id=getattr(user, "tenant_id", None))
         return Tenant.objects.none()
