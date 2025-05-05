@@ -29,9 +29,11 @@ export default function ProductCategories() {
     deleteCategory
   } = useCategoryStore()
   
-  const { isAuthenticated, user } = useAuthStore()
-  const isVerified = user?.is_verified || false
+  const { isAuthenticated, user, isTenantVerified } = useAuthStore()
+  const isVerified = isTenantVerified()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  console.log(isVerified)
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -44,20 +46,27 @@ export default function ProductCategories() {
   }
 
   // Add a new category
-  const handleAddCategory = async (categoryData: Omit<typeof categories[0], 'id'>) => {
+  const handleAddCategory = async (data: {
+    name: string
+    description: string
+    icon?: string
+    parent?: string | null
+  }) => {
     setIsSubmitting(true)
     try {
-      await addCategory(categoryData)
+      await addCategory(data)
+      await fetchCategories() // Refresh the list
     } finally {
       setIsSubmitting(false)
     }
   }
 
   // Update an existing category
-  const handleUpdateCategory = async (id: string, data: Partial<Omit<typeof categories[0], 'id'>>) => {
+  const handleUpdateCategory = async (id: string, data: Partial<any>) => {
     setIsSubmitting(true)
     try {
       await updateCategory(id, data)
+      await fetchCategories() // Refresh the list
     } finally {
       setIsSubmitting(false)
     }
@@ -68,6 +77,7 @@ export default function ProductCategories() {
     setIsSubmitting(true)
     try {
       await deleteCategory(id)
+      await fetchCategories() // Refresh the list
     } finally {
       setIsSubmitting(false)
     }

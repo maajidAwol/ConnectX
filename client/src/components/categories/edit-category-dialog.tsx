@@ -26,27 +26,33 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Upload } from "lucide-react"
+import { Pencil, Upload } from "lucide-react"
 import { toast } from "sonner"
-import useCategoryStore from "@/store/useCategoryStore"
+import type { Category } from "@/store/useCategoryStore"
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Category name must be at least 2 characters.",
-  }),
+  }).optional(),
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
-  }),
-  parent: z.string().nullable(),
+  }).optional(),
+  parent: z.string().nullable().optional(),
 })
 
-interface AddCategoryDialogProps {
-  categories: any[]
-  onAddCategory: (data: any) => Promise<void>
+interface EditCategoryDialogProps {
+  category: Category
+  categories: Category[]
+  onEditCategory: (id: string, data: Partial<Category>) => Promise<void>
   isSubmitting: boolean
 }
 
-export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: AddCategoryDialogProps) {
+export function EditCategoryDialog({ 
+  category, 
+  categories, 
+  onEditCategory,
+  isSubmitting 
+}: EditCategoryDialogProps) {
   const [open, setOpen] = useState(false)
   const [iconFile, setIconFile] = useState<File | null>(null)
   const [iconPreview, setIconPreview] = useState<string | null>(null)
@@ -54,9 +60,9 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      parent: null,
+      name: category.name,
+      description: category.description,
+      parent: category.parent,
     },
   })
 
@@ -64,8 +70,6 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setIconFile(file)
-      
-      // Create preview URL
       const previewUrl = URL.createObjectURL(file)
       setIconPreview(previewUrl)
     }
@@ -73,26 +77,30 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const categoryData = {
-        name: values.name,
-        description: values.description,
-        icon: iconFile ? await convertFileToBase64(iconFile) : "icon-url", // Use uploaded icon or default
-        parent: values.parent === "none" ? null : values.parent
+      const updateData: Partial<Category> = {}
+      
+      // Only include changed fields
+      if (values.name !== category.name) updateData.name = values.name
+      if (values.description !== category.description) updateData.description = values.description
+      if (values.parent !== category.parent) {
+        updateData.parent = values.parent === "none" ? null : values.parent
+      }
+      if (iconFile) {
+        updateData.icon = await convertFileToBase64(iconFile)
       }
 
-      await onAddCategory(categoryData)
-      toast.success("Category added successfully", { className: 'bg-[#02569B] text-white' })
+      await onEditCategory(category.id, updateData)
+      toast.success("Category updated successfully", { className: 'bg-[#02569B] text-white' })
       setOpen(false)
       form.reset()
       setIconFile(null)
       setIconPreview(null)
     } catch (error) {
-      console.error("Error adding category:", error)
-      toast.error("Failed to add category. Please try again.", { className: 'bg-red-500 text-white' })
+      console.error("Error updating category:", error)
+      toast.error("Failed to update category. Please try again.", { className: 'bg-red-500 text-white' })
     }
   }
 
-  // Helper function to convert File to base64
   const convertFileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -105,16 +113,16 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          <span>Add Category</span>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Pencil className="h-4 w-4" />
+          <span>Edit</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Category</DialogTitle>
+          <DialogTitle>Edit Category</DialogTitle>
           <DialogDescription>
-            Create a new product category. Fill in the details below.
+            Make changes to the category. Only modified fields will be updated.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -166,11 +174,13 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {categories
+                        .filter(c => c.id !== category.id) // Prevent self-selection
+                        .map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -190,10 +200,10 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
                     onChange={handleFileChange}
                     className="cursor-pointer"
                   />
-                  {iconPreview && (
+                  {(iconPreview || category.icon) && (
                     <div className="mt-2">
                       <img
-                        src={iconPreview}
+                        src={iconPreview || category.icon || ''}
                         alt="Icon preview"
                         className="w-16 h-16 object-cover rounded-md"
                       />
@@ -202,12 +212,12 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
                 </div>
               </FormControl>
               <FormDescription>
-                Optional: Upload an icon for the category. If not provided, a default icon will be used.
+                Optional: Upload a new icon for the category
               </FormDescription>
             </FormItem>
             <DialogFooter>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Adding..." : "Add Category"}
+                {isSubmitting ? "Updating..." : "Update Category"}
               </Button>
             </DialogFooter>
           </form>
@@ -215,4 +225,4 @@ export function AddCategoryDialog({ categories, onAddCategory, isSubmitting }: A
       </DialogContent>
     </Dialog>
   )
-}
+} 
