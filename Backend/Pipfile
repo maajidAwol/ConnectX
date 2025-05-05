@@ -5,13 +5,18 @@ name = "pypi"
 
 [packages]
 django = "*"
-psycopg2-binary = "*"
-python-dotenv = "*"
-rest-framework-simplejwt = "*"
 djangorestframework = "*"
-djangorestframework-simplejwt = "*"
 drf-yasg = "*"
 gunicorn = "*"
+psycopg2-binary = "*"
+python-dotenv = "*"
+graphviz = "*"
+django-extensions = "*"
+django-cors-headers = "*"
+pillow = "*"
+djangorestframework-simplejwt = "*"
+cloudinary = "*"
+django-cloudinary-storage = "*"
 
 [dev-packages]
 
