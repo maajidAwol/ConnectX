@@ -130,19 +130,19 @@ export default function ProductCategories() {
     return range;
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="space-y-6">
-        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Authentication Required</AlertTitle>
-          <AlertDescription>
-            You need to login to view and manage categories.
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
+  // if (!isAuthenticated) {
+  //   return (
+  //     <div className="space-y-6">
+  //       <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+  //         <AlertCircle className="h-4 w-4" />
+  //         <AlertTitle>Authentication Required</AlertTitle>
+  //         <AlertDescription>
+  //           You need to login to view and manage categories.
+  //         </AlertDescription>
+  //       </Alert>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="space-y-6">

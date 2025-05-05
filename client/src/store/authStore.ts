@@ -76,18 +76,26 @@ const loadStateFromCookies = () => {
   const refreshToken = getCookie('refreshToken');
   
   let user = null;
+  let tenantData = null;
+  
   try {
     const userJson = getCookie('user');
     if (userJson) {
       user = JSON.parse(decodeURIComponent(userJson));
     }
+    
+    const tenantDataJson = getCookie('tenantData');
+    if (tenantDataJson) {
+      tenantData = JSON.parse(decodeURIComponent(tenantDataJson));
+    }
   } catch (error) {
-    console.error('Error parsing user from cookie:', error);
+    console.error('Error parsing data from cookies:', error);
   }
   
   return {
     isAuthenticated: !!accessToken && !!refreshToken,
     user,
+    tenantData,
     accessToken,
     refreshToken
   };
@@ -95,7 +103,6 @@ const loadStateFromCookies = () => {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   ...loadStateFromCookies(),
-  tenantData: null,
   signup: async (data) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/`, {
@@ -159,6 +166,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     deleteCookie('refreshToken');
     deleteCookie('userRole');
     deleteCookie('user');
+    deleteCookie('tenantData');
     
     set({ 
       user: null, 
@@ -189,7 +197,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fetchTenantData: async () => {
     try {
       const { accessToken, user } = get();
-      if (!accessToken || !user?.tenant) throw new Error('No access token or tenant ID available');
+      if (!accessToken || !user?.tenant) {
+        console.warn('No access token or tenant ID available for fetching tenant data');
+        return;
+      }
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/tenants/${user.tenant}/`,
@@ -201,21 +212,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       );
 
-      if (!response.ok) throw new Error('Failed to fetch tenant data');
+      if (!response.ok) {
+        console.error('Failed to fetch tenant data:', response.status);
+        return;
+      }
 
       const tenantData = await response.json();
+      
+      // Store tenant data in state and cookie
       set({ tenantData });
-
-      // Store tenant data in cookie for persistence
       setCookie('tenantData', encodeURIComponent(JSON.stringify(tenantData)), 7);
     } catch (error) {
       console.error('Error fetching tenant data:', error);
-      // Don't throw here, just log the error
     }
   },
   isTenantVerified: () => {
     const { tenantData } = get();
-    console.log("tenantData", tenantData)
-    return tenantData?.is_verified || false;
+    if (!tenantData) {
+      // If tenant data is not loaded, try to fetch it
+      get().fetchTenantData();
+      return false;
+    }
+    return tenantData.is_verified || false;
   }
 }))
