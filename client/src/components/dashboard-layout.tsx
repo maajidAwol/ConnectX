@@ -33,7 +33,7 @@ interface DashboardLayoutProps {
   description: string;
 }
 
-export function DashboardLayout({ children, role, navigation }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, role, navigation }: DashboardLayoutProps) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)

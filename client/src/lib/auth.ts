@@ -75,8 +75,29 @@ export function getCurrentUser() {
   return null
 }
 
+// Check if user is logged in
+export const isUserLoggedIn = (): boolean => {
+  try {
+    const token = localStorage.getItem('token')
+    return !!token
+  } catch (error) {
+    console.error('Error checking login status:', error)
+    return false
+  }
+}
+
 // Check if merchant is verified
-export function isMerchantVerified() {
-  const user = getCurrentUser()
-  return user?.role === "merchant" && user.isVerified === true
+export const isMerchantVerified = (): boolean => {
+  // In a real implementation, this would check user data from an auth context/store
+  // For now using localStorage, but in production this should be properly implemented
+  try {
+    const userData = localStorage.getItem('user')
+    if (!userData) return false
+    
+    const user = JSON.parse(userData)
+    return user.isVerified === true
+  } catch (error) {
+    console.error('Error checking verification status:', error)
+    return false
+  }
 }

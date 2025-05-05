@@ -4,7 +4,6 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DashboardLayout } from "@/components/dashboard-layout"
 import {
   LayoutDashboard,
   Building2,
@@ -47,59 +46,6 @@ const users = [
 
 export default function AdminUsersPage() {
   return (
-    <DashboardLayout
-      title="User Management"
-      description="Manage system administrators and their roles"
-      role="admin"
-      navigation={[
-        {
-          title: "Dashboard",
-          href: "/admin/dashboard",
-          icon: LayoutDashboard,
-        },
-        {
-          title: "Merchants",
-          href: "/admin/merchants",
-          icon: Building2,
-          badge: 3,
-        },
-        {
-          title: "Developers",
-          href: "/admin/developers",
-          icon: Code2,
-        },
-        {
-          title: "Users",
-          href: "/admin/users",
-          icon: Users,
-        },
-        {
-          title: "Analytics",
-          href: "/admin/analytics",
-          icon: BarChart3,
-        },
-        {
-          title: "System Health",
-          href: "/admin/system-health",
-          icon: Activity,
-        },
-        {
-          title: "Security",
-          href: "/admin/security",
-          icon: ShieldAlert,
-        },
-        {
-          title: "Settings",
-          href: "/admin/settings",
-          icon: Settings,
-        },
-        {
-          title: "Help",
-          href: "/admin/help",
-          icon: HelpCircle,
-        },
-      ]}
-    >
       <div className="container mx-auto py-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -154,7 +100,6 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   )
 }
 

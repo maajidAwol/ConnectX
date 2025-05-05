@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Tenant
 from .serializers import TenantSerializer
+from .permissions import TenantPermission
 
 
 # Define a custom serializer for the request body if needed
@@ -20,14 +21,21 @@ class TenantCreateRequestSerializer(serializers.Serializer):
 class TenantViewSet(viewsets.ModelViewSet):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
-    permission_classes = []  # Remove authentication requirement
+    permission_classes = [TenantPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+        if self.action in ["list", "retrieve", "destroy", "update", "partial_update"]:
+            if user.is_authenticated and user.role == "admin":
+                return Tenant.objects.all()
+            return Tenant.objects.filter(id=getattr(user, "tenant_id", None))
+        return Tenant.objects.none()
+
 
     @swagger_auto_schema(request_body=TenantCreateRequestSerializer)
     def create(self, request, *args, **kwargs):
         """Explicitly create a tenant and a user from the request body."""
         data = request.data.copy()
-        api_key = secrets.token_urlsafe(32)
-        data["api_key"] = api_key
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
