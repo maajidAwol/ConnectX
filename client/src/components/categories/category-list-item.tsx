@@ -55,7 +55,7 @@ export function CategoryListItem({ category, onDelete, onUpdate, isSubmitting, p
       </div>
       <div className="col-span-2 text-sm text-muted-foreground">
         {/* In a real app, you would show the parent category name here */}
-        Top Level
+        {category.parent ? category.parent : "Top Level"}
       </div>
       <div className="col-span-2 flex justify-end gap-2">
         <Dialog>

@@ -36,6 +36,7 @@ interface CategoryState {
   }) => Promise<any>
   updateCategory: (id: string, data: Partial<Category>) => Promise<void>
   deleteCategory: (id: string) => Promise<void>
+  canEditCategory: (category: Category) => boolean
 }
 
 // In a production environment, this would be loaded from environment variables
@@ -173,6 +174,7 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
     } catch (error) {
       console.error('Error updating category:', error)
       set({ error: error instanceof Error ? error.message : 'An error occurred' })
+      throw error
     } finally {
       set({ isLoading: false })
     }
@@ -202,6 +204,11 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
     } finally {
       set({ isLoading: false })
     }
+  },
+
+  canEditCategory: (category: Category) => {
+    const { user } = useAuthStore.getState()
+    return user?.tenant === category.tenant
   }
 }))
 
