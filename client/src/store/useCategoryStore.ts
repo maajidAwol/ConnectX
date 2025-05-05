@@ -6,6 +6,11 @@ export type Category = {
   id: string
   name: string
   description: string
+  icon: string | null
+  parent: string | null
+  created_at: string
+  updated_at: string
+  tenant: string
 }
 
 interface CategoryState {
@@ -23,9 +28,14 @@ interface CategoryState {
   }) => Promise<void>
   setSearchQuery: (query: string) => void
   setCurrentPage: (page: number) => void
-  addCategory: (category: Omit<Category, 'id'>) => Promise<Category | null>
-  updateCategory: (id: string, data: Partial<Omit<Category, 'id'>>) => Promise<boolean>
-  deleteCategory: (id: string) => Promise<boolean>
+  addCategory: (data: {
+    name: string
+    description: string
+    icon?: string
+    parent?: string | null
+  }) => Promise<any>
+  updateCategory: (id: string, data: Partial<Category>) => Promise<void>
+  deleteCategory: (id: string) => Promise<void>
 }
 
 // In a production environment, this would be loaded from environment variables
@@ -106,89 +116,91 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
     get().fetchCategories({ page })
   },
   
-  addCategory: async (categoryData) => {
+  addCategory: async (data) => {
+    set({ isLoading: true, error: null })
     try {
       const { accessToken } = useAuthStore.getState()
-      if (!accessToken) {
-        set({ error: 'Authentication required to add category' })
-        return null
-      }
       
-      const response = await axios.post(`${API_URL}/categories/`, categoryData, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          accept: 'application/json'
+      const response = await axios.post(
+        `${API_URL}/categories/`,
+        data,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+          }
         }
-      })
-      
-      // Refresh categories after adding
-      get().fetchCategories()
-      
-      return response.data
+      )
+
+      const newCategory = response.data
+      set((state) => ({
+        categories: [...state.categories, newCategory],
+      }))
+      return newCategory
     } catch (error) {
       console.error('Error adding category:', error)
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to add category'
-      })
-      return null
+      set({ error: error instanceof Error ? error.message : 'An error occurred' })
+      throw error
+    } finally {
+      set({ isLoading: false })
     }
   },
   
-  updateCategory: async (id, data) => {
+  updateCategory: async (id: string, data: Partial<Category>) => {
+    set({ isLoading: true, error: null })
     try {
       const { accessToken } = useAuthStore.getState()
-      if (!accessToken) {
-        set({ error: 'Authentication required to update category' })
-        return false
-      }
       
-      await axios.patch(`${API_URL}/categories/${id}/`, data, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          accept: 'application/json'
+      const response = await axios.patch(
+        `${API_URL}/categories/${id}/`,
+        data,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+          }
         }
-      })
-      
-      // Refresh categories after updating
-      get().fetchCategories()
-      
-      return true
+      )
+
+      const updatedCategory = response.data
+      set((state) => ({
+        categories: state.categories.map((category) =>
+          category.id === id ? updatedCategory : category
+        ),
+      }))
     } catch (error) {
       console.error('Error updating category:', error)
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to update category'
-      })
-      return false
+      set({ error: error instanceof Error ? error.message : 'An error occurred' })
+    } finally {
+      set({ isLoading: false })
     }
   },
   
-  deleteCategory: async (id) => {
+  deleteCategory: async (id: string) => {
+    set({ isLoading: true, error: null })
     try {
       const { accessToken } = useAuthStore.getState()
-      if (!accessToken) {
-        set({ error: 'Authentication required to delete category' })
-        return false
-      }
       
-      await axios.delete(`${API_URL}/categories/${id}/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          accept: 'application/json'
+      await axios.delete(
+        `${API_URL}/categories/${id}/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'accept': 'application/json'
+          }
         }
-      })
-      
-      // Refresh categories after deleting
-      get().fetchCategories()
-      
-      return true
+      )
+
+      set((state) => ({
+        categories: state.categories.filter((category) => category.id !== id),
+      }))
     } catch (error) {
       console.error('Error deleting category:', error)
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to delete category'
-      })
-      return false
+      set({ error: error instanceof Error ? error.message : 'An error occurred' })
+    } finally {
+      set({ isLoading: false })
     }
   }
 }))

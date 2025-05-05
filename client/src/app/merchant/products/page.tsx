@@ -604,7 +604,7 @@ function ProductListCard({
                         ) : (
                           <Button 
                             variant="ghost" 
-                            size="sm"
+                            size="lg"
                             onClick={() => handleListProduct(product)}
                             className="text-blue-600 hover:text-blue-800"
                             disabled={isLoading}
