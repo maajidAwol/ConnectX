@@ -62,7 +62,7 @@ class FlashSale extends StatelessWidget {
                         image: products[index].coverUrl,
                         brandName: products[index].name,
                       title: products[index].subDescription,
-                      price: products[index].priceSale! > products[index].price ? products[index].priceSale! : products[index].price,
+                      price: products[index].priceSale != null && products[index].priceSale! > products[index].price ? products[index].priceSale! : products[index].price,
                       priceAfetDiscount: products[index].price,
                       dicountpercent: products[index].priceSale != null && products[index].priceSale! > products[index].price
                           ? ((products[index].price -

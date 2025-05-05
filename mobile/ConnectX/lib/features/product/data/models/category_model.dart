@@ -23,11 +23,18 @@ class CategoryModel extends Category {
       description: json['description'],
       coverImg: json['coverImg'],
       isActive: json['isActive'],
-      children: (json['children'] as List?)
-          ?.map((child) => CategoryModel.fromJson(child))
-          .toList(),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      children:
+          (json['children'] as List?)
+              ?.map((child) => CategoryModel.fromJson(child))
+              .toList(),
+      createdAt:
+          json['createdAt'] is String
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now(),
+      updatedAt:
+          json['updatedAt'] is String
+              ? DateTime.parse(json['updatedAt'])
+              : DateTime.now(),
     );
   }
 

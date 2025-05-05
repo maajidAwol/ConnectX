@@ -9,7 +9,6 @@ djangorestframework = "*"
 drf-yasg = "*"
 gunicorn = "*"
 psycopg2-binary = "*"
-python-dotenv = "*"
 graphviz = "*"
 django-extensions = "*"
 django-cors-headers = "*"
@@ -17,6 +16,7 @@ pillow = "*"
 djangorestframework-simplejwt = "*"
 cloudinary = "*"
 django-cloudinary-storage = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
