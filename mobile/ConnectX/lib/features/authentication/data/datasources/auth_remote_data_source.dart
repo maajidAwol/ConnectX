@@ -7,17 +7,13 @@ import '../models/address_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> login(String email, String password);
-  Future<bool> signup(
-    String email,
-    String password,
-    String confirmPassword,
-    String firstName,
-    String lastName,
-    String phone,
-    String sex,
-    String address,
-    bool agreement,
-  );
+  Future<UserModel> signup({
+    required String tenant,
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  });
   Future<void> logout();
   // Future<UserModel> getCurrentUser();
   Future<void> verifyEmail(String email, String otp);
@@ -53,96 +49,82 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> login(String email, String password) async {
     final response = await client.post(
-      Uri.parse('https://api.korecha.com.et/api/auth/sign-in'),
-      body: json.encode({
-        'identifier': email,
-        'password': password,
-      }),
+      Uri.parse('https://connectx-9agd.onrender.com/api/auth/login/'),
       headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email, 'password': password}),
     );
-    // print(response.body);
-    // print(response.statusCode);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      // Save credentials and token
 
-      await storageService.saveUserCredentials(email, password);
-      await storageService.saveAccessToken(data['accessToken']);
+      await storageService.saveAccessToken(data['access']);
+      await storageService.saveRefreshToken(data['refresh']);
 
-      final user = UserModel.fromJson(data);
+      final user = UserModel.fromJson(data['user']);
       await storageService.saveUser(user);
 
       return user;
-    } else if (response.statusCode == 203) {
-      final data = json.decode(response.body);
-      if (data['status'] == 'verification_required') {
-        throw VerificationRequiredException(
-          message: data['message'],
-          email: email,
-          accessToken: data['accessToken'],
-        );
-      }
-      return UserModel.fromJson(data);
     } else {
-      final data = json.decode(response.body);
-      String message = data['message'] ?? 'Server error';
+      String message = 'Login failed';
+      try {
+        final data = json.decode(response.body);
+        message = data['detail'] ?? data['message'] ?? 'Unknown login error';
+      } catch (e) {
+        message = 'Server error: ${response.statusCode}';
+      }
       throw ServerException(message);
     }
   }
 
   @override
-  Future<bool> signup(
-    String email,
-    String password,
-    String confirmPassword,
-    String firstName,
-    String lastName,
-    String phone,
-    String sex,
-    String address,
-    bool agreement,
-  ) async {
+  Future<UserModel> signup({
+    required String tenant,
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
     final response = await client.post(
-      Uri.parse('https://api.korecha.com.et/api/auth/sign-up'),
+      Uri.parse('https://connectx-9agd.onrender.com/api/users/'),
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: json.encode({
-        'role': 'customer',
-        'firstName': firstName,
-        'lastName': lastName,
+        'tenant': tenant,
+        'name': name,
         'email': email,
-        'phone': phone,
-        'sex': sex,
-        'address': address,
         'password': password,
-        'confirmPassword': confirmPassword,
-        'agreement': agreement,
+        'role': role,
       }),
-    ); 
+    );
 
     if (response.statusCode == 201) {
-
-      // print(response.body);
       final data = json.decode(response.body);
-      // Save credentials and token
-      // await storageService.saveUserCredentials(email, password);
-      // await storageService.saveAccessToken(data['accessToken']);
-      if (data['success'] == true) {
-        return true;
-      } else {
-        return false;
-      }
-    } else if (response.statusCode == 422) {
-      final error = json.decode(response.body);
-      throw ValidationException(
-          error['message'] ?? 'Validation error occurred');
+      final user = UserModel.fromJson(data);
+      return user;
     } else {
-      final data = json.decode(response.body);
-      String message = data['message'] ?? 'Server error';
-      throw ServerException(message);
+      String message = 'Signup failed';
+      try {
+        final data = json.decode(response.body);
+        if (data is Map<String, dynamic>) {
+          message = data.entries
+              .map(
+                (e) =>
+                    '${e.key}: ${e.value is List ? e.value.join(', ') : e.value}',
+              )
+              .join('\n');
+        } else {
+          message = data.toString();
+        }
+      } catch (e) {
+        message = 'Server error: ${response.statusCode}';
+      }
+      if (response.statusCode == 400 || response.statusCode == 422) {
+        throw ValidationException(message);
+      } else {
+        throw ServerException(message);
+      }
     }
   }
 
@@ -155,22 +137,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<List<AddressModel>> getAddresses() async {
     final token = storageService.getAccessToken();
     final user = await getUserProfile();
-
-    // Create primary address from user profile if it has an address
-    List<AddressModel> addresses = [];
-    if (user.address.isNotEmpty == true) {
-      addresses.add(AddressModel(
-        id: 'profile',
-        fullAddress: user.address,
-        primary: true,
-        phoneNumber: user.phoneNumber ?? '',
-        addressType: 'home',
-      ));
-    }
-
     final userId = user.id;
+
     final response = await client.get(
-      Uri.parse('https://api.korecha.com.et/api/user/$userId/addresses'),
+      Uri.parse(
+        'https://connectx-9agd.onrender.com/api/user/$userId/addresses',
+      ),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -180,12 +152,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     if (response.statusCode == 200) {
       final List<dynamic> addressesJson = json.decode(response.body);
-      final additionalAddresses = addressesJson
-          .map((json) => AddressModel.fromJson(json))
-          .where((addr) => addr.id != 'profile') // Exclude duplicates
-          .toList();
-
-      addresses.addAll(additionalAddresses);
+      final addresses =
+          addressesJson.map((json) => AddressModel.fromJson(json)).toList();
       return addresses;
     } else {
       final error = json.decode(response.body);
@@ -201,15 +169,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final response = await client.post(
         Uri.parse(
-            'https://api.korecha.com.et/api/user/$userId/addresses/create'),
+          'https://connectx-9agd.onrender.com/api/user/$userId/addresses/create',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
           "fullAddress": address.fullAddress,
-          "addressType": "home",
-          "primary": false
+          "addressType": address.addressType,
+          "primary": address.primary,
+          "phoneNumber": address.phoneNumber,
         }),
       );
 
@@ -225,10 +195,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> updateAddress(AddressModel address) async {
-    const userId = '1'; // TODO: Get actual user ID
+    final token = storageService.getAccessToken();
+    final user = await getUserProfile();
+    final userId = user.id;
     final response = await client.put(
       Uri.parse(
-          'https://api.korecha.com.et/api/user/$userId/addresses/${address.id}'),
+        'https://connectx-9agd.onrender.com/api/user/$userId/addresses/${address.id}',
+      ),
       headers: _headers,
       body: json.encode(address.toJson()),
     );
@@ -241,9 +214,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> deleteAddress(String id) async {
-    const userId = '1'; // TODO: Get actual user ID
+    final token = storageService.getAccessToken();
+    final user = await getUserProfile();
+    final userId = user.id;
     final response = await client.delete(
-      Uri.parse('https://api.korecha.com.et/api/user/$userId/addresses/$id'),
+      Uri.parse(
+        'https://connectx-9agd.onrender.com/api/user/$userId/addresses/$id',
+      ),
       headers: _headers,
     );
 
@@ -253,27 +230,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-  // @override
-  // Future<UserModel> getCurrentUser() async {
-  //   // Implementation needed
-  //   throw UnimplementedError();
-  // }
-
   @override
   Future<void> verifyEmail(String email, String otp) async {
     final response = await client.post(
-      Uri.parse('$baseUrl/auth/email/verify'),
+      Uri.parse('https://connectx-9agd.onrender.com/api/auth/email/verify'),
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: json.encode({
-        'email': email,
-        'otp': otp,
-      }),
+      body: json.encode({'email': email, 'otp': otp}),
     );
-    // print(response.statusCode);
-    // print(response.body);
     if (response.statusCode != 200) {
       final error = json.decode(response.body);
       throw ValidationException(error['error'] ?? 'Failed to verify email');
@@ -283,10 +249,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> resendVerification(String email) async {
     final response = await client.post(
-      Uri.parse('$baseUrl/auth/email/verify/resend'),
+      Uri.parse(
+        'https://connectx-9agd.onrender.com/api/auth/email/verify/resend',
+      ),
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: json.encode({'email': email}),
     );
@@ -294,27 +262,56 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (response.statusCode != 200) {
       final error = json.decode(response.body);
       throw ValidationException(
-          error['message'] ?? 'Failed to resend verification');
+        error['message'] ?? 'Failed to resend verification',
+      );
     }
   }
 
   @override
   Future<UserModel> getUserProfile() async {
     final token = storageService.getAccessToken();
+    final user = storageService.getUser();
+
+    if (token == null || user == null) {
+      throw ServerException("User not logged in or token/user data missing.");
+    }
+
+    final userId = user.id;
 
     final response = await client.get(
-      Uri.parse('https://api.korecha.com.et/api/auth/me'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        "Authorization": "Bearer $token",
-      },
+      Uri.parse('https://connectx-9agd.onrender.com/api/users/$userId/'),
+      headers: {'Accept': 'application/json', "Authorization": "Bearer $token"},
     );
 
     if (response.statusCode != 200) {
-      final error = json.decode(response.body);
-      throw ValidationException(error['error'] ?? 'Failed to get user profile');
+      String errorMessage = 'Failed to get user profile';
+      try {
+        final error = json.decode(response.body);
+        errorMessage =
+            error['detail'] ??
+            error['message'] ??
+            'Server error: ${response.statusCode}';
+      } catch (e) {
+        errorMessage =
+            'Server error: ${response.statusCode}. Unable to parse error response.';
+      }
+      if (response.statusCode == 401) {
+        throw ServerException(
+          "Unauthorized (401): Token may be invalid or expired.",
+        );
+      } else if (response.statusCode == 404) {
+        throw ServerException(
+          "Not Found (404): User not found with ID: $userId",
+        );
+      }
+      throw ServerException(errorMessage);
     }
-    return UserModel.fromJson(json.decode(response.body));
+
+    final profileData = json.decode(response.body);
+    final updatedUser = UserModel.fromJson(profileData);
+
+    await storageService.saveUser(updatedUser);
+
+    return updatedUser;
   }
 }

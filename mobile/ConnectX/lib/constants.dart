@@ -13,50 +13,52 @@ const productDemoImg6 = "https://i.imgur.com/JfyZlnO.png";
 
 const grandisExtendedFont = "Grandis Extended";
 
-// Coffee theme colors
-const Color primaryColor = Color(0xFF6F4E37); // Rich coffee brown
+// --- Sky Blue Theme Colors ---
+const Color primaryColor = Color(0xFF039BE5); // Main blue color
 
-const MaterialColor primaryMaterialColor =
-    MaterialColor(0xFF6F4E37, <int, Color>{
-  50: Color(0xFFF5F0ED), // Lightest coffee cream
-  100: Color(0xFFE6D9D1), // Light coffee cream
-  200: Color(0xFFD6C0B4), // Coffee with lots of cream
-  300: Color(0xFFC5A696), // Latte color
-  400: Color(0xFFB78F7B), // Cappuccino
-  500: Color(0xFF6F4E37), // Primary coffee brown
-  600: Color(0xFF664631), // Darker roast
-  700: Color(0xFF5A3C2A), // Dark roast
-  800: Color(0xFF4E3323), // Extra dark roast
-  900: Color(0xFF3B2317), // Espresso dark
-});
+const MaterialColor primaryMaterialColor = MaterialColor(
+  0xFF039BE5,
+  <int, Color>{
+    50: Color(0xFFE1F5FE), // Lightest Sky Blue
+    100: Color(0xFFB3E5FC), // Lighter Sky Blue
+    200: Color(0xFF81D4FA), // Light Sky Blue
+    300: Color(0xFF4FC3F7), // Sky Blue
+    400: Color(0xFF29B6F6), // Bright Sky Blue
+    500: Color(0xFF03A9F4), // Standard Blue
+    600: Color(0xFF039BE5), // Primary blue (slightly darker)
+    700: Color(0xFF0288D1), // Darker Blue
+    800: Color(0xFF0277BD), // Even Darker Blue
+    900: Color(0xFF01579B), // Deep Blue
+  },
+);
 
-// Neutral and supporting colors
-const Color blackColor = Color(0xFF2C1810); // Deep coffee black
-const Color blackColor80 = Color(0xFF4A332B);
-const Color blackColor60 = Color(0xFF695A54);
-const Color blackColor40 = Color(0xFF8C817C);
-const Color blackColor20 = Color(0xFFB0A8A5);
-const Color blackColor10 = Color(0xFFD2CCC9);
-const Color blackColor5 = Color(0xFFE9E6E4);
+// --- Neutral and Supporting Colors ---
+const Color blackColor = Colors.black; // Standard black
+// Using standard Material grey shades instead of custom black opacities
+const Color blackColor80 = Color(
+  0xCC000000,
+); // Keeping for potential direct usage, but prefer grey shades
+const Color blackColor60 = Color(0x99000000);
+const Color blackColor40 = Color(0x66000000);
+const Color blackColor20 = Color(0x33000000);
+const Color blackColor10 = Color(0x1A000000);
+const Color blackColor5 = Color(0x0D000000);
 
 const Color whiteColor = Colors.white;
-const Color whileColor80 = Color(0xFFE8E1DD);
-const Color whileColor60 = Color(0xFFD1C5BE);
-const Color whileColor40 = Color(0xFFBAA89F);
-const Color whileColor20 = Color(0xFFA38C80);
-const Color whileColor10 = Color(0xFF8C7062);
-const Color whileColor5 = Color(0xFF755C4F);
+// Removing coffee-themed 'whileColor' variants
+// Use standard white with opacity (e.g., Colors.white70) or light grey shades if needed
 
-const Color greyColor = Color(0xFFB8ACA3); // Warm grey
-const Color lightGreyColor = Color(0xFFF5F1EE); // Light cream
-const Color darkGreyColor = Color(0xFF2C1810); // Dark coffee
+const Color greyColor = Colors.grey; // Standard grey
+const Color lightGreyColor = Color(0xFFEEEEEE); // Material Grey[200]
+const Color darkGreyColor = Color(0xDD000000); // Colors.black87
 
-const Color purpleColor =
-    Color(0xFF6F4E37); // Changed to coffee brown for consistency
-const Color successColor = Color(0xFF2E7D32); // Forest green
-const Color warningColor = Color(0xFFD4A056); // Caramel
-const Color errorColor = Color(0xFFC62828); // Deep red
+// Functional Colors
+const Color purpleColor = primaryColor; // Align with the new primary color
+const Color successColor = Color(0xFF2E7D32); // Forest green (Keep)
+const Color warningColor = Colors.amber; // Amber/Orange (Changed from Caramel)
+const Color errorColor = Color(0xFFC62828); // Deep red (Keep)
 
+// --- Defaults ---
 const double defaultPadding = 16.0;
 const double defaultBorderRadious = 12.0;
 const Duration defaultDuration = Duration(milliseconds: 300);
@@ -64,8 +66,10 @@ const Duration defaultDuration = Duration(milliseconds: 300);
 final passwordValidator = MultiValidator([
   RequiredValidator(errorText: 'Password is required'),
   MinLengthValidator(8, errorText: 'password must be at least 8 digits long'),
-  PatternValidator(r'(?=.*?[#?!@$%^&*-])',
-      errorText: 'passwords must have at least one special character')
+  PatternValidator(
+    r'(?=.*?[#?!@$%^&*-])',
+    errorText: 'passwords must have at least one special character',
+  ),
 ]);
 
 final emaildValidator = MultiValidator([
