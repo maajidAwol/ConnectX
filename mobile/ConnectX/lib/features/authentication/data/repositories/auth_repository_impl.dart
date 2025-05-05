@@ -110,10 +110,10 @@ class AuthRepositoryImpl implements AuthRepository {
         await remoteDataSource.addAddress(
           AddressModel(
             id: address.id,
+            label: address.label,
             fullAddress: address.fullAddress,
-            primary: address.primary,
             phoneNumber: address.phoneNumber,
-            addressType: address.addressType,
+            isDefault: address.isDefault,
           ),
         );
         return const Right(null);
@@ -132,10 +132,10 @@ class AuthRepositoryImpl implements AuthRepository {
         await remoteDataSource.updateAddress(
           AddressModel(
             id: address.id,
+            label: address.label,
             fullAddress: address.fullAddress,
-            primary: address.primary,
             phoneNumber: address.phoneNumber,
-            addressType: address.addressType,
+            isDefault: address.isDefault,
           ),
         );
         return const Right(null);

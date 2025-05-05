@@ -1,15 +1,19 @@
 class Address {
   final String id;
+  final String label;
   final String fullAddress;
-  final bool primary;
   final String phoneNumber;
-  final String addressType;
+  final bool isDefault;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const Address({
     required this.id,
+    required this.label,
     required this.fullAddress,
-    required this.primary,
     required this.phoneNumber,
-    required this.addressType,
+    required this.isDefault,
+    this.createdAt,
+    this.updatedAt,
   });
 }

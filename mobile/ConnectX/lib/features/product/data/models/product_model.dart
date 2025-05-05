@@ -1,5 +1,6 @@
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_entities.dart';
+import 'dart:ui';
 
 class ProductModel extends Product {
   ProductModel({
@@ -33,6 +34,7 @@ class ProductModel extends Product {
     required super.saleLabel,
     required super.createdAt,
     required super.brand,
+    super.additionalInfo,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -49,19 +51,23 @@ class ProductModel extends Product {
         priceSale: (json['priceSale'] as num?)?.toDouble(),
         taxes: (json['taxes'] as num?)?.toDouble() ?? 0.0,
         coverUrl: json['coverUrl'] as String? ?? '',
-        tags: (json['tags'] as List<dynamic>?)
+        tags:
+            (json['tags'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        sizes: (json['sizes'] as List<dynamic>?)
+        sizes:
+            (json['sizes'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        colors: (json['colors'] as List<dynamic>?)
+        colors:
+            (json['colors'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        gender: (json['gender'] as List<dynamic>?)
+        gender:
+            (json['gender'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
@@ -78,10 +84,12 @@ class ProductModel extends Product {
         ratings: _parseRatings(json['ratings']),
         newLabel: _parseLabel(json['newLabel']),
         saleLabel: _parseSaleLabel(json['saleLabel']),
-        createdAt: json['createdAt'] != null
-            ? DateTime.parse(json['createdAt'].toString())
-            : DateTime.now(),
+        createdAt:
+            json['createdAt'] != null
+                ? DateTime.parse(json['createdAt'].toString())
+                : DateTime.now(),
         brand: _parseBrand(json['brand']),
+        additionalInfo: json['additional_info'],
       );
     } catch (e) {
       print('Error parsing ProductModel: $e');
@@ -172,5 +180,46 @@ class ProductModel extends Product {
     }
     return SaleLabel.empty();
   }
-  
+
+  // Convert color string to Color object
+  static Color parseColor(String colorStr) {
+    if (colorStr.startsWith('#')) {
+      try {
+        return Color(
+          int.parse(colorStr.substring(1, 7), radix: 16) + 0xFF000000,
+        );
+      } catch (e) {
+        return Color(0xFF2196F3); // Default to blue if invalid hex
+      }
+    } else {
+      // Handle named colors
+      switch (colorStr.toLowerCase()) {
+        case 'red':
+          return Color(0xFFF44336);
+        case 'green':
+          return Color(0xFF4CAF50);
+        case 'blue':
+          return Color(0xFF2196F3);
+        case 'yellow':
+          return Color(0xFFFFEB3B);
+        case 'orange':
+          return Color(0xFFFF9800);
+        case 'purple':
+          return Color(0xFF9C27B0);
+        case 'pink':
+          return Color(0xFFE91E63);
+        case 'brown':
+          return Color(0xFF795548);
+        case 'grey':
+        case 'gray':
+          return Color(0xFF9E9E9E);
+        case 'black':
+          return Color(0xFF000000);
+        case 'white':
+          return Color(0xFFFFFFFF);
+        default:
+          return Color(0xFF2196F3); // Default to blue
+      }
+    }
+  }
 }
