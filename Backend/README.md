@@ -47,6 +47,10 @@ ConnectX is a Django-based backend application designed to manage users, product
    ```bash
    python manage.py runserver
    ```
+8. **Run the tests:**
+   ```bash
+   python connectx_backend/manage.py test users products orders tenants categories payments shipping analytics reviews --noinput
+   ```
 ## Database Schema Visualization in Django
 
 ### 📌 Prerequisites

@@ -3,10 +3,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, ChevronDown, Database, Home, Menu, Settings, Shield, Users, X } from "lucide-react"
+import { BarChart2, ChevronDown, Database, Home, LogOut, Menu, Settings, Shield, Users, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { useAuthStore } from "@/store/authStore"
 
 interface SidebarProps {
   className?: string
@@ -15,7 +16,8 @@ interface SidebarProps {
 export function AdminSidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-
+  const logout = useAuthStore((state) => state.logout)
+  
   const routes = [
     {
       title: "Dashboard",
@@ -34,28 +36,23 @@ export function AdminSidebar({ className }: SidebarProps) {
         // { title: "Account Management", href: "/admin/merchants/accounts" },
       ],
     },
-    // {
-    //   title: "Developer Oversight",
-    //   href: "/admin/developers",
-    //   icon: Shield,
-    //   isActive: pathname.startsWith("/admin/developers"),
-    //   submenu: [
-    //     { title: "Developer Directory", href: "/admin/developers" },
-    //     { title: "API Rate Limits", href: "/admin/developers/api-limits" },
-    //     { title: "Product Linkage", href: "/admin/developers/products" },
-    //   ],
-    // },
-    // {
-    //   title: "Platform Settings",
-    //   href: "/admin/settings",
-    //   icon: Settings,
-    //   isActive: pathname.startsWith("/admin/settings"),
-    //   submenu: [
-    //     { title: "Global Config", href: "/admin/settings" },
-    //     { title: "Feature Toggles", href: "/admin/settings/features" },
-    //     { title: "Notifications", href: "/admin/settings/notifications" },
-    //   ],
-    // },
+    {
+      title: "Add Admin",
+      href: "/admin/add-admin",
+      icon: Shield,
+      isActive: pathname.startsWith("/admin/add-admin"),
+    },
+    {
+      title: "Platform Settings",
+      href: "/admin/settings",
+      icon: Settings,
+      isActive: pathname.startsWith("/admin/settings"),
+      submenu: [
+        { title: "Global Config", href: "/admin/settings" },
+        { title: "Feature Toggles", href: "/admin/settings/features" },
+        { title: "Notifications", href: "/admin/settings/notifications" },
+      ],
+    },
     {
       title: "Analytics",
       href: "/admin/analytics",
@@ -84,10 +81,10 @@ export function AdminSidebar({ className }: SidebarProps) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-[280px] p-0 h-full">
-          <div className="flex h-full flex-col bg-white">
-            <div className="flex h-14 items-center border-b px-4">
-              <div className="flex items-center gap-2 font-semibold">
-                <Database className="h-5 w-5 text-blue-600" />
+          <div className="flex h-full flex-col bg-background border-r border-border">
+            <div className="flex h-14 items-center border-b border-border px-4">
+              <div className="flex items-center gap-2 font-semibold text-foreground">
+                <Database className="h-5 w-5 text-primary" />
                 <span>ConnectX Admin</span>
               </div>
               <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setIsOpen(false)}>
@@ -104,7 +101,9 @@ export function AdminSidebar({ className }: SidebarProps) {
                           onClick={() => toggleSubmenu(route.title)}
                           className={cn(
                             "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium",
-                            route.isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100",
+                            route.isActive 
+                              ? "bg-primary/10 text-primary" 
+                              : "text-foreground hover:bg-muted",
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -116,7 +115,7 @@ export function AdminSidebar({ className }: SidebarProps) {
                           />
                         </button>
                         {openMenus[route.title] && (
-                          <div className="ml-6 mt-1 grid gap-1 pl-3 border-l border-gray-200">
+                          <div className="ml-6 mt-1 grid gap-1 pl-3 border-l border-border">
                             {route.submenu.map((item) => (
                               <Link
                                 key={item.href}
@@ -125,8 +124,8 @@ export function AdminSidebar({ className }: SidebarProps) {
                                 className={cn(
                                   "rounded-md px-3 py-2 text-sm",
                                   pathname === item.href
-                                    ? "bg-blue-50 text-blue-700"
-                                    : "text-gray-700 hover:bg-gray-100",
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                 )}
                               >
                                 {item.title}
@@ -141,7 +140,9 @@ export function AdminSidebar({ className }: SidebarProps) {
                         onClick={() => setIsOpen(false)}
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                          route.isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100",
+                          route.isActive 
+                            ? "bg-primary/10 text-primary" 
+                            : "text-foreground hover:bg-muted",
                         )}
                       >
                         <route.icon className="h-5 w-5" />
@@ -152,26 +153,25 @@ export function AdminSidebar({ className }: SidebarProps) {
                 ))}
               </nav>
             </div>
-            <div className="border-t p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-700 font-medium">A</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-gray-500">admin@connectx.com</p>
-                </div>
-              </div>
+            <div className="border-t border-border p-4">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                onClick={logout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </Button>
             </div>
           </div>
         </SheetContent>
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <div className={cn("hidden fixed top-0 left-0 h-screen w-64 flex-col border-r bg-white md:flex z-10", className)}>
-        <div className="flex h-14 items-center border-b px-4">
-          <div className="flex items-center gap-2 font-semibold">
-            <Database className="h-5 w-5 text-blue-600" />
+      <div className={cn("hidden fixed top-0 left-0 h-screen w-64 flex-col border-r border-border bg-background md:flex z-10", className)}>
+        <div className="flex h-14 items-center border-b border-border px-4">
+          <div className="flex items-center gap-2 font-semibold text-foreground">
+            <Database className="h-5 w-5 text-primary" />
             <span>ConnectX Admin</span>
           </div>
         </div>
@@ -185,7 +185,9 @@ export function AdminSidebar({ className }: SidebarProps) {
                       onClick={() => toggleSubmenu(route.title)}
                       className={cn(
                         "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium",
-                        route.isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100",
+                        route.isActive 
+                          ? "bg-primary/10 text-primary" 
+                          : "text-foreground hover:bg-muted",
                       )}
                     >
                       <div className="flex items-center gap-3">
@@ -197,14 +199,16 @@ export function AdminSidebar({ className }: SidebarProps) {
                       />
                     </button>
                     {openMenus[route.title] && (
-                      <div className="ml-6 mt-1 grid gap-1 pl-3 border-l border-gray-200">
+                      <div className="ml-6 mt-1 grid gap-1 pl-3 border-l border-border">
                         {route.submenu.map((item) => (
                           <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
                               "rounded-md px-3 py-2 text-sm",
-                              pathname === item.href ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100",
+                              pathname === item.href 
+                                ? "bg-primary/10 text-primary" 
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
                             )}
                           >
                             {item.title}
@@ -218,7 +222,9 @@ export function AdminSidebar({ className }: SidebarProps) {
                     href={route.href}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                      route.isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100",
+                      route.isActive 
+                        ? "bg-primary/10 text-primary" 
+                        : "text-foreground hover:bg-muted",
                     )}
                   >
                     <route.icon className="h-5 w-5" />
@@ -229,16 +235,15 @@ export function AdminSidebar({ className }: SidebarProps) {
             ))}
           </nav>
         </div>
-        <div className="border-t p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-700 font-medium">A</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium">Admin User</p>
-              <p className="text-xs text-gray-500">admin@connectx.com</p>
-            </div>
-          </div>
+        <div className="border-t border-border p-4">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            onClick={logout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
     </>

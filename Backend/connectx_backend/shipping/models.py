@@ -1,14 +1,23 @@
 import uuid
 from django.db import models
-from orders.models import Order
+from users.models import User
 
-class OrderShippingAddress(models.Model):
+
+class ShippingAddress(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="shipping_address")
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shipping_addresses",
+    )
+    label = models.CharField(max_length=100)
     full_address = models.TextField()
     phone_number = models.CharField(max_length=20)
+    is_default = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Shipping for Order {self.order.order_number}"
+        return f"{self.label} - {self.full_address}"

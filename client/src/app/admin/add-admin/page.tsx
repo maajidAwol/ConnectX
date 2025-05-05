@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import  DashboardLayout  from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,7 +31,7 @@ export default function AddAdminPage() {
   }
 
   return (
-    <DashboardLayout title="Add Administrator" description="Create a new administrator account" role="admin">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto py-6">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
@@ -104,7 +103,7 @@ export default function AddAdminPage() {
           </form>
         </Card>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 
