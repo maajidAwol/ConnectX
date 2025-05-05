@@ -12,17 +12,10 @@ class AuthSuccess extends AuthState {
   AuthSuccess({required this.user});
 }
 
-class SignUpSuccess extends AuthState {
-  final bool success;
-
-  SignUpSuccess({required this.success});
-}
-
-class LogoutSuccess extends AuthState {}
-class AuthError extends AuthState {
-  final String message;
-
-  AuthError({required this.message});
+class SignUpRedirectToLogin extends AuthState {
+  final String email;
+  final String password;
+  SignUpRedirectToLogin({required this.email, required this.password});
 }
 
 class AuthVerificationRequired extends AuthState {
@@ -35,5 +28,12 @@ class AuthVerificationRequired extends AuthState {
     required this.message,
     required this.accessToken,
   });
-     
 }
+
+class AuthError extends AuthState {
+  final String message;
+
+  AuthError({required this.message});
+}
+
+class LogoutSuccess extends AuthState {}

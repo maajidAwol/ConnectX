@@ -7,7 +7,7 @@ import 'banner_s.dart';
 class BannerSStyle1 extends StatelessWidget {
   const BannerSStyle1({
     super.key,
-    this.image = "assets/koricha/banners/1.png",
+    this.image = "assets/connectx/banners/1.png",
     required this.title,
     required this.press,
     this.subtitle,

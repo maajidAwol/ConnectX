@@ -8,7 +8,7 @@ import 'banner_m.dart';
 class BannerMWithCounter extends StatefulWidget {
   const BannerMWithCounter({
     super.key,
-    this.image = "assets/koricha/banners/2.png",
+    this.image = "assets/connectx/banners/2.png",
     required this.text,
     required this.duration,
     required this.press,
