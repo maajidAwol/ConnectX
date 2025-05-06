@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/authentication/presentation/state/auth/bloc/auth_bloc.dart';
 import 'package:korecha/features/authentication/presentation/widgets/auth/signup_form.dart';
-
 import 'package:korecha/route/route_constants.dart';
+import 'package:korecha/features/authentication/presentation/pages/auth/login_page.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -15,36 +15,34 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
-  String _selectedSex = 'male';
-  bool _agreement = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is SignUpSuccess) {
+          if (state is SignUpRedirectToLogin) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(
-                  'Registration successful! Please login to continue.',
-                ),
+                content: Text('Registration successful! Please login.'),
                 duration: Duration(seconds: 2),
               ),
             );
 
-            // Navigate to login screen after showing the message
             Future.delayed(const Duration(seconds: 2), () {
-              Navigator.pushNamedAndRemoveUntil(
+              Navigator.pushAndRemoveUntil(
                 context,
-                logInScreenRoute,
+                MaterialPageRoute(
+                  builder:
+                      (context) => LoginScreen(
+                        initialEmail: state.email,
+                        initialPassword: state.password,
+                      ),
+                ),
                 (route) => false,
               );
             });
@@ -60,12 +58,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Image.asset(
-                //   "assets/images/signUp_dark.png",
-                //   height: MediaQuery.of(context).size.height * 0.35,
-                //   width: double.infinity,
-                //   fit: BoxFit.cover,
-                // ),
                 Padding(
                   padding: const EdgeInsets.only(
                     top: 70,
@@ -76,7 +68,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: SizedBox(
                     width: width * 0.6,
                     height: height * 0.16,
-                    child: Image.asset("assets/koricha/logo-full.png"),
+                      child: Image.asset("assets/connectx/transparent_logo.png"),
                   ),
                 ),
                 Padding(
@@ -91,48 +83,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: defaultPadding / 2),
                       const Text(
-                        "Please enter your valid data in order \n to create an account.",
+                        "Create your account to continue.",
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: defaultPadding),
                       SignUpForm(
                         formKey: _formKey,
+                        nameController: _nameController,
                         emailController: _emailController,
                         passwordController: _passwordController,
                         confirmPasswordController: _confirmPasswordController,
-                        firstNameController: _firstNameController,
-                        lastNameController: _lastNameController,
-                        phoneController: _phoneController,
-                        addressController: _addressController,
-                        selectedSex: _selectedSex,
-                        agreement: _agreement,
-                        onSexChanged: (value) {
-                          setState(() => _selectedSex = value ?? 'male');
-                        },
-                        onAgreementChanged: (value) {
-                          setState(() => _agreement = value ?? false);
-                        },
                       ),
-                      const SizedBox(height: defaultPadding),
+                      const SizedBox(height: defaultPadding * 1.5),
                       if (state is AuthLoading)
                         const Center(child: CircularProgressIndicator())
                       else
                         ElevatedButton(
                           onPressed: () {
-                            if (_formKey.currentState!.validate() &&
-                                _agreement) {
+                            FocusScope.of(context).unfocus();
+                            if (_formKey.currentState!.validate()) {
                               context.read<AuthBloc>().add(
                                 SignUpRequested(
+                                  name: _nameController.text,
                                   email: _emailController.text,
                                   password: _passwordController.text,
-                                  confirmPassword:
-                                      _confirmPasswordController.text,
-                                  firstName: _firstNameController.text,
-                                  lastName: _lastNameController.text,
-                                  phoneNumber: _phoneController.text,
-                                  sex: _selectedSex,
-                                  address: _addressController.text,
-                                  agreement: _agreement,
                                 ),
                               );
                             }
@@ -164,13 +138,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 }

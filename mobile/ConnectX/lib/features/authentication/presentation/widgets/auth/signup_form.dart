@@ -7,31 +7,17 @@ class SignUpForm extends StatelessWidget {
   const SignUpForm({
     super.key,
     required this.formKey,
+    required this.nameController,
     required this.emailController,
     required this.passwordController,
     required this.confirmPasswordController,
-    required this.firstNameController,
-    required this.lastNameController,
-    required this.phoneController,
-    required this.addressController,
-    required this.selectedSex,
-    required this.agreement,
-    required this.onSexChanged,
-    required this.onAgreementChanged,
   });
 
   final GlobalKey<FormState> formKey;
+  final TextEditingController nameController;
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
-  final TextEditingController firstNameController;
-  final TextEditingController lastNameController;
-  final TextEditingController phoneController;
-  final TextEditingController addressController;
-  final String selectedSex;
-  final bool agreement;
-  final Function(String?) onSexChanged;
-  final Function(bool?) onAgreementChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -46,29 +32,15 @@ class SignUpForm extends StatelessWidget {
       child: Column(
         children: [
           TextFormField(
-            controller: firstNameController,
+            controller: nameController,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'First name is required';
+                return 'Name is required';
               }
               return null;
             },
             decoration: const InputDecoration(
-              hintText: "First Name",
-              prefixIcon: Icon(Icons.person_outline),
-            ),
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: lastNameController,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Last name is required';
-              }
-              return null;
-            },
-            decoration: const InputDecoration(
-              hintText: "Last Name",
+              hintText: "Full Name",
               prefixIcon: Icon(Icons.person_outline),
             ),
           ),
@@ -77,13 +49,18 @@ class SignUpForm extends StatelessWidget {
             controller: emailController,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Email or phone number is required';
+                return 'Email is required';
+              }
+              if (!RegExp(
+                r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+              ).hasMatch(value)) {
+                return 'Please enter a valid email address';
               }
               return null;
             },
-            keyboardType: TextInputType.text,
+            keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              hintText: "Email or phone number",
+              hintText: "Email",
               prefixIcon: Padding(
                 padding: const EdgeInsets.all(defaultPadding * 0.75),
                 child: SvgPicture.asset(
@@ -102,87 +79,8 @@ class SignUpForm extends StatelessWidget {
           ),
           const SizedBox(height: defaultPadding),
           TextFormField(
-            controller: phoneController,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Phone number is required';
-              }
-              return null;
-            },
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              hintText: "Phone Number",
-              prefixIcon: Icon(Icons.phone),
-            ),
-          ),
-          const SizedBox(height: defaultPadding),
-          DropdownButtonFormField<String>(
-            dropdownColor: Theme.of(context).scaffoldBackgroundColor,
-            value: selectedSex,
-            decoration: const InputDecoration(
-              hintText: "Sex",
-              prefixIcon: Icon(Icons.person_outline),
-            ),
-            style: Theme.of(context).textTheme.bodyLarge,
-            icon: Icon(
-              Icons.arrow_drop_down,
-              color: Theme.of(context).iconTheme.color,
-            ),
-            borderRadius: BorderRadius.circular(8),
-            items: [
-              DropdownMenuItem(
-                value: "male",
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: defaultPadding / 2,
-                  ),
-                  child: Text(
-                    "Male",
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              ),
-              DropdownMenuItem(
-                value: "female",
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: defaultPadding / 2,
-                  ),
-                  child: Text(
-                    "Female",
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              ),
-            ],
-            onChanged: onSexChanged,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please select your sex';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: addressController,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Address is required';
-              }
-              return null;
-            },
-            maxLines: 1,
-            decoration: const InputDecoration(
-              hintText: "Address",
-              prefixIcon: Icon(Icons.location_on_outlined),
-            ),
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
             controller: passwordController,
             validator: passwordValidator,
-            // validator: passwordValidator.call,
             obscureText: true,
             decoration: InputDecoration(
               hintText: "Password",
@@ -206,6 +104,9 @@ class SignUpForm extends StatelessWidget {
           TextFormField(
             controller: confirmPasswordController,
             validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please confirm your password';
+              }
               if (value != passwordController.text) {
                 return 'Passwords do not match';
               }
@@ -218,6 +119,8 @@ class SignUpForm extends StatelessWidget {
                 padding: const EdgeInsets.all(defaultPadding * 0.75),
                 child: SvgPicture.asset(
                   "assets/icons/Lock.svg",
+                  height: 24,
+                  width: 24,
                   colorFilter: ColorFilter.mode(
                     Theme.of(
                       context,
@@ -227,13 +130,6 @@ class SignUpForm extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: defaultPadding),
-          CheckboxListTile(
-            value: agreement,
-            onChanged: onAgreementChanged,
-            title: const Text('I agree to the Terms and Conditions'),
-            controlAffinity: ListTileControlAffinity.leading,
           ),
         ],
       ),

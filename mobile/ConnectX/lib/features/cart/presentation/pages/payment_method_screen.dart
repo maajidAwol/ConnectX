@@ -213,7 +213,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset('assets/koricha/chapa.png', height: 120),
+                      Image.asset('assets/connectx/chapa.png', height: 120),
                       const SizedBox(height: 16),
                       Text(
                         'Secure Payment with Chapa',

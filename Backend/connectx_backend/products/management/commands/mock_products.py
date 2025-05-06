@@ -1,0 +1,71 @@
+import os
+from django.core.management.base import BaseCommand
+from django.utils.crypto import get_random_string
+from products.models import Product
+from tenants.models import Tenant
+from users.models import User
+from categories.models import Category
+from decimal import Decimal
+
+
+class Command(BaseCommand):
+    help = "Create at least 15 mock products with required dependencies."
+
+    def handle(self, *args, **options):
+        # Ensure at least one tenant
+        tenant, _ = Tenant.objects.get_or_create(
+            name="MockTenant",
+            defaults={
+                "email": "mocktenant@example.com",
+                "password": "mockpass123",
+            },
+        )
+        # Ensure at least one owner user
+        owner, _ = User.objects.get_or_create(
+            email="mockowner@example.com",
+            defaults={
+                "name": "Mock Owner",
+                "password": "mockownerpass",
+                "tenant": tenant,
+                "role": User.OWNER,
+            },
+        )
+        # Ensure at least one category
+        category, _ = Category.objects.get_or_create(
+            name="MockCategory",
+            tenant=tenant,
+            defaults={"description": "A mock category."},
+        )
+
+        # Create 15 mock products
+        for i in range(15):
+            sku = f"MOCKSKU{i+1:03d}"
+            name = f"Mock Product {i+1}"
+            base_price = Decimal("10.00") + i
+            profit_percentage = Decimal("20.00")
+            quantity = 10 + i
+            description = f"This is a mock product number {i+1}."
+            cover_url = f"https://example.com/mock_product_{i+1}.jpg"
+            product, created = Product.objects.get_or_create(
+                sku=sku,
+                defaults={
+                    "name": name,
+                    "base_price": base_price,
+                    "profit_percentage": profit_percentage,
+                    "quantity": quantity,
+                    "category": category,
+                    "owner": owner,
+                    "description": description,
+                    "cover_url": cover_url,
+                    "is_public": True,
+                    "images": [cover_url],
+                    "colors": ["red", "blue"],
+                    "sizes": ["S", "M", "L"],
+                },
+            )
+            if created:
+                product.tenant.set([tenant])  # Correct way for ManyToManyField
+                self.stdout.write(self.style.SUCCESS(f"Created product: {name}"))
+            else:
+                self.stdout.write(f"Product already exists: {name}")
+        self.stdout.write(self.style.SUCCESS("Mock product creation complete."))

@@ -38,9 +38,9 @@ class _ProfilePageState extends State<ProfilePage> {
             body: ListView(
               children: [
                 ProfileCard(
-                  name: state.user.firstName,
+                  name: state.user.name,
                   email: state.user.email,
-                  imageSrc: state.user.avatarUrl,
+                  imageSrc: state.user.avatar_url ?? '',
                   // proLableText: "Sliver",
                   // isPro: true, if the user is pro
                   // press: () {

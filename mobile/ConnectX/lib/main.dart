@@ -17,6 +17,7 @@ import 'package:korecha/core/services/storage_service.dart';
 import 'core/injection/injection_container.dart' as di;
 
 void main() async {
+  
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
   runApp(const MyApp());
@@ -24,7 +25,7 @@ void main() async {
 }
 
 // Thanks for using our template. You are using the free version of the template.
-// 🔗 Full template: https://theflutterway.gumroad.com/l/fluttershop
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

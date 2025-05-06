@@ -10,7 +10,10 @@ import 'package:korecha/core/services/storage_service.dart';
 import 'package:get_it/get_it.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialEmail;
+  final String? initialPassword;
+
+  const LoginScreen({super.key, this.initialEmail, this.initialPassword});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -24,23 +27,35 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSavedCredentials();
+    if (widget.initialEmail != null) {
+      _emailController.text = widget.initialEmail!;
+    }
+    if (widget.initialPassword != null) {
+      _passwordController.text = widget.initialPassword!;
+    } else {
+      _loadSavedCredentials();
+    }
   }
 
   void _loadSavedCredentials() {
     final storageService = GetIt.I<StorageService>();
-    final savedEmail = storageService.getUserEmail();
-    final savedPassword = storageService.getUserPassword();
-    
-    if (savedEmail != null) {
-      _emailController.text = savedEmail;
+    if (_emailController.text.isEmpty) {
+      final savedEmail = storageService.getUserEmail();
+      if (savedEmail != null) {
+        _emailController.text = savedEmail;
+      }
     }
-    if (savedPassword != null) {
-      _passwordController.text = savedPassword;
+    if (_passwordController.text.isEmpty) {
+      final savedPassword = storageService.getUserPassword();
+      if (savedPassword != null) {
+        _passwordController.text = savedPassword;
+      }
     }
   }
 
   void _handleLogin() {
+    FocusScope.of(context).unfocus();
+
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         LoginRequested(
@@ -48,8 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text,
         ),
       );
-      
-      // Save credentials when login is attempted
+
       GetIt.I<StorageService>().saveUserCredentials(
         _emailController.text,
         _passwordController.text,
@@ -66,9 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => EmailVerificationPage(
-                  email: state.email,
-                ),
+                builder: (context) => EmailVerificationPage(email: state.email),
               ),
             );
           } else if (state is AuthSuccess) {
@@ -78,13 +90,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ModalRoute.withName(logInScreenRoute),
             );
           } else if (state is AuthError) {
-            // print(state.message); 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            // print(state.message);
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
           if (state is LogoutSuccess) {
-           
             _emailController.clear();
             _passwordController.clear();
             // GetIt.I<StorageService>().clearUserCredentials();
@@ -100,11 +111,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 0, bottom: 0, left: 0, right: 0),
+                    padding: const EdgeInsets.only(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                    ),
                     child: SizedBox(
                       width: width * 0.6,
                       height: height * 0.16,
-                      child: Image.asset("assets/koricha/logo-full.png"),
+                      child: Image.asset("assets/connectx/transparent_logo.png"),
                     ),
                   ),
                   Padding(
@@ -113,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          "Welcome back to Korecha!",
+                          "Welcome back to ConnectX!",
                           style: Theme.of(context).textTheme.headlineSmall,
                           textAlign: TextAlign.center,
                         ),
@@ -138,15 +154,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         //   ),
                         // ),
                         SizedBox(
-                          height: MediaQuery.of(context).size.height > 700
-                              ? MediaQuery.of(context).size.height * 0.1
-                              : defaultPadding,
+                          height:
+                              MediaQuery.of(context).size.height > 700
+                                  ? MediaQuery.of(context).size.height * 0.1
+                                  : defaultPadding,
                         ),
                         ElevatedButton(
                           onPressed: _handleLogin,
-                          child: state is AuthLoading
-                              ? const CircularProgressIndicator()
-                              : const Text("Log in"),
+                          child:
+                              state is AuthLoading
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Text("Log in"),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -157,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.pushNamed(context, signUpScreenRoute);
                               },
                               child: const Text("Sign up"),
-                            )
+                            ),
                           ],
                         ),
                       ],

@@ -17,6 +17,11 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
     is_public = models.BooleanField(default=False)
     description = models.TextField(blank=True, default="")
+    short_description = models.TextField(blank=True, default="")
+    tag=models.JSONField(default=list, blank=True)  # List of tags
+    brand = models.CharField(max_length=100, blank=True, default="")
+    additional_info = models.JSONField(default=dict, blank=True)  # Dictionary for additional information
+    warranty = models.CharField(max_length=100, blank=True, default="")
     cover_url = models.CharField(max_length=255, blank=True, default="")
     images = models.JSONField(default=list, blank=True)  # List of image URLs
     colors = models.JSONField(default=list, blank=True)  # List of colors

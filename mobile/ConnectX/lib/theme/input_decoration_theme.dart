@@ -12,10 +12,10 @@ const InputDecorationTheme lightInputDecorationTheme = InputDecorationTheme(
   errorBorder: errorOutlineInputBorder,
 );
 
-const InputDecorationTheme darkInputDecorationTheme = InputDecorationTheme(
+final InputDecorationTheme darkInputDecorationTheme = InputDecorationTheme(
   fillColor: darkGreyColor,
   filled: true,
-  hintStyle: TextStyle(color: whileColor40),
+  hintStyle: TextStyle(color: whiteColor.withOpacity(0.4)),
   border: outlineInputBorder,
   enabledBorder: outlineInputBorder,
   focusedBorder: focusedOutlineInputBorder,
@@ -24,9 +24,7 @@ const InputDecorationTheme darkInputDecorationTheme = InputDecorationTheme(
 
 const OutlineInputBorder outlineInputBorder = OutlineInputBorder(
   borderRadius: BorderRadius.all(Radius.circular(defaultBorderRadious)),
-  borderSide: BorderSide(
-    color: Colors.transparent,
-  ),
+  borderSide: BorderSide(color: Colors.transparent),
 );
 
 const OutlineInputBorder focusedOutlineInputBorder = OutlineInputBorder(
@@ -36,9 +34,7 @@ const OutlineInputBorder focusedOutlineInputBorder = OutlineInputBorder(
 
 const OutlineInputBorder errorOutlineInputBorder = OutlineInputBorder(
   borderRadius: BorderRadius.all(Radius.circular(defaultBorderRadious)),
-  borderSide: BorderSide(
-    color: errorColor,
-  ),
+  borderSide: BorderSide(color: errorColor),
 );
 
 OutlineInputBorder secodaryOutlineInputBorder(BuildContext context) {
