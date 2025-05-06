@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Step, StepStatus } from "@/components/ui/step"
@@ -16,6 +16,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import useProductStore from "@/store/useProductStore"
+import useCategoryStore from "@/store/useCategoryStore"
+import { toast } from "sonner"
 
 interface FormErrors {
   name?: string
@@ -60,6 +64,15 @@ export default function AddProductPage() {
     colors: [] as string[],
     sizes: [] as string[],
   })
+
+  const router = useRouter()
+  const createProduct = useProductStore((state: any) => state.createProduct)
+  const { categories, fetchCategories, isLoading: isCategoriesLoading } = useCategoryStore()
+  
+  // Fetch categories when component mounts
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
 
   // Define steps
   const steps = [
@@ -372,11 +385,6 @@ export default function AddProductPage() {
       e.preventDefault();
     }
     
-    // console.log("=== PRODUCT SUBMISSION STARTED ===");
-    // console.log("Current step:", currentStep);
-    // console.log("Current form data:", JSON.stringify(formData, null, 2));
-    // console.log("Additional info:", JSON.stringify(formData.additional_info, null, 2));
-    
     // Only allow submission on the final step
     if (currentStep !== steps.length - 1) {
       console.log("Not on final step, preventing submission");
@@ -401,9 +409,14 @@ export default function AddProductPage() {
       // Prepare the data for submission
       const submitData = {
         ...formData,
-        cover_url: coverImage?.preview || "",
-        images: images.map(img => img.preview),
-        base_price: parseFloat(formData.base_price),
+        // cover_url: coverImage?.preview || "",
+        // images: images.map(img => img.preview),
+        cover_url: "https://example.com/image.jpg",
+        images: [
+          "https://example.com/image1.jpg",
+          "https://example.com/image2.jpg"
+        ],
+        base_price: formData.base_price,
         quantity: parseInt(formData.quantity),
         tag: [...formData.tag], // Create a new array to prevent reference issues
         colors: [...formData.colors],
@@ -414,11 +427,14 @@ export default function AddProductPage() {
       // Console log the data
       console.log("=== FINAL SUBMISSION DATA ===");
       console.log(JSON.stringify(submitData, null, 2));
-      console.log("Additional info in submission:", JSON.stringify(submitData.additional_info, null, 2));
 
-      // Mock successful submission
-      setSuccessMessage("Product successfully added!");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Create the product using the store
+      const newProduct = await createProduct(submitData);
+
+      // Show success message
+      toast.success("Product successfully added!", {
+        className: "bg-green-500 text-white",
+      });
 
       // Clear form after successful submission
       setFormData({
@@ -442,12 +458,16 @@ export default function AddProductPage() {
       setCurrentStep(0);
       setStepsStatus(["current", "upcoming", "upcoming", "upcoming"]);
 
-      // Clear success message after 5 seconds
+      // Redirect to products page after 2 seconds
       setTimeout(() => {
-        setSuccessMessage("");
-      }, 5000);
+        router.push('/merchant/products');
+      }, 2000);
+
     } catch (error) {
       console.error('Error adding product:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to add product. Please try again.", {
+        className: "bg-red-500 text-white",
+      });
       setErrors({
         name: "Failed to add product. Please try again."
       });
@@ -478,6 +498,8 @@ export default function AddProductPage() {
             handleArrayFieldChange={handleArrayFieldChange}
             generateSKU={generateSKU}
             errors={errors}
+            categories={categories}
+            isCategoriesLoading={isCategoriesLoading}
           />
         )
       case 1:

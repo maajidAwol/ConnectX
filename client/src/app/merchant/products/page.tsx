@@ -555,7 +555,7 @@ function ProductListCard({
                         </div>
                       </div>
                       <div className="col-span-2">{getCategoryName(product.category)}</div>
-                      <div className="col-span-1">${product.selling_price || "0.00"}</div>
+                      <div className="col-span-1">{product.base_price || "0.00"} ETB</div>
                       <div className="col-span-1">{product.quantity || 0}</div>
                       <div className="col-span-2">
                         {showStatus ? (

@@ -9,20 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-// import { productCategories } from "@/lib/data"
 import { Badge } from "@/components/ui/badge"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-// Mock categories for UI display (replace with actual integration later)
-const productCategories = [
-  { id: "1", name: "Electronics" },
-  { id: "2", name: "Clothing" },
-  { id: "3", name: "Home & Kitchen" },
-  { id: "4", name: "Accessories" }
-]
+import type { Category } from "@/store/useCategoryStore"
 
 interface ProductBasicInfoTabProps {
   formData: {
@@ -43,6 +35,8 @@ interface ProductBasicInfoTabProps {
     category_id?: string
     description?: string
   }
+  categories: Category[]
+  isCategoriesLoading: boolean
 }
 
 const COMMON_TAGS = [
@@ -68,7 +62,15 @@ const COMMON_TAGS = [
   "travel",
 ] as const
 
-export function ProductBasicInfoTab({ formData, handleInputChange, handleArrayFieldChange, generateSKU, errors }: ProductBasicInfoTabProps) {
+export function ProductBasicInfoTab({ 
+  formData, 
+  handleInputChange, 
+  handleArrayFieldChange, 
+  generateSKU, 
+  errors,
+  categories,
+  isCategoriesLoading 
+}: ProductBasicInfoTabProps) {
   const [openTags, setOpenTags] = useState(false)
   const [tagInput, setTagInput] = useState("")
 
@@ -139,13 +141,14 @@ export function ProductBasicInfoTab({ formData, handleInputChange, handleArrayFi
                 handleInputChange(e)
               }}
               required
+              disabled={isCategoriesLoading}
             >
               <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={isCategoriesLoading ? "Loading categories..." : "Select category"} />
               </SelectTrigger>
               <SelectContent>
-                {productCategories.map((category) => (
-                  <SelectItem key={category.id} value={String(category.id)}>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
                 ))}
