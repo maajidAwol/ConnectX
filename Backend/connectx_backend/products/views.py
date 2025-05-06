@@ -200,7 +200,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         if not self.request.user.is_authenticated:
             raise PermissionDenied("Authentication is required.")
-        serializer.save(owner=self.request.user)
+        
+        serializer.save(owner=self.request.user.tenant)
         
     @swagger_auto_schema(
         operation_description="Get products filtered by category ID",
