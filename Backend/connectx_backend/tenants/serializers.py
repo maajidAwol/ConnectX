@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import Tenant
 from pathlib import Path
 import sys
+
 # from connectx_backend.utils import upload_image
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import upload_image
@@ -54,12 +55,23 @@ class TenantSerializer(serializers.ModelSerializer):
             "api_key",
         ]
         read_only_fields = [
-            "id", "api_key", "created_at", "updated_at", "is_verified", "tenant_verification_date", "tenant_verification_status"
+            "id",
+            "api_key",
+            "created_at",
+            "updated_at",
+            "is_verified",
+            "tenant_verification_date",
+            "tenant_verification_status",
         ]
         extra_kwargs = {
-            "password": {"write_only": True},
+            "password": {"write_only": True, "required": False, "allow_null": True},
+            "name": {"required": False, "allow_null": True},
+            "email": {"required": False, "allow_null": True},
             "logo": {"required": False, "allow_null": True},
-            "business_registration_certificate": {"required": False, "allow_null": True},
+            "business_registration_certificate": {
+                "required": False,
+                "allow_null": True,
+            },
             "business_license": {"required": False, "allow_null": True},
             "tax_registration_certificate": {"required": False, "allow_null": True},
             "bank_statement": {"required": False, "allow_null": True},
@@ -84,8 +96,6 @@ class TenantSerializer(serializers.ModelSerializer):
                 "business_type": "Retail",
                 "business_bio": "Leading retailer of electronics.",
                 "licence_registration_date": "2025-01-01",
-                "tenant_verification_status": "pending",
-                "tenant_verification_date": None,
                 "business_registration_certificate": "https://example.com/cert.pdf",
                 "business_license": "https://example.com/license.pdf",
                 "tin_number": "TIN-123456",
@@ -100,7 +110,6 @@ class TenantSerializer(serializers.ModelSerializer):
                 "mobileapp_url": "https://app.acme.com",
                 "mobileapp_name": "AcmeApp",
                 "id_card": "https://example.com/id_card.pdf",
-                "api_key": "api-key-123456",
             }
         }
         swagger_extra_kwargs = {
@@ -150,6 +159,9 @@ class TenantSerializer(serializers.ModelSerializer):
             if file_obj:
                 folder = f"tenants/{tenant_id}/{field}"
                 result = upload_image(file_obj, folder=folder)
+                print(
+                    f"Uploading {field} for tenant {tenant_id} to folder {folder} with result: {result}"
+                )
                 if result.get("success"):
                     validated_data[field] = result["url"]
         return super().update(instance, validated_data)
