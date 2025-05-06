@@ -136,18 +136,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<List<AddressModel>> getAddresses() async {
     final token = storageService.getAccessToken();
-    final user = await getUserProfile();
-    final userId = user.id;
+
+    if (token == null) {
+      throw ServerException("User not logged in or token missing.");
+    }
 
     final response = await client.get(
       Uri.parse(
-        'https://connectx-9agd.onrender.com/api/user/$userId/addresses',
+        'https://connectx-9agd.onrender.com/api/shipping-addresses/my_address/',
       ),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -164,25 +162,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> addAddress(AddressModel address) async {
     final token = storageService.getAccessToken();
-    final user = await getUserProfile();
-    final userId = user.id;
+
+    if (token == null) {
+      throw ServerException("User not logged in or token missing.");
+    }
+
     try {
       final response = await client.post(
-        Uri.parse(
-          'https://connectx-9agd.onrender.com/api/user/$userId/addresses/create',
-        ),
+        Uri.parse('https://connectx-9agd.onrender.com/api/shipping-addresses/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          "fullAddress": address.fullAddress,
-          "addressType": address.addressType,
-          "primary": address.primary,
-          "phoneNumber": address.phoneNumber,
+          "label": address.label,
+          "full_address": address.fullAddress,
+          "phone_number": address.phoneNumber,
+          "is_default": address.isDefault,
         }),
       );
-
+      print(response.body);
       if (response.statusCode != 201) {
         final error = json.decode(response.body);
         throw ServerException(error['message'] ?? 'Failed to add address');
@@ -196,13 +195,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> updateAddress(AddressModel address) async {
     final token = storageService.getAccessToken();
-    final user = await getUserProfile();
-    final userId = user.id;
+
+    if (token == null) {
+      throw ServerException("User not logged in or token missing.");
+    }
+
     final response = await client.put(
       Uri.parse(
-        'https://connectx-9agd.onrender.com/api/user/$userId/addresses/${address.id}',
+        'https://connectx-9agd.onrender.com/api/shipping-addresses/${address.id}/',
       ),
-      headers: _headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
       body: json.encode(address.toJson()),
     );
 
@@ -215,18 +220,25 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> deleteAddress(String id) async {
     final token = storageService.getAccessToken();
-    final user = await getUserProfile();
-    final userId = user.id;
+
+    if (token == null) {
+      throw ServerException("User not logged in or token missing.");
+    }
+
     final response = await client.delete(
       Uri.parse(
-        'https://connectx-9agd.onrender.com/api/user/$userId/addresses/$id',
+        'https://connectx-9agd.onrender.com/api/shipping-addresses/$id/',
       ),
-      headers: _headers,
+      headers: {'Authorization': 'Bearer $token'},
     );
 
-    if (response.statusCode != 200) {
-      final error = json.decode(response.body);
-      throw ServerException(error['message'] ?? 'Failed to delete address');
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      String errorMessage = 'Failed to delete address';
+      try {
+        final error = json.decode(response.body);
+        errorMessage = error['message'] ?? errorMessage;
+      } catch (_) {}
+      throw ServerException(errorMessage);
     }
   }
 

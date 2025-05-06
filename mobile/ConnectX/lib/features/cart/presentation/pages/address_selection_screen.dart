@@ -37,28 +37,31 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: defaultPadding,
-          right: defaultPadding,
-          top: defaultPadding,
-        ),
-        child: _AddAddressForm(
-          onAddressAdded: () {
-            _loadAddresses();
-          },
-        ),
-      ),
+      builder:
+          (context) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: defaultPadding,
+              right: defaultPadding,
+              top: defaultPadding,
+            ),
+            child: _AddAddressForm(
+              onAddressAdded: () {
+                _loadAddresses();
+              },
+            ),
+          ),
     );
   }
 
   List<Address> _filterAddresses(List<Address> addresses) {
     if (_searchQuery.isEmpty) return addresses;
     return addresses
-        .where((address) => address.fullAddress
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
+        .where(
+          (address) => address.fullAddress.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
+        )
         .toList();
   }
 
@@ -77,9 +80,9 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
           BlocListener<AddressBloc, AddressState>(
             listener: (context, state) {
               if (state is AddressError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.message)));
               }
               if (state is AddressAdded) {
                 _loadAddresses();
@@ -103,55 +106,61 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                   final filteredAddresses = _filterAddresses(state.addresses);
 
                   return Column(
-        children: [
-          Padding(
+                    children: [
+                      Padding(
                         padding: const EdgeInsets.all(defaultPadding),
-            child: TextField(
+                        child: TextField(
                           controller: _searchController,
                           onChanged: (value) {
                             setState(() {
                               _searchQuery = value;
                             });
                           },
-              decoration: InputDecoration(
-                hintText: 'Find an address...',
-                hintStyle: TextStyle(color: Colors.grey[400]),
-                            prefixIcon:
-                                Icon(Icons.search, color: Colors.grey[400]),
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 16),
-              ),
-            ),
-          ),
-          InkWell(
+                          decoration: InputDecoration(
+                            hintText: 'Find an address...',
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Colors.grey[400],
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      InkWell(
                         onTap: _showAddAddressDialog,
-            child: Container(
+                        child: Container(
                           margin: const EdgeInsets.symmetric(
-                              horizontal: defaultPadding),
+                            horizontal: defaultPadding,
+                          ),
                           padding: const EdgeInsets.all(defaultPadding),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.add_location_alt_outlined,
-                      color: Theme.of(context).primaryColor),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Add new address',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.add_location_alt_outlined,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Add new address',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: defaultPadding),
                       if (filteredAddresses.isEmpty && _searchQuery.isNotEmpty)
                         Center(
@@ -189,12 +198,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                               const SizedBox(height: defaultPadding / 2),
                               Text(
                                 'Add your first address',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.copyWith(
-                                      color: Colors.grey[600],
-                                    ),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(color: Colors.grey[600]),
                               ),
                               const SizedBox(height: defaultPadding * 1.5),
                               ElevatedButton.icon(
@@ -206,151 +211,158 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                           ),
                         )
                       else
-          Expanded(
+                        Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 80),
-            child: ListView.builder(
+                            child: ListView.builder(
                               padding: const EdgeInsets.all(defaultPadding),
                               itemCount: filteredAddresses.length,
-              itemBuilder: (context, index) {
+                              itemBuilder: (context, index) {
                                 final address = filteredAddresses[index];
-                return Container(
+                                return Container(
                                   margin: const EdgeInsets.only(
-                                      bottom: defaultPadding),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                                      color: (address.primary ||
-                                              address == selectedAddress)
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey[300]!,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: InkWell(
-                    onTap: () {
+                                    bottom: defaultPadding,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color:
+                                          (address.isDefault ||
+                                                  address == selectedAddress)
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.grey[300]!,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
                                       setState(() {
                                         selectedAddress = address;
                                       });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.all(defaultPadding),
-                      child: Row(
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(
+                                        defaultPadding,
+                                      ),
+                                      child: Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                                              color: (address.primary ||
-                                                      address ==
-                                                          selectedAddress)
-                                  ? Theme.of(context)
-                                      .primaryColor
-                                      .withOpacity(0.1)
-                                  : Colors.grey[100],
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.home_outlined,
-                                              color: (address.primary ||
-                                                      address ==
-                                                          selectedAddress)
-                                                  ? Theme.of(context)
-                                                      .primaryColor
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  (address.isDefault ||
+                                                          address ==
+                                                              selectedAddress)
+                                                      ? Theme.of(context)
+                                                          .primaryColor
+                                                          .withOpacity(0.1)
+                                                      : Colors.grey[100],
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.home_outlined,
+                                              color:
+                                                  (address.isDefault ||
+                                                          address ==
+                                                              selectedAddress)
+                                                      ? Theme.of(
+                                                        context,
+                                                      ).primaryColor
+                                                      : Colors.grey[600],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                                      address.primary
-                                                          ? 'Primary Address'
-                                                          : 'Additional Address',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      address.label,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleMedium
+                                                          ?.copyWith(
                                                             fontWeight:
                                                                 FontWeight.w600,
-                                          ),
-                                    ),
-                                                    if (address.primary) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
+                                                          ),
+                                                    ),
+                                                    if (address.isDefault) ...[
+                                                      const SizedBox(width: 8),
+                                                      Container(
                                                         padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                                        decoration:
-                                                            BoxDecoration(
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 4,
+                                                            ),
+                                                        decoration: BoxDecoration(
                                                           color: Theme.of(
-                                                                  context)
-                                              .primaryColor
-                                              .withOpacity(0.1),
-                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(12),
-                                        ),
-                                        child: Text(
-                                          'Default',
-                                          style: TextStyle(
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .primaryColor,
-                                            fontSize: 12,
+                                                                context,
+                                                              ).primaryColor
+                                                              .withOpacity(0.1),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          'Default',
+                                                          style: TextStyle(
+                                                            color:
+                                                                Theme.of(
+                                                                  context,
+                                                                ).primaryColor,
+                                                            fontSize: 12,
                                                             fontWeight:
                                                                 FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
                                                   address.fullAddress,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    height: 1.5,
-                                  ),
-                                ),
-                                                if (address.phoneNumber
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    height: 1.5,
+                                                  ),
+                                                ),
+                                                if (address
+                                                    .phoneNumber
                                                     .isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  address.phoneNumber,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    address.phoneNumber,
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                    ),
+                                                  ),
                                                 ],
-                              ],
+                                              ],
+                                            ),
+                                          ),
+                                          if (address == selectedAddress)
+                                            Icon(
+                                              Icons.check_circle,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                                          if (address == selectedAddress)
-                            Icon(
-                              Icons.check_circle,
-                                              color: Theme.of(context)
-                                                  .primaryColor,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
                         ),
                     ],
                   );
@@ -377,9 +389,10 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                 ),
                 child: SafeArea(
                   child: ElevatedButton(
-                    onPressed: selectedAddress == null
-                        ? null
-                        : () => Navigator.pop(context, selectedAddress),
+                    onPressed:
+                        selectedAddress == null
+                            ? null
+                            : () => Navigator.pop(context, selectedAddress),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -407,9 +420,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
 class _AddAddressForm extends StatefulWidget {
   final VoidCallback onAddressAdded;
 
-  const _AddAddressForm({
-    required this.onAddressAdded,
-  });
+  const _AddAddressForm({required this.onAddressAdded});
 
   @override
   State<_AddAddressForm> createState() => _AddAddressFormState();
@@ -422,6 +433,8 @@ class _AddAddressFormState extends State<_AddAddressForm> {
   final _stateController = TextEditingController();
   final _countryController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _labelController = TextEditingController(text: 'Home');
+  bool _isDefault = false;
 
   @override
   void dispose() {
@@ -429,7 +442,8 @@ class _AddAddressFormState extends State<_AddAddressForm> {
     _cityController.dispose();
     _stateController.dispose();
     _countryController.dispose();
-    // _phoneController.dispose();
+    _phoneController.dispose();
+    _labelController.dispose();
     super.dispose();
   }
 
@@ -445,6 +459,21 @@ class _AddAddressFormState extends State<_AddAddressForm> {
             'Add New Address',
             style: Theme.of(context).textTheme.titleLarge,
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: defaultPadding),
+          TextFormField(
+            controller: _labelController,
+            decoration: const InputDecoration(
+              labelText: 'Label',
+              hintText: 'Home, Work, etc.',
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a label';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: defaultPadding),
           TextFormField(
@@ -506,23 +535,31 @@ class _AddAddressFormState extends State<_AddAddressForm> {
               return null;
             },
           ),
-          // const SizedBox(height: defaultPadding),
-          // TextFormField(
-          //   controller: _phoneController,
-          //   decoration: const InputDecoration(
-          //     labelText: 'Phone Number',
-          //     hintText: 'Enter your phone number',
-          //     border: OutlineInputBorder(),
-          //   ),
-          //   keyboardType: TextInputType.phone,
-          //   validator: (value) {
-          //     if (value == null || value.isEmpty) {
-          //       return 'Please enter phone number';
-          //     }
-          //     return null;
-          //   },
-          // ),
-          const SizedBox(height: defaultPadding * 1.5),
+          const SizedBox(height: defaultPadding),
+          TextFormField(
+            controller: _phoneController,
+            decoration: const InputDecoration(
+              labelText: 'Phone Number',
+              hintText: 'Enter your phone number',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.phone,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter phone number';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: defaultPadding),
+          SwitchListTile(
+            title: const Text('Set as default address'),
+            value: _isDefault,
+            onChanged: (value) {
+              setState(() => _isDefault = value);
+            },
+          ),
+          const SizedBox(height: defaultPadding),
           ElevatedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
@@ -534,16 +571,16 @@ class _AddAddressFormState extends State<_AddAddressForm> {
                 ].join(', ');
 
                 final address = Address(
-                  id: DateTime.now().toString(),
+                  id: '', // Will be assigned by the server
+                  label: _labelController.text.trim(),
                   fullAddress: fullAddress,
-                  primary: false,
                   phoneNumber: _phoneController.text.trim(),
-                  addressType: 'home',
+                  isDefault: _isDefault,
                 );
 
-                context
-                    .read<AddressBloc>()
-                    .add(AddAddressEvent(address: address));
+                context.read<AddressBloc>().add(
+                  AddAddressEvent(address: address),
+                );
                 widget.onAddressAdded();
                 Navigator.pop(context);
               }
