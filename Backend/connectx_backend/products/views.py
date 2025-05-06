@@ -2,18 +2,23 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from django.db.models import Q
-from rest_framework.filters import SearchFilter
-from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-
-from .models import Product, ProductListing
+from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
+from .models import Product
 from .serializers import ProductSerializer
 from users.permissions import IsTenantOwner
+
+from categories.models import Category
+from django.db.models import Q
+from rest_framework.exceptions import PermissionDenied
 from core.pagination import CustomPagination
+from rest_framework.filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 
+
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
@@ -25,8 +30,6 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         """Allow all authenticated users to read, but only tenant owners can write."""
         if self.action in ['list', 'retrieve', 'by_category']:
-
-        if self.action in ["list", "retrieve"]:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated(), IsTenantOwner()]
 
