@@ -1,5 +1,5 @@
 from rest_framework import serializers, filters
-from .models import Product
+from .models import Product, ProductListing
 from categories.serializers import CategorySerializer
 
 
@@ -11,6 +11,9 @@ class ProductSerializer(serializers.ModelSerializer):
         required=True,
         source="category",
     )
+    profit_percentage = serializers.SerializerMethodField()
+    selling_price = serializers.SerializerMethodField()
+
     filter_backends = [filters.SearchFilter]
     search_fields = [
         "name",
@@ -20,6 +23,22 @@ class ProductSerializer(serializers.ModelSerializer):
         "brand",
         "category__name",
     ]
+
+    def get_profit_percentage(self, obj):
+        request = self.context.get("request")
+        if not request or not hasattr(request.user, "tenant"):
+            return None
+
+        listing = ProductListing.objects.filter(product=obj, tenant=request.user.tenant).first()
+        return listing.profit_percentage if listing else None
+
+    def get_selling_price(self, obj):
+        request = self.context.get("request")
+        if not request or not hasattr(request.user, "tenant"):
+            return None
+
+        listing = ProductListing.objects.filter(product=obj, tenant=request.user.tenant).first()
+        return listing.selling_price if listing else None
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
@@ -67,16 +86,16 @@ class ProductSerializer(serializers.ModelSerializer):
             "total_reviews",
             "created_at",
             "updated_at",
+            "profit_percentage",
+            "selling_price",
         ]
         swagger_schema_fields = {
             "example": {
                 "sku": "SKU-001",
                 "name": "Smartphone X",
                 "base_price": "500.00",
-                "profit_percentage": "20.00",
-                "selling_price": "600.00",
                 "quantity": 100,
-                "category_id": "uuid-of-category",
+                "category_id": "733195c9-c31a-41ab-be6d-bf4d93338eab",
                 "is_public": True,
                 "description": "Latest model with advanced features.",
                 "short_description": "Compact and powerful.",
