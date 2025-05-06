@@ -26,6 +26,7 @@ class Tenant(models.Model):
         ('rejected', 'Rejected')
     ], default='pending')
     tenant_verification_date = models.DateField(null=True, blank=True)
+    
     business_bio = models.TextField(null=True, blank=True)
     website_url = models.URLField(max_length=500, null=True, blank=True)
     is_verified = models.BooleanField(default=False)

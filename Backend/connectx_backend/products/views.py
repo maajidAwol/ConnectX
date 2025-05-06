@@ -2,18 +2,16 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from .models import Product
-from .serializers import ProductSerializer
-from users.permissions import IsTenantOwner
 from django.db.models import Q
-from rest_framework.exceptions import PermissionDenied
-from core.pagination import CustomPagination
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-
-
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
+from .models import Product, ProductListing
+from .serializers import ProductSerializer
+from users.permissions import IsTenantOwner
+from core.pagination import CustomPagination
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -31,15 +29,30 @@ class ProductViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(
         operation_summary="List product under current tenant",
         operation_description="""
-    Associates a product with the current user's tenant.
-    
-    Allowed if:
-    - The tenant is the owner of the product
-    - OR the product is marked as public
-    
-    Returns 400 if already listed.
-    """,
-        request_body=None,
+        Associates a product with the current user's tenant with an optional profit percentage or selling price.
+        
+        Allowed if:
+        - The tenant is the owner of the product
+        - OR the product is marked as public
+        
+        Returns 400 if already listed.
+        """,
+        manual_parameters=[
+            openapi.Parameter(
+                "profit_percentage",
+                openapi.IN_QUERY,
+                description="Profit percentage to apply when listing this product",
+                type=openapi.TYPE_NUMBER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "selling_price",
+                openapi.IN_QUERY,
+                description="Selling price to apply when listing this product",
+                type=openapi.TYPE_NUMBER,
+                required=False,
+            ),
+        ],
         responses={
             200: openapi.Response(description="Product listed successfully"),
             400: openapi.Response(description="Already listed"),
@@ -56,14 +69,22 @@ class ProductViewSet(viewsets.ModelViewSet):
         if product.owner != tenant and not product.is_public:
             raise PermissionDenied("You are not allowed to list this product.")
 
-        if tenant in product.tenant.all():
+        if ProductListing.objects.filter(product=product, tenant=tenant).exists():
             return Response(
                 {"detail": "Product already listed under this tenant."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        product.tenant.add(tenant)
-        product.save()
+        profit_percentage = request.query_params.get("profit_percentage")
+        selling_price = request.query_params.get("selling_price")
+
+        kwargs = {"product": product, "tenant": tenant}
+        if profit_percentage is not None:
+            kwargs["profit_percentage"] = float(profit_percentage)
+        if selling_price is not None:
+            kwargs["selling_price"] = float(selling_price)
+
+        ProductListing.objects.create(**kwargs)
 
         return Response(
             {"detail": f"Product listed under tenant '{tenant.name}'."},
@@ -73,7 +94,13 @@ class ProductViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(
         operation_summary="Unlist product from current tenant",
         operation_description="""
-        Removes the association of this product with the current user's tenant.\n\nAllowed if:\n- The tenant is the owner of the product\n- OR the product is currently listed under the tenant\n\nReturns 400 if not listed.
+        Removes the association of this product with the current user's tenant.
+
+        Allowed if:
+        - The tenant is the owner of the product
+        - OR the product is currently listed under the tenant
+
+        Returns 400 if not listed.
         """,
         request_body=None,
         responses={
@@ -86,20 +113,20 @@ class ProductViewSet(viewsets.ModelViewSet):
     def unlist_from_tenant(self, request, pk=None):
         """Remove this product from the current user's tenant."""
         product = self.get_object()
-        user = request.user
-        tenant = user.tenant
+        tenant = request.user.tenant
 
-        if product.owner != tenant and tenant not in product.tenant.all():
+        listing = ProductListing.objects.filter(product=product, tenant=tenant).first()
+
+        if not listing and product.owner != tenant:
             raise PermissionDenied("You are not allowed to unlist this product.")
 
-        if tenant not in product.tenant.all():
+        if not listing:
             return Response(
                 {"detail": "Product is not listed under this tenant."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        product.tenant.remove(tenant)
-        product.save()
+        listing.delete()
 
         return Response(
             {"detail": f"Product unlisted from tenant '{tenant.name}'."},
@@ -114,31 +141,30 @@ class ProductViewSet(viewsets.ModelViewSet):
             return Product.objects.none()
 
         tenant = self.request.user.tenant
-        user = self.request.user    
+        user = self.request.user
         filter_type = self.request.query_params.get("filter_type", "public_owned")
-        # If the user is a customer, only show products listed in their tenant
+        min_price = self.request.query_params.get("min_price")
+        max_price = self.request.query_params.get("max_price")
+        category = self.request.query_params.get("category")
+
+        # If user is a customer, restrict to listed only
         if user.role == "customer":
             filter_type = "listed"
 
         if filter_type == "listed":
-            queryset = Product.objects.filter(tenant=tenant)
+            listings = ProductListing.objects.filter(tenant=tenant)
+            if min_price:
+                listings = listings.filter(selling_price__gte=min_price)
+            if max_price:
+                listings = listings.filter(selling_price__lte=max_price)
+            product_ids = listings.values_list("product_id", flat=True)
+            queryset = Product.objects.filter(id__in=product_ids)
         elif filter_type == "owned":
             queryset = Product.objects.filter(owner=tenant)
         elif filter_type == "public":
             queryset = Product.objects.filter(is_public=True)
         else:  # "public_owned"
             queryset = Product.objects.filter(Q(owner=tenant) | Q(is_public=True))
-
-        # Optional filters from query params
-        min_price = self.request.query_params.get("min_price")
-        max_price = self.request.query_params.get("max_price")
-        category = self.request.query_params.get("category")
-
-        if min_price:
-            queryset = queryset.filter(selling_price__gte=min_price)
-
-        if max_price:
-            queryset = queryset.filter(selling_price__lte=max_price)
 
         if category:
             queryset = queryset.filter(category__name__icontains=category)
@@ -151,39 +177,14 @@ class ProductViewSet(viewsets.ModelViewSet):
                 "filter_type",
                 openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
-                enum=["listed", "owned", "public", "all"],
-                description='Filter products by type. Options: "listed", "owned", "public", "all". Defaults to "all".',
+                enum=["listed", "owned", "public", "public_owned"],
+                description='Filter products by type. Defaults to "public_owned".',
             ),
-            openapi.Parameter(
-                "min_price",
-                openapi.IN_QUERY,
-                description="Min price",
-                type=openapi.TYPE_NUMBER,
-            ),
-            openapi.Parameter(
-                "max_price",
-                openapi.IN_QUERY,
-                description="Max price",
-                type=openapi.TYPE_NUMBER,
-            ),
-            openapi.Parameter(
-                "category",
-                openapi.IN_QUERY,
-                description="Category name",
-                type=openapi.TYPE_STRING,
-            ),
-            openapi.Parameter(
-                "search",
-                openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                description="Search across name, SKU, description, etc.",
-            ),
-            openapi.Parameter(
-                "size",
-                openapi.IN_QUERY,
-                description="Page Size",
-                type=openapi.TYPE_NUMBER,
-            ),
+            openapi.Parameter("min_price", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("max_price", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("category", openapi.IN_QUERY, type=openapi.TYPE_STRING),
+            openapi.Parameter("search", openapi.IN_QUERY, type=openapi.TYPE_STRING),
+            openapi.Parameter("size", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
         ]
     )
     def list(self, request, *args, **kwargs):
