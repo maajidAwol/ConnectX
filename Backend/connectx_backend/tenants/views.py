@@ -4,6 +4,9 @@ from rest_framework import serializers
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import action
+from drf_yasg import openapi
 from .models import Tenant
 from .serializers import TenantSerializer
 from .permissions import TenantPermission
@@ -22,6 +25,7 @@ class TenantViewSet(viewsets.ModelViewSet):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
     permission_classes = [TenantPermission]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         user = self.request.user
@@ -30,7 +34,6 @@ class TenantViewSet(viewsets.ModelViewSet):
                 return Tenant.objects.all()
             return Tenant.objects.filter(id=getattr(user, "tenant_id", None))
         return Tenant.objects.none()
-
 
     @swagger_auto_schema(request_body=TenantCreateRequestSerializer)
     def create(self, request, *args, **kwargs):
@@ -57,3 +60,63 @@ class TenantViewSet(viewsets.ModelViewSet):
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                "name", openapi.IN_FORM, type=openapi.TYPE_STRING, required=False
+            ),
+            openapi.Parameter(
+                "email", openapi.IN_FORM, type=openapi.TYPE_STRING, required=False
+            ),
+            openapi.Parameter(
+                "password", openapi.IN_FORM, type=openapi.TYPE_STRING, required=False
+            ),
+            openapi.Parameter(
+                "fullname", openapi.IN_FORM, type=openapi.TYPE_STRING, required=False
+            ),
+            openapi.Parameter(
+                "logo", openapi.IN_FORM, type=openapi.TYPE_FILE, required=False
+            ),
+            openapi.Parameter(
+                "business_registration_certificate",
+                openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "business_license",
+                openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "tax_registration_certificate",
+                openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "bank_statement",
+                openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "id_card", openapi.IN_FORM, type=openapi.TYPE_FILE, required=False
+            ),
+            # Add other fields as needed
+        ],
+        operation_description="Update a tenant using multipart/form-data",
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_path="me")
+    def me(self, request):
+        """Return the current user's tenant details."""
+        tenant = getattr(request.user, "tenant", None)
+        if not tenant:
+            return Response({"detail": "No tenant found for user."}, status=404)
+        serializer = self.get_serializer(tenant)
+        return Response(serializer.data)

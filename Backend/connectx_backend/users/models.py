@@ -47,6 +47,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=CUSTOMER)
+    bio=models.TextField(null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
     avatar_url = models.URLField(null=True, blank=True)
     is_active = models.BooleanField(default=True)

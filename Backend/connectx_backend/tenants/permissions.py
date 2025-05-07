@@ -13,7 +13,7 @@ class TenantPermission(BasePermission):
     def has_permission(self, request, view):
         if view.action == "create":
             return True
-        if view.action in ["list", "retrieve"]:
+        if view.action in ["list", "retrieve","me"]:
             return request.user.is_authenticated
         if view.action in ["update", "partial_update","destroy"]:
             return request.user.is_authenticated and request.user.role in [
