@@ -52,6 +52,7 @@ interface ProductState {
   listProduct: (productId: string) => Promise<{ detail: string }>
   unlistProduct: (productId: string) => Promise<{ detail: string }>
   deleteProduct: (productId: string) => Promise<{ detail: string }>
+  createProduct: (productData: Omit<Product, 'id' | 'tenant' | 'owner' | 'profit_percentage' | 'selling_price' | 'total_sold' | 'total_ratings' | 'total_reviews' | 'created_at' | 'updated_at'>) => Promise<Product>
 }
 
 // In a production environment, this would be loaded from environment variables
@@ -251,6 +252,42 @@ const useProductStore = create<ProductState>((set, get) => ({
       return data;
     } catch (error) {
       console.error('Error deleting product:', error);
+      throw error;
+    }
+  },
+
+  createProduct: async (productData) => {
+    try {
+      const { accessToken } = useAuthStore.getState();
+      
+      if (!accessToken) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`${API_URL}/products/`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(productData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create product');
+      }
+
+      const newProduct = await response.json();
+      
+      // Refresh products with current filter type
+      const { filterType } = get();
+      await get().fetchProducts({ filterType });
+      
+      return newProduct;
+    } catch (error) {
+      console.error('Error creating product:', error);
       throw error;
     }
   }
