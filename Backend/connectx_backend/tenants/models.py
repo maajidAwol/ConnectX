@@ -31,6 +31,7 @@ class Tenant(models.Model):
         max_length=50,
         choices=[
             ("pending", "Pending"),
+            ("under_reviw","Under  Reviw"),
             ("approved", "Approved"),
             ("rejected", "Rejected"),
         ],
