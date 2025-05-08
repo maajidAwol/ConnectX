@@ -41,7 +41,7 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
-          </nav>
+          </nav> 
         </div>
 
         <div className="flex items-center space-x-4">
@@ -68,8 +68,9 @@ export function SiteHeader() {
             size="icon"
             className="md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            name="Menu"
           >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5"/>}
           </Button>
         </div>
       </div>
@@ -104,7 +105,7 @@ export function SiteHeader() {
                   </Button>
                 </Link>
                 <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-sm">
+                  <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-sm" name="Sign Up">
                     Sign Up
                   </Button>
                 </Link>
