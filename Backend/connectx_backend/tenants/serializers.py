@@ -1,11 +1,6 @@
 import uuid
 from rest_framework import serializers
 from .models import Tenant
-from pathlib import Path
-import sys
-
-# from connectx_backend.utils import upload_image
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import upload_image
 
 

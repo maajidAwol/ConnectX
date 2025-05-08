@@ -17,9 +17,6 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 import sys
 import os
 from pathlib import Path
-
-# Add parent directory to sys.path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils import upload_image
 from rest_framework.decorators import action
 
