@@ -3,6 +3,7 @@ from django.db import models
 from tenants.models import Tenant
 from users.models import User
 from categories.models import Category
+from decimal import Decimal, InvalidOperation
 
 
 class Product(models.Model):
@@ -70,9 +71,7 @@ class ProductListing(models.Model):
         unique_together = ("tenant", "product")
 
     def save(self, *args, **kwargs):
-        from decimal import Decimal, InvalidOperation
-
-        base_price = self.product.base_price
+        base_price = Decimal(str(self.product.base_price))  # Convert to Decimal
         # If both are provided, prioritize profit_percentage
         if base_price is not None:
             if self.profit_percentage and (
@@ -80,7 +79,9 @@ class ProductListing(models.Model):
             ):
                 # Calculate selling_price from profit_percentage
                 try:
-                    profit_percentage_decimal = Decimal(self.profit_percentage)
+                    profit_percentage_decimal = Decimal(
+                        str(self.profit_percentage)
+                    )  # Convert to Decimal
                     self.selling_price = base_price * (
                         Decimal("1") + profit_percentage_decimal / Decimal("100")
                     )
@@ -91,7 +92,9 @@ class ProductListing(models.Model):
             ):
                 # Calculate profit_percentage from selling_price
                 try:
-                    selling_price_decimal = Decimal(self.selling_price)
+                    selling_price_decimal = Decimal(
+                        str(self.selling_price)
+                    )  # Convert to Decimal
                     self.profit_percentage = (
                         (selling_price_decimal / base_price) - Decimal("1")
                     ) * Decimal("100")
@@ -99,7 +102,9 @@ class ProductListing(models.Model):
                     pass
             elif self.profit_percentage and self.selling_price:
                 # Optionally, ensure consistency or prioritize profit_percentage
-                profit_percentage_decimal = Decimal(self.profit_percentage)
+                profit_percentage_decimal = Decimal(
+                    str(self.profit_percentage)
+                )  # Convert to Decimal
                 self.selling_price = base_price * (
                     Decimal("1") + profit_percentage_decimal / Decimal("100")
                 )

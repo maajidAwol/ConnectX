@@ -1,34 +1,114 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 
+
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    tenant_name = serializers.StringRelatedField(source="tenant.name", read_only=True)
+    tenant_id = serializers.UUIDField(source="tenant.id", read_only=True)
+    groups = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Group.objects.all(), required=False
+    )
+    
 
     class Meta:
         model = User
-        fields = "__all__"
-        extra_kwargs = {"password": {"write_only": True}}
-        read_only_fields = ['id', 'is_staff', 'is_active', 'tenant', 'created_at', 'updated_at']
+        fields = [
+            "id",
+            "name",
+            "email",
+            "phone_number",
+            "password",
+            "role",
+            "tenant",
+            "bio",
+            "tenant_name",
+            "tenant_id",
+            "avatar_url",
+            "is_active",
+            "is_verified",
+            "created_at",
+            "updated_at",
+            "groups",
+        ]
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "email": {"required": True},
+            "tenant": {"required": True},
+        }
+        read_only_fields = [
+            "id",
+            "is_staff",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
         swagger_schema_fields = {
-            "example": {
-                "id": "123e4567-e89b-12d3-a456-426614174000",
-                "tenant": "tenant-uuid",
-                "name": "John Doe",
-                "email": "john@example.com",
-                "password": "yourpassword",
-                "role": "customer",
-                "is_verified": True,
-                "avatar_url": "https://example.com/avatar.jpg",
-            }
+            "required": ["email", "password", "name"],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the user",
+                },
+                "password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "Password for the user",
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Full name of the user",
+                },
+                "role": {
+                    "type": "string",
+                    "enum": ["admin", "customer", "owner"],
+                    "description": "Role of the user in the system",
+                },
+                "tenant": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the tenant the user belongs to",
+                },
+            },
         }
 
     def create(self, validated_data):
-        # Use set_password to securely hash passwords
-        password = validated_data.pop('password', None)
-        user = User(**validated_data)
+        """Create a new user with encrypted password."""
+        # Remove groups to handle separately
+        groups = None
+        if "groups" in validated_data:
+            groups = validated_data.pop("groups")
+
+        with transaction.atomic():
+            # Create the user without groups
+            user = User(**validated_data)
+            user.set_password(validated_data["password"])
+            user.save()
+
+            # Add groups after user is created
+            if groups:
+                user.groups.set(groups)
+
+            return user
+
+    def update(self, instance, validated_data):
+        """Update a user, correctly handling the password."""
+        password = validated_data.pop("password", None)
+        groups = validated_data.pop("groups", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
         if password:
-            user.set_password(password)
-        user.save()
-        return user
+            instance.set_password(password)
+
+        if groups is not None:
+            instance.groups.set(groups)
+
+        instance.save()
+        return instance

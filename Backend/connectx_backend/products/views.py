@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
-from .models import Product
+from .models import Product, ProductListing
 from .serializers import ProductSerializer
 from users.permissions import IsTenantOwner
 
@@ -16,9 +16,10 @@ from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
+
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
@@ -27,11 +28,21 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_fields = ["category__name", "owner", "is_public"]
 
     def get_permissions(self):
+        """
+        Get the list of permissions that the current action requires.
 
-        """Allow all authenticated users to read, but only tenant owners can write."""
-        if self.action in ['list', 'retrieve', 'by_category']:
+        - List/Retrieve: Any authenticated user
+        - Create: Tenant owner or admin
+        - Update/Delete: Owner of the product
+        - List/Unlist: Owner of the product or tenant with listing
+        """
+        if self.action in ["list", "retrieve", "by_category"]:
             return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsTenantOwner()]
+        elif self.action == "create":
+            return [permissions.IsAuthenticated(), IsTenantOwner()]
+        elif self.action in ["update", "partial_update", "destroy"]:
+            return [permissions.IsAuthenticated(), IsTenantOwner()]
+        return [permissions.IsAuthenticated()]
 
     @swagger_auto_schema(
         operation_summary="List product under current tenant",
@@ -150,29 +161,34 @@ class ProductViewSet(viewsets.ModelViewSet):
         tenant = self.request.user.tenant
         user = self.request.user
         filter_type = self.request.query_params.get("filter_type", "public_owned")
+
+        # Base queryset - products owned by tenant or public products
+        if self.action in ["update", "partial_update", "destroy"]:
+            # For update/delete, only show products owned by the tenant
+            queryset = Product.objects.filter(owner=tenant)
+        else:
+            # For other actions, show owned products and public products
+            queryset = Product.objects.filter(Q(owner=tenant) | Q(is_public=True))
+
+        # Apply additional filters based on filter_type
+        if filter_type == "listed":
+            listings = ProductListing.objects.filter(tenant=tenant)
+            product_ids = listings.values_list("product_id", flat=True)
+            queryset = queryset.filter(id__in=product_ids)
+        elif filter_type == "owned":
+            queryset = queryset.filter(owner=tenant)
+        elif filter_type == "public":
+            queryset = queryset.filter(is_public=True)
+
+        # Apply price and category filters
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
         category = self.request.query_params.get("category")
 
-        # If user is a customer, restrict to listed only
-        if user.role == "customer":
-            filter_type = "listed"
-
-        if filter_type == "listed":
-            listings = ProductListing.objects.filter(tenant=tenant)
-            if min_price:
-                listings = listings.filter(selling_price__gte=min_price)
-            if max_price:
-                listings = listings.filter(selling_price__lte=max_price)
-            product_ids = listings.values_list("product_id", flat=True)
-            queryset = Product.objects.filter(id__in=product_ids)
-        elif filter_type == "owned":
-            queryset = Product.objects.filter(owner=tenant)
-        elif filter_type == "public":
-            queryset = Product.objects.filter(is_public=True)
-        else:  # "public_owned"
-            queryset = Product.objects.filter(Q(owner=tenant) | Q(is_public=True))
-
+        if min_price:
+            queryset = queryset.filter(base_price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(base_price__lte=max_price)
         if category:
             queryset = queryset.filter(category__name__icontains=category)
 
@@ -198,52 +214,50 @@ class ProductViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        if not self.request.user.is_authenticated:
-            raise PermissionDenied("Authentication is required.")
-        
+        """Set the owner to the current user's tenant."""
         serializer.save(owner=self.request.user.tenant)
-        
+
+    def perform_update(self, serializer):
+        """Ensure only the owner can update the product."""
+        instance = self.get_object()
+        if instance.owner != self.request.user.tenant:
+            raise PermissionDenied("You can only update products you own.")
+        serializer.save()
+
     @swagger_auto_schema(
         operation_description="Get products filtered by category ID",
         operation_summary="List products by category",
         manual_parameters=[
             openapi.Parameter(
-                'category_id',
+                "category_id",
                 openapi.IN_PATH,
                 description="Category ID (UUID)",
                 type=openapi.TYPE_STRING,
                 format=openapi.FORMAT_UUID,
-                required=True
+                required=True,
             ),
         ],
         responses={
             200: openapi.Response(
-                description="Success",
-                schema=ProductSerializer(many=True)
+                description="Success", schema=ProductSerializer(many=True)
             ),
             404: "Category not found",
-            500: "Server error"
-        }
+            500: "Server error",
+        },
     )
-    @action(detail=False, methods=['GET'], url_path='by-category/(?P<category_id>[^/.]+)')
+    @action(
+        detail=False, methods=["GET"], url_path="by-category/(?P<category_id>[^/.]+)"
+    )
     def by_category(self, request, category_id=None):
-        """
-        Get products filtered by category ID.
-        """
+        """Get products filtered by category ID."""
         try:
-            # Verify the category exists
-            category = get_object_or_404(Category, id=category_id)
-            
-            # Get the base queryset and filter by category
+            category = Category.objects.get(id=category_id)
             queryset = self.get_queryset().filter(category=category)
-            
-            # Return all results
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            return Response({"results": serializer.data})
         except Exception as e:
-            return Response(
-                {"error": str(e)},
-                status=500
-            )
-
-        serializer.save(owner=self.request.user.tenant)
+            return Response({"error": str(e)}, status=500)
