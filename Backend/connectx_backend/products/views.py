@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+
+from api_keys.authentication import ApiKeyAuthentication
 from .models import Product
 from .serializers import ProductSerializer
 from users.permissions import IsTenantOwner
@@ -19,14 +21,18 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+# @swagger_auto_schema(security=[{"ApiKeyAuth": []}])
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["name", "sku", "description"]
     filterset_fields = ["category__name", "owner", "is_public"]
+    authentication_classes = [ApiKeyAuthentication]
 
     def get_permissions(self):
+        print("request.tenant =", getattr(self.request, "tenant", None))
+        print("request.user =", self.request.user)
 
         """Allow all authenticated users to read, but only tenant owners can write."""
         if self.action in ['list', 'retrieve', 'by_category']:

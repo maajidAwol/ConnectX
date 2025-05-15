@@ -41,7 +41,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:3000"
+).split(",")
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -57,6 +59,7 @@ INSTALLED_APPS = [
     "shipping",
     "analytics",
     "reviews",
+    "api_keys",
     "django_extensions",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -153,6 +156,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "api_keys.authentication.ApiKeyAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
@@ -170,6 +174,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    
 }
 
 # Custom User Model
@@ -187,6 +192,11 @@ SWAGGER_SETTINGS = {
             "in": "header",
             "description": 'JWT Authorization header using the Bearer scheme. Example: "Bearer {token}"',
         },
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-KEY"
+        }
     },
     "USE_SESSION_AUTH": False,
 }
