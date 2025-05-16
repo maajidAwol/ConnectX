@@ -31,7 +31,7 @@ class Tenant(models.Model):
         max_length=50,
         choices=[
             ("pending", "Pending"),
-            ("under_reviw","Under  Reviw"),
+            ("under_reviw", "Under  Reviw"),
             ("approved", "Approved"),
             ("rejected", "Rejected"),
         ],
@@ -91,3 +91,4 @@ class Tenant(models.Model):
 
     class Meta:
         db_table = "tenants"
+        ordering = ["-created_at", "name"]

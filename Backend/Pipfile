@@ -17,6 +17,8 @@ djangorestframework-simplejwt = "*"
 cloudinary = "*"
 django-cloudinary-storage = "*"
 python-dotenv = "*"
+django-filter = "*"
+pytest = "*"
 
 [dev-packages]
 
