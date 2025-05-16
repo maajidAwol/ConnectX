@@ -76,7 +76,7 @@ class TestCategoryAPI:
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_category_create_as_owner(self, owner_client, category_data):
+    def test1_category_create_as_owner(self, owner_client, category_data):
         """
         Test that tenant owners can create categories.
         """
@@ -159,7 +159,7 @@ class TestCategoryAPI:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_category_update(
+    def test1_category_update(
         self, owner_client, category_factory, category_update_data
     ):
         """
