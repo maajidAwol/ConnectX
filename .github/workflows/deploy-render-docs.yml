@@ -61,6 +61,7 @@ jobs:
         working-directory: Backend
       - name: Run migrations
         run: |
+          python manage.py makemigrations
           python manage.py migrate
         working-directory: Backend/connectx_backend
       - name: Run Pytest
