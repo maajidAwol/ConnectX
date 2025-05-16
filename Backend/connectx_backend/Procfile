@@ -1,1 +1,1 @@
-web: gunicorn connectx_backend.wsgi
+web: gunicorn connectx.wsgi

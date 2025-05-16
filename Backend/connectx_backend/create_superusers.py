@@ -22,7 +22,7 @@ def create_superusers():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('connectx_backend', 'previous_migration'),
+        ('connectx', 'previous_migration'),
     ]
 
     operations = [
