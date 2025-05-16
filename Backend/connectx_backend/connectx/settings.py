@@ -228,3 +228,8 @@ LOGGING = {
         },
     },
 }
+
+# Chapa Payment Integration
+CHAPA_API_KEY = os.environ.get('CHAPA_API_KEY', 'YOUR_TEST_API_KEY_HERE')
+CHAPA_API_URL = 'https://api.chapa.co/v1/transaction/initialize'
+CHAPA_VERIFY_URL = 'https://api.chapa.co/v1/transaction/verify/'
