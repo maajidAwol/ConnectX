@@ -111,7 +111,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         //         itemBuilder: (context, index) {
                         //           final product = state.products[index];
                         //           return ProductCard(
-
+                                    
                         //             product: product,
                         //           );
                         //         },
@@ -119,6 +119,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         //     ),
                         //   ],
                         // );
+
+
+
                       }
 
                       // Show categories (initial state or after clicking Explore Categories)
