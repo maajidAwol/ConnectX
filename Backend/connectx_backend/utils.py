@@ -148,12 +148,29 @@ def generate_image_url(
     
     Args:
         public_id: The public ID of the image
-        transformation: Optional transformation parameters
+        transformation: Optional transformation parameters for Cloudinary
+            This dictionary can include parameters like:
+            - width, height: for resizing
+            - crop: cropping mode (fill, fit, etc.)
+            - effect: visual effects
+            - quality: compression quality
+            - format: output format (jpg, png, etc.)
+            - overlay: for adding watermarks or text
         
     Returns:
         URL string for the transformed image
+    
+    Example:
+        # Generate URL for a resized image (200x200, cropped to fill)
+        url = generate_image_url('product_id', {
+            'width': 200,
+            'height': 200,
+            'crop': 'fill'
+        })
     """
     if not transformation:
         transformation = {}
     
+    # This function uses Cloudinary's API to generate a URL for an image
+    # with the specified transformations applied on-the-fly
     return cloudinary.CloudinaryImage(public_id).build_url(**transformation) 
