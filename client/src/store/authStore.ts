@@ -12,15 +12,42 @@ interface User {
   updated_at: string
 }
 
+interface TenantData {
+  id: string
+  name: string
+  legal_name: string | null
+  business_registration_number: string | null
+  api_key: string | null
+  email: string
+  logo: string | null
+  business_type: string | null
+  phone: string | null
+  address: string | null
+  mobileapp_url: string | null
+  mobileapp_name: string | null
+  licence_registration_date: string | null
+  tenant_verification_status: string
+  tenant_verification_date: string | null
+  business_bio: string | null
+  website_url: string | null
+  is_verified: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 interface AuthState {
   isAuthenticated: boolean
   user: User | null
+  tenantData: TenantData | null
   accessToken: string | null
   refreshToken: string | null
   signup: (data: { name: string; email: string; password: string; fullname: string }) => Promise<void>
   login: (data: { email: string; password: string }) => Promise<void>
   logout: () => void
   getRedirectPath: () => string
+  fetchTenantData: () => Promise<void>
+  isTenantVerified: () => boolean
 }
 
 // In Next.js, cookies need to be set server-side
@@ -49,18 +76,26 @@ const loadStateFromCookies = () => {
   const refreshToken = getCookie('refreshToken');
   
   let user = null;
+  let tenantData = null;
+  
   try {
     const userJson = getCookie('user');
     if (userJson) {
       user = JSON.parse(decodeURIComponent(userJson));
     }
+    
+    const tenantDataJson = getCookie('tenantData');
+    if (tenantDataJson) {
+      tenantData = JSON.parse(decodeURIComponent(tenantDataJson));
+    }
   } catch (error) {
-    console.error('Error parsing user from cookie:', error);
+    console.error('Error parsing data from cookies:', error);
   }
   
   return {
     isAuthenticated: !!accessToken && !!refreshToken,
     user,
+    tenantData,
     accessToken,
     refreshToken
   };
@@ -116,7 +151,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         accessToken: access,
         refreshToken: refresh,
         isAuthenticated: true 
-      })
+      });
+
+      // Fetch tenant data after successful login
+      await get().fetchTenantData();
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -128,12 +166,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     deleteCookie('refreshToken');
     deleteCookie('userRole');
     deleteCookie('user');
+    deleteCookie('tenantData');
     
     set({ 
       user: null, 
       accessToken: null,
       refreshToken: null,
-      isAuthenticated: false 
+      isAuthenticated: false,
+      tenantData: null
     });
     
     // Redirect to home page after logout
@@ -153,5 +193,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     
     return '/'
+  },
+  fetchTenantData: async () => {
+    try {
+      const { accessToken, user } = get();
+      if (!accessToken || !user?.tenant) {
+        console.warn('No access token or tenant ID available for fetching tenant data');
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/tenants/${user.tenant}/`,
+        {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Failed to fetch tenant data:', response.status);
+        return;
+      }
+
+      const tenantData = await response.json();
+      
+      // Store tenant data in state and cookie
+      set({ tenantData });
+      setCookie('tenantData', encodeURIComponent(JSON.stringify(tenantData)), 7);
+    } catch (error) {
+      console.error('Error fetching tenant data:', error);
+    }
+  },
+  isTenantVerified: () => {
+    const { tenantData } = get();
+    if (!tenantData) {
+      // If tenant data is not loaded, try to fetch it
+      get().fetchTenantData();
+      return false;
+    }
+    return tenantData.is_verified || false;
   }
 }))

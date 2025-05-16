@@ -6,6 +6,10 @@ from django.contrib.auth.hashers import make_password
 class Tenant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
+    legal_name = models.CharField(max_length=255, null=True, blank=True)
+    business_registration_number = models.CharField(max_length=255, null=True, blank=True)
+    
+
     api_key = models.CharField(max_length=100, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)  # Store hashed passwords
@@ -22,7 +26,6 @@ class Tenant(models.Model):
         ('rejected', 'Rejected')
     ], default='pending')
     tenant_verification_date = models.DateField(null=True, blank=True)
-    
     business_bio = models.TextField(null=True, blank=True)
     website_url = models.URLField(max_length=500, null=True, blank=True)
     is_verified = models.BooleanField(default=False)

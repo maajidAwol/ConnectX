@@ -1,11 +1,10 @@
-Internal Server Error: /api/tenants/
+Internal Server Error: /api/products/
 Traceback (most recent call last):
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
     return self.cursor.execute(sql, params)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.errors.UndefinedColumn: column tenants_tenant.logo does not exist
-LINE 1: ...nts_tenant"."email", "tenants_tenant"."password", "tenants_t...
-                                                             ^
+psycopg2.errors.NotNullViolation: null value in column "category_id" of relation "products_product" violates not-null constraint
+DETAIL:  Failing row contains (43a7f6c6-3978-4bd1-aeb0-d0c1c9845a91, SKU-001, Smartphone X, 500.00, 20.00, 600.00, 0, t, Latest model with advanced features., , [], , {}, , https://example.com/image.jpg, ["https://example.com/image1.jpg", "https://example.com/image2.j..., ["Black", "White"], ["64GB", "128GB"], 0, 0, 0, 2025-05-04 08:36:27.502801+00, 2025-05-04 08:36:27.502859+00, null, 06cbdc10-c1a0-4e24-8744-dd237b65be43).
 
 
 The above exception was the direct cause of the following exception:
@@ -33,165 +32,10 @@ Traceback (most recent call last):
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
     response = handler(request, *args, **kwargs)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 46, in list
-    return Response(serializer.data)
-                    ^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 797, in data
-    ret = super().data
-          ^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 251, in data
-    self._data = self.to_representation(self.instance)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 715, in to_representation
-    return [
-           ^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 384, in __iter__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
-    cursor.execute(sql, params)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
-    return super().execute(sql, params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
-    return self._execute_with_wrappers(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
-    return executor(sql, params, many, context)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
-    with self.db.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
-    return self.cursor.execute(sql, params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.ProgrammingError: column tenants_tenant.logo does not exist
-LINE 1: ...nts_tenant"."email", "tenants_tenant"."password", "tenants_t...
-                                                             ^
-
-"GET /api/tenants/ HTTP/1.1" 500 28881
-Internal Server Error: /api/tenants/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
-    return self.cursor.execute(sql, params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.errors.UndefinedColumn: column tenants_tenant.logo does not exist
-LINE 1: ...nts_tenant"."email", "tenants_tenant"."password", "tenants_t...
-                                                             ^
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
-    response = get_response(request)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 46, in list
-    return Response(serializer.data)
-                    ^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 797, in data
-    ret = super().data
-          ^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 251, in data
-    self._data = self.to_representation(self.instance)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 715, in to_representation
-    return [
-           ^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 384, in __iter__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
-    cursor.execute(sql, params)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
-    return super().execute(sql, params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
-    return self._execute_with_wrappers(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
-    return executor(sql, params, many, context)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
-    with self.db.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
-    return self.cursor.execute(sql, params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.ProgrammingError: column tenants_tenant.logo does not exist
-LINE 1: ...nts_tenant"."email", "tenants_tenant"."password", "tenants_t...
-                                                             ^
-
-"GET /api/tenants/ HTTP/1.1" 500 28949
-Internal Server Error: /api/tenants/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
-    return self.cursor.execute(sql, params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.errors.UndefinedColumn: column "logo" of relation "tenants_tenant" does not exist
-LINE 1: ...t" ("id", "name", "api_key", "email", "password", "logo", "b...
-                                                             ^
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
-    response = get_response(request)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/tenants/views.py", line 34, in create
-    tenant = serializer.save()
-             ^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 19, in create
+    self.perform_create(serializer)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 191, in perform_create
+    serializer.save(owner=self.request.user.tenant)
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 210, in save
     self.instance = self.create(validated_data)
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -203,7 +47,7 @@ Traceback (most recent call last):
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 663, in create
     obj.save(force_insert=True, using=self.db)
-  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/tenants/models.py", line 22, in save
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/models.py", line 41, in save
     super().save(*args, **kwargs)
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 902, in save
     self.save_base(
@@ -240,35 +84,11 @@ Traceback (most recent call last):
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
     return self.cursor.execute(sql, params)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.ProgrammingError: column "logo" of relation "tenants_tenant" does not exist
-LINE 1: ...t" ("id", "name", "api_key", "email", "password", "logo", "b...
-                                                             ^
+django.db.utils.IntegrityError: null value in column "category_id" of relation "products_product" violates not-null constraint
+DETAIL:  Failing row contains (43a7f6c6-3978-4bd1-aeb0-d0c1c9845a91, SKU-001, Smartphone X, 500.00, 20.00, 600.00, 0, t, Latest model with advanced features., , [], , {}, , https://example.com/image.jpg, ["https://example.com/image1.jpg", "https://example.com/image2.j..., ["Black", "White"], ["64GB", "128GB"], 0, 0, 0, 2025-05-04 08:36:27.502801+00, 2025-05-04 08:36:27.502859+00, null, 06cbdc10-c1a0-4e24-8744-dd237b65be43).
 
-"POST /api/tenants/ HTTP/1.1" 500 30270
-Internal Server Error: /api/tenants/272e7c79-ba7e-4228-b29c-ec0ccd2e07c8/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-
-The above exception was the direct cause of the following exception:
-
+"POST /api/products/ HTTP/1.1" 500 32068
+Internal Server Error: /api/products/
 Traceback (most recent call last):
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
     response = get_response(request)
@@ -289,658 +109,31 @@ Traceback (most recent call last):
     self.raise_uncaught_exception(exc)
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
     raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 503, in dispatch
-    self.initial(request, *args, **kwargs)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 420, in initial
-    self.perform_authentication(request)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 330, in perform_authentication
-    request.user
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 232, in user
-    self._authenticate()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 385, in _authenticate
-    user_auth_tuple = authenticator.authenticate(self)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 51, in authenticate
-    return self.get_user(validated_token), validated_token
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 130, in get_user
-    user = self.user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
-    return getattr(self.get_queryset(), name)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
-    num = len(clone)
-          ^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1620, in execute_sql
-    cursor = self.connection.cursor()
-             ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 320, in cursor
-    return self._cursor()
-           ^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 296, in _cursor
-    self.ensure_connection()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 278, in ensure_connection
-    with self.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-"DELETE /api/tenants/272e7c79-ba7e-4228-b29c-ec0ccd2e07c8/ HTTP/1.1" 500 32711
-Internal Server Error: /api/tenants/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
-    response = get_response(request)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 503, in dispatch
-    self.initial(request, *args, **kwargs)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 420, in initial
-    self.perform_authentication(request)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 330, in perform_authentication
-    request.user
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 232, in user
-    self._authenticate()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 385, in _authenticate
-    user_auth_tuple = authenticator.authenticate(self)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 51, in authenticate
-    return self.get_user(validated_token), validated_token
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 130, in get_user
-    user = self.user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
-    return getattr(self.get_queryset(), name)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
-    num = len(clone)
-          ^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1620, in execute_sql
-    cursor = self.connection.cursor()
-             ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 320, in cursor
-    return self._cursor()
-           ^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 296, in _cursor
-    self.ensure_connection()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 278, in ensure_connection
-    with self.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-"GET /api/tenants/ HTTP/1.1" 500 32519
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
-    response = get_response(request)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 503, in dispatch
-    self.initial(request, *args, **kwargs)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 420, in initial
-    self.perform_authentication(request)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 330, in perform_authentication
-    request.user
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 232, in user
-    self._authenticate()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 385, in _authenticate
-    user_auth_tuple = authenticator.authenticate(self)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 51, in authenticate
-    return self.get_user(validated_token), validated_token
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 130, in get_user
-    user = self.user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
-    return getattr(self.get_queryset(), name)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
-    num = len(clone)
-          ^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1620, in execute_sql
-    cursor = self.connection.cursor()
-             ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 320, in cursor
-    return self._cursor()
-           ^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 296, in _cursor
-    self.ensure_connection()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 278, in ensure_connection
-    with self.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 32711
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
-    response = get_response(request)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 503, in dispatch
-    self.initial(request, *args, **kwargs)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 420, in initial
-    self.perform_authentication(request)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 330, in perform_authentication
-    request.user
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 232, in user
-    self._authenticate()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 385, in _authenticate
-    user_auth_tuple = authenticator.authenticate(self)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 51, in authenticate
-    return self.get_user(validated_token), validated_token
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 130, in get_user
-    user = self.user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
-    return getattr(self.get_queryset(), name)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
-    num = len(clone)
-          ^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1620, in execute_sql
-    cursor = self.connection.cursor()
-             ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 320, in cursor
-    return self._cursor()
-           ^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 296, in _cursor
-    self.ensure_connection()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 278, in ensure_connection
-    with self.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 32711
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
-    response = get_response(request)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 503, in dispatch
-    self.initial(request, *args, **kwargs)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 420, in initial
-    self.perform_authentication(request)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 330, in perform_authentication
-    request.user
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 232, in user
-    self._authenticate()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 385, in _authenticate
-    user_auth_tuple = authenticator.authenticate(self)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 51, in authenticate
-    return self.get_user(validated_token), validated_token
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 130, in get_user
-    user = self.user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
-    return getattr(self.get_queryset(), name)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
-    num = len(clone)
-          ^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1620, in execute_sql
-    cursor = self.connection.cursor()
-             ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 320, in cursor
-    return self._cursor()
-           ^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 296, in _cursor
-    self.ensure_connection()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 278, in ensure_connection
-    with self.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 32711
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
-    response = get_response(request)
-               ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 503, in dispatch
-    self.initial(request, *args, **kwargs)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 420, in initial
-    self.perform_authentication(request)
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 330, in perform_authentication
-    request.user
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 232, in user
-    self._authenticate()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/request.py", line 385, in _authenticate
-    user_auth_tuple = authenticator.authenticate(self)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 51, in authenticate
-    return self.get_user(validated_token), validated_token
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework_simplejwt/authentication.py", line 130, in get_user
-    user = self.user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
-    return getattr(self.get_queryset(), name)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
-    num = len(clone)
-          ^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1620, in execute_sql
-    cursor = self.connection.cursor()
-             ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 320, in cursor
-    return self._cursor()
-           ^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 296, in _cursor
-    self.ensure_connection()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 278, in ensure_connection
-    with self.wrap_database_errors:
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
-    raise dj_exc_value.with_traceback(traceback) from exc_value
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 279, in ensure_connection
-    self.connect()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/base/base.py", line 256, in connect
-    self.connection = self.get_new_connection(conn_params)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/postgresql/base.py", line 332, in get_new_connection
-    connection = self.Database.connect(**conn_params)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-django.db.utils.OperationalError: could not translate host name "pg-328e6d27-adanemoges6-fed8.d.aivencloud.com" to address: Temporary failure in name resolution
-
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 32711
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 47
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 47
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 47
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 47
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
-"DELETE /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/ HTTP/1.1" 500 47
-Internal Server Error: /api/tenants/5ec0c2eb-cb88-458e-a41b-ed9b06d7723c/
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 19, in create
+    self.perform_create(serializer)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 191, in perform_create
+    serializer.save(owner=self.request.user.tenant)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 210, in save
+    self.instance = self.create(validated_data)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 977, in create
+    raise_errors_on_nested_writes('create', self, validated_data)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 842, in raise_errors_on_nested_writes
+    assert not any(
+           ^^^^^^^^
+AssertionError: The `.create()` method does not support writable nested fields by default.
+Write an explicit `.create()` method for serializer `products.serializers.ProductSerializer`, or set `read_only=True` on nested serializer fields.
+"POST /api/products/ HTTP/1.1" 500 27049
+Internal Server Error: /api/products/
 Traceback (most recent call last):
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
     return self.cursor.execute(sql, params)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.errors.UndefinedColumn: column tenants.is_active does not exist
-LINE 1: ..."tenants"."website_url", "tenants"."is_verified", "tenants"....
-                                                             ^
+psycopg2.errors.NotNullViolation: null value in column "category_id" of relation "products_product" violates not-null constraint
+DETAIL:  Failing row contains (a37d847e-cb5c-4c67-8fc9-24a63db7f180, SKU-001, Smartphone X, 500.00, 20.00, 600.00, 100, t, Latest model with advanced features., , [], , {}, , https://example.com/image.jpg, ["https://example.com/image1.jpg", "https://example.com/image2.j..., ["Black", "White"], ["64GB", "128GB"], 0, 0, 0, 2025-05-04 08:53:02.904994+00, 2025-05-04 08:53:02.905076+00, null, 06cbdc10-c1a0-4e24-8744-dd237b65be43).
 
 
 The above exception was the direct cause of the following exception:
@@ -968,30 +161,221 @@ Traceback (most recent call last):
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
     response = handler(request, *args, **kwargs)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 54, in retrieve
-    instance = self.get_object()
-               ^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/generics.py", line 100, in get_object
-    obj = get_object_or_404(queryset, **filter_kwargs)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/generics.py", line 19, in get_object_or_404
-    return _get_object_or_404(queryset, *filter_args, **filter_kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/shortcuts.py", line 90, in get_object_or_404
-    return queryset.get(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 629, in get
-    num = len(clone)
-          ^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 366, in __len__
-    self._fetch_all()
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1935, in _fetch_all
-    self._result_cache = list(self._iterable_class(self))
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
-    results = compiler.execute_sql(
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 19, in create
+    self.perform_create(serializer)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 191, in perform_create
+    serializer.save(owner=self.request.user.tenant,)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 210, in save
+    self.instance = self.create(validated_data)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 991, in create
+    instance = ModelClass._default_manager.create(**validated_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/models.py", line 41, in save
+    super().save(*args, **kwargs)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1854, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1881, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: null value in column "category_id" of relation "products_product" violates not-null constraint
+DETAIL:  Failing row contains (a37d847e-cb5c-4c67-8fc9-24a63db7f180, SKU-001, Smartphone X, 500.00, 20.00, 600.00, 100, t, Latest model with advanced features., , [], , {}, , https://example.com/image.jpg, ["https://example.com/image1.jpg", "https://example.com/image2.j..., ["Black", "White"], ["64GB", "128GB"], 0, 0, 0, 2025-05-04 08:53:02.904994+00, 2025-05-04 08:53:02.905076+00, null, 06cbdc10-c1a0-4e24-8744-dd237b65be43).
+
+"POST /api/products/ HTTP/1.1" 500 32076
+Internal Server Error: /api/products/
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.NotNullViolation: null value in column "category_id" of relation "products_product" violates not-null constraint
+DETAIL:  Failing row contains (2990d0a3-ee9f-4eb1-9646-44874205013b, SKU-001, Smartphone X, 500.00, 20.00, 600.00, 100, t, Latest model with advanced features., , [], , {}, , https://example.com/image.jpg, ["https://example.com/image1.jpg", "https://example.com/image2.j..., ["Black", "White"], ["64GB", "128GB"], 0, 0, 0, 2025-05-04 08:54:21.611227+00, 2025-05-04 08:54:21.611279+00, null, 06cbdc10-c1a0-4e24-8744-dd237b65be43).
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 19, in create
+    self.perform_create(serializer)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 191, in perform_create
+    serializer.save(owner=self.request.user.tenant,)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 210, in save
+    self.instance = self.create(validated_data)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 991, in create
+    instance = ModelClass._default_manager.create(**validated_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/models.py", line 41, in save
+    super().save(*args, **kwargs)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1854, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1881, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: null value in column "category_id" of relation "products_product" violates not-null constraint
+DETAIL:  Failing row contains (2990d0a3-ee9f-4eb1-9646-44874205013b, SKU-001, Smartphone X, 500.00, 20.00, 600.00, 100, t, Latest model with advanced features., , [], , {}, , https://example.com/image.jpg, ["https://example.com/image1.jpg", "https://example.com/image2.j..., ["Black", "White"], ["64GB", "128GB"], 0, 0, 0, 2025-05-04 08:54:21.611227+00, 2025-05-04 08:54:21.611279+00, null, 06cbdc10-c1a0-4e24-8744-dd237b65be43).
+
+"POST /api/products/ HTTP/1.1" 500 32076
+Internal Server Error: /api/products/
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.NotNullViolation: null value in column "category_id" of relation "products_product" violates not-null constraint
+DETAIL:  Failing row contains (acc99b55-c22b-4186-8a7e-de9a7f9e5205, SKU-001, Smartphone X, 500.00, 20.00, 600.00, 100, t, Latest model with advanced features., , [], , {}, , https://example.com/image.jpg, ["https://example.com/image1.jpg", "https://example.com/image2.j..., ["Black", "White"], ["64GB", "128GB"], 0, 0, 0, 2025-05-04 08:54:47.021703+00, 2025-05-04 08:54:47.021734+00, null, 06cbdc10-c1a0-4e24-8744-dd237b65be43).
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/mixins.py", line 19, in create
+    self.perform_create(serializer)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/views.py", line 191, in perform_create
+    serializer.save(owner=self.request.user.tenant,)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 210, in save
+    self.instance = self.create(validated_data)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/rest_framework/serializers.py", line 991, in create
+    instance = ModelClass._default_manager.create(**validated_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/adane/Repository/ConnectX/Backend/connectx_backend/products/models.py", line 41, in save
+    super().save(*args, **kwargs)
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/query.py", line 1854, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1881, in execute_sql
     cursor.execute(sql, params)
   File "/home/adane/snap/code/190/.local/share/virtualenvs/Backend-OTU7wIHD/lib/python3.12/site-packages/django/db/backends/utils.py", line 122, in execute
     return super().execute(sql, params)
@@ -1483,71 +867,3 @@ Traceback (most recent call last):
     rv = reductor(4)
 TypeError: cannot pickle 'BufferedRandom' instances
 "POST /api/users/fdf7ad93-41db-48de-98dd-8c2a5acb8c85/update-profile/ HTTP/1.1" 500 165043
-Internal Server Error: /api/users/fdf7ad93-41db-48de-98dd-8c2a5acb8c85/update-profile/
-Traceback (most recent call last):
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-  File "C:\Users\maajid\Desktop\personal\FinalYear\ConnectX\Backend\connectx_backend\users\views.py", line 77, in update_profile
-    user = self.get_object()
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\generics.py", line 87, in get_object
-    queryset = self.filter_queryset(self.get_queryset())
-                                    ~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\maajid\Desktop\personal\FinalYear\ConnectX\Backend\connectx_backend\users\views.py", line 61, in get_queryset
-    return User.objects.filter(tenant=self.request.user.tenant)
-                                      ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\db\models\fields\related_descriptors.py", line 268, in __get__
-    raise self.RelatedObjectDoesNotExist(
-        "%s has no %s." % (self.field.model.__name__, self.field.name)
-    )
-users.models.User.tenant.RelatedObjectDoesNotExist: User has no tenant.. Did you mean: 'tenant_id'?
-"POST /api/users/fdf7ad93-41db-48de-98dd-8c2a5acb8c85/update-profile/ HTTP/1.1" 500 113062
-Internal Server Error: /api/users/fdf7ad93-41db-48de-98dd-8c2a5acb8c85/update-profile/
-Traceback (most recent call last):
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
-    response = self.handle_exception(exc)
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
-    self.raise_uncaught_exception(exc)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
-    raise exc
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-  File "C:\Users\maajid\Desktop\personal\FinalYear\ConnectX\Backend\connectx_backend\users\views.py", line 77, in update_profile
-    user = self.get_object()
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\rest_framework\generics.py", line 87, in get_object
-    queryset = self.filter_queryset(self.get_queryset())
-                                    ~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\maajid\Desktop\personal\FinalYear\ConnectX\Backend\connectx_backend\users\views.py", line 61, in get_queryset
-    return User.objects.filter(tenant=self.request.user.tenant)
-                                      ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\maajid\.virtualenvs\Backend-mSACcdW2\Lib\site-packages\django\db\models\fields\related_descriptors.py", line 268, in __get__
-    raise self.RelatedObjectDoesNotExist(
-        "%s has no %s." % (self.field.model.__name__, self.field.name)
-    )
-users.models.User.tenant.RelatedObjectDoesNotExist: User has no tenant.. Did you mean: 'tenant_id'?
-"POST /api/users/fdf7ad93-41db-48de-98dd-8c2a5acb8c85/update-profile/ HTTP/1.1" 500 113773
