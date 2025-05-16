@@ -14,7 +14,6 @@ class Review(models.Model):
         Product, on_delete=models.CASCADE, related_name="reviews"
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
-    title = models.CharField(max_length=255)
     rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
