@@ -13,6 +13,11 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     profit_percentage = serializers.SerializerMethodField()
     selling_price = serializers.SerializerMethodField()
+    base_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=True
+    )
+    name = serializers.CharField(required=True)
+    sku = serializers.CharField(required=True)
 
     filter_backends = [filters.SearchFilter]
     search_fields = [
@@ -24,12 +29,22 @@ class ProductSerializer(serializers.ModelSerializer):
         "category__name",
     ]
 
+    def validate(self, data):
+        """Validate the product data."""
+        if "base_price" in data and data["base_price"] <= 0:
+            raise serializers.ValidationError(
+                {"base_price": "Base price must be greater than 0"}
+            )
+        return data
+
     def get_profit_percentage(self, obj):
         request = self.context.get("request")
         if not request or not hasattr(request.user, "tenant"):
             return None
 
-        listing = ProductListing.objects.filter(product=obj, tenant=request.user.tenant).first()
+        listing = ProductListing.objects.filter(
+            product=obj, tenant=request.user.tenant
+        ).first()
         return listing.profit_percentage if listing else None
 
     def get_selling_price(self, obj):
@@ -37,7 +52,9 @@ class ProductSerializer(serializers.ModelSerializer):
         if not request or not hasattr(request.user, "tenant"):
             return None
 
-        listing = ProductListing.objects.filter(product=obj, tenant=request.user.tenant).first()
+        listing = ProductListing.objects.filter(
+            product=obj, tenant=request.user.tenant
+        ).first()
         return listing.selling_price if listing else None
 
     def to_representation(self, instance):
@@ -89,6 +106,20 @@ class ProductSerializer(serializers.ModelSerializer):
             "profit_percentage",
             "selling_price",
         ]
+        extra_kwargs = {
+            "description": {"required": False},
+            "short_description": {"required": False},
+            "tag": {"required": False},
+            "brand": {"required": False},
+            "additional_info": {"required": False},
+            "warranty": {"required": False},
+            "cover_url": {"required": False},
+            "images": {"required": False},
+            "colors": {"required": False},
+            "sizes": {"required": False},
+            "quantity": {"required": False},
+            "is_public": {"required": False, "default": True},
+        }
         swagger_schema_fields = {
             "example": {
                 "sku": "SKU-001",
