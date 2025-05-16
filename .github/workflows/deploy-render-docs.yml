@@ -15,22 +15,27 @@ on:
 jobs:
   deploy-render-docs:
     runs-on: ubuntu-latest
+
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install dependencies
+        working-directory: Backend
         run: |
-          pwd && ls
-          cd Backend
-          ls
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
       - name: Run Pytest
+        working-directory: Backend/connectx_backend
         run: |
           pytest
-        working-directory: Backend/connectx_backend
+
       - name: Trigger Render Deploy Hook
         run: |
-            curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
+          curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
