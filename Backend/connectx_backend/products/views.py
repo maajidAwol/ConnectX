@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
-from .models import Product
+from .models import Product, ProductListing
 from .serializers import ProductSerializer
 from users.permissions import IsTenantOwner
 
