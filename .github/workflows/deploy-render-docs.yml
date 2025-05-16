@@ -25,7 +25,6 @@ jobs:
           pwd
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-        working-directory: connectx_backend
       - name: Run Pytest
         run: |
           pytest
