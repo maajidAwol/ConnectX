@@ -22,13 +22,14 @@ jobs:
           python-version: '3.10'
       - name: Install dependencies
         run: |
+          pwd
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-        working-directory: Backend
+        working-directory: connectx_backend
       - name: Run Pytest
         run: |
           pytest
-        working-directory: Backend/connectx_backend/
+        working-directory: connectx_backend
       - name: Trigger Render Deploy Hook
         run: |
             curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
