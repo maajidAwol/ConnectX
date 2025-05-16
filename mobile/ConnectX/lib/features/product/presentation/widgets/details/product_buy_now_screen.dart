@@ -6,7 +6,6 @@ import 'package:korecha/components/custom_modal_bottom_sheet.dart';
 import 'package:korecha/components/network_image_with_loader.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/cart/presentation/state/cart/bloc/cart_bloc.dart';
-import 'package:korecha/features/product/data/models/product_model.dart';
 import 'package:korecha/features/product/domain/entities/product.dart';
 // import 'package:shop/screens/product/views/added_to_cart_message_screen.dart';
 import 'package:korecha/screens/product/views/components/product_quantity.dart';
@@ -49,12 +48,11 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
   @override
   Widget build(BuildContext context) {
     List<String> sizes = widget.product.sizes;
-    List<Color> colors =
-        widget.product.colors.isEmpty
-            ? []
-            : widget.product.colors.map((colorStr) {
-              return ProductModel.parseColor(colorStr);
-            }).toList();
+    List<Color> colors = widget.product.colors.isEmpty
+        ? []
+        : widget.product.colors
+            .map((e) => Color(int.parse(e.replaceAll('#', '0xff'))))
+            .toList();
 
     return Scaffold(
       bottomNavigationBar: CartButton(
@@ -66,9 +64,7 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
           print('Selected color: $selectedColor');
           print('Selected size: $selectedSize');
 
-          context.read<CartBloc>().add(
-            AddToCart(
-              CartItem(
+          context.read<CartBloc>().add(AddToCart(CartItem(
                 id: widget.product.id,
                 productId: widget.product.id,
                 name: widget.product.name,
@@ -78,9 +74,7 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                 color: selectedColor,
                 size: selectedSize,
                 address: '', // Default empty address for cart items
-              ),
-            ),
-          );
+              )));
           customModalBottomSheet(
             context,
             isDismissible: false,
@@ -92,9 +86,7 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: defaultPadding / 2,
-              vertical: defaultPadding,
-            ),
+                horizontal: defaultPadding / 2, vertical: defaultPadding),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -121,9 +113,7 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: defaultPadding,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
                     child: AspectRatio(
                       aspectRatio: 1.05,
                       child: NetworkImageWithLoader(widget.product.coverUrl),
@@ -186,65 +176,62 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                       },
                     ),
                   ),
-                if (widget.product.additionalInfo != null &&
-                    widget.product.additionalInfo is Map)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(defaultPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Additional Information",
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: defaultPadding),
-                          ...List.generate(
-                            (widget.product.additionalInfo as Map)
-                                .entries
-                                .length,
-                            (index) {
-                              final entry = (widget.product.additionalInfo
-                                      as Map)
-                                  .entries
-                                  .elementAt(index);
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "${entry.key}: ",
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        entry.value.toString(),
-                                        style:
-                                            Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: defaultPadding),
-                ),
+                if (widget.product.sizes.isNotEmpty)
+                  // SliverPadding(
+                  //   padding:
+                  //       const EdgeInsets.symmetric(vertical: defaultPadding),
+                  //   sliver: ProductListTile(
+                  //     title: "Size guide",
+                  //     svgSrc: "assets/icons/Sizeguid.svg",
+                  //     isShowBottomBorder: true,
+                  //     press: () {
+                  //       customModalBottomSheet(
+                  //         context,
+                  //         height: MediaQuery.of(context).size.height * 0.9,
+                  //         child: const SizeGuideScreen(),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
+                  // SliverPadding(
+                  //   padding:
+                  //       const EdgeInsets.symmetric(horizontal: defaultPadding),
+                  //   sliver: SliverToBoxAdapter(
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         const SizedBox(height: defaultPadding / 2),
+                  //         Text(
+                  //           "Store pickup availability",
+                  //           style: Theme.of(context).textTheme.titleSmall,
+                  //         ),
+                  //         const SizedBox(height: defaultPadding / 2),
+                  //         const Text(
+                  //             "Select a size to check store availability and In-Store pickup options.")
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+                  // SliverPadding(
+                  //   padding: const EdgeInsets.symmetric(vertical: defaultPadding),
+                  //   sliver: ProductListTile(
+                  //     title: "Check stores",
+                  //     svgSrc: "assets/icons/Stores.svg",
+                  //     isShowBottomBorder: true,
+                  //     press: () {
+                  //       customModalBottomSheet(
+                  //         context,
+                  //         height: MediaQuery.of(context).size.height * 0.92,
+                  //         child: const LocationPermissonStoreAvailabilityScreen(),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
+                  const SliverToBoxAdapter(
+                      child: SizedBox(height: defaultPadding))
               ],
             ),
-          ),
+          )
         ],
       ),
     );

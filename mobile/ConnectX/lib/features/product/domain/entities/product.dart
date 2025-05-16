@@ -31,7 +31,6 @@ class Product {
   final SaleLabel saleLabel;
   final DateTime createdAt;
   final Brand brand;
-  final dynamic additionalInfo;
 
   Product({
     required this.id,
@@ -64,7 +63,6 @@ class Product {
     required this.saleLabel,
     required this.createdAt,
     required this.brand,
-    this.additionalInfo,
   });
 
   bool get isFeatured => true;
