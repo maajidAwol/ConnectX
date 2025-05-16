@@ -16,6 +16,18 @@ jobs:
   deploy-render-docs:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: test_connectx
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -30,12 +42,12 @@ jobs:
           echo "SECRET_KEY=django-insecure-knk_\$kus_#roeezooizs-r)i_j0y-fy^%*liz^xfo%@02yg*k(" > Backend/.env
           echo "DJANGO_DEBUG=True" >> Backend/.env
           echo "ALLOWED_HOSTS=localhost,127.0.0.1,*" >> Backend/.env
-          echo "DB_NAME=ConnectX" >> Backend/.env
-          echo "DB_USER=avnadmin" >> Backend/.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> Backend/.env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> Backend/.env
-          echo "DB_PORT=15106" >> Backend/.env
-          echo "DB_SSLMODE=require" >> Backend/.env
+          echo "DB_NAME=test_connectx" >> Backend/.env
+          echo "DB_USER=postgres" >> Backend/.env
+          echo "DB_PASSWORD=postgres" >> Backend/.env
+          echo "DB_HOST=localhost" >> Backend/.env
+          echo "DB_PORT=5432" >> Backend/.env
+          echo "DB_SSLMODE=disable" >> Backend/.env
           echo "JWT_ACCESS_TOKEN_LIFETIME_HOURS=24" >> Backend/.env
           echo "JWT_REFRESH_TOKEN_LIFETIME_DAYS=7" >> Backend/.env
           echo "CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://connect-x-peach.vercel.app" >> Backend/.env
@@ -47,11 +59,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
         working-directory: Backend
-
+      - name: Run migrations
+        run: |
+          python manage.py migrate
+        working-directory: Backend/connectx_backend
       - name: Run Pytest
         run: pytest -v --disable-warnings
         working-directory: Backend/connectx_backend
-
       - name: Trigger Render Deploy Hook
         run: |
           curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"
