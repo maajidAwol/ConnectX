@@ -59,11 +59,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
         working-directory: Backend
-      - name: Run migrations
-        run: |
-          python manage.py makemigrations
-          python manage.py migrate
-        working-directory: Backend/connectx_backend
+      # - name: Run migrations
+      #   run: |
+      #     python manage.py makemigrations
+      #     python manage.py migrate
+      #   working-directory: Backend/connectx_backend
       - name: Run Pytest
         run: pytest -v --disable-warnings
         working-directory: Backend/connectx_backend
