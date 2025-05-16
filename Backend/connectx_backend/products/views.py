@@ -14,6 +14,7 @@ from rest_framework.exceptions import PermissionDenied
 from core.pagination import CustomPagination
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from api_keys.authentication import ApiKeyAuthentication
 
 
 from drf_yasg.utils import swagger_auto_schema
