@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 // @mui
 import {
   Box,
@@ -16,10 +17,11 @@ import {
 } from '@mui/material';
 // config
 import { NAV } from 'src/config-global';
-// _mock
-import { _products } from 'src/_mock';
 // components
 import Iconify from 'src/components/iconify';
+// store
+import { useProductStore } from 'src/store/product';
+import { useAuthStore } from 'src/store/auth';
 //
 import { EcommerceHeader } from '../layout';
 import EcommerceFilters from '../product/filters';
@@ -42,27 +44,22 @@ const SORT_OPTIONS = [
 
 export default function EcommerceProductsView() {
   const [mobileOpen, setMobileOpen] = useState(false);
-
+  const [viewMode, setViewMode] = useState('grid');
   const [sort, setSort] = useState('latest');
 
-  const [loading, setLoading] = useState(true);
-
-  const [viewMode, setViewMode] = useState('grid');
+  const router = useRouter();
+  const { products, loading, error, fetchProducts } = useProductStore();
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    const fakeLoading = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setLoading(false);
-    };
-    fakeLoading();
-  }, []);
+    if (isAuthenticated) {
+      fetchProducts();
+    }
+  }, [fetchProducts, isAuthenticated]);
 
-  const handleChangeViewMode = (
-    event: React.MouseEvent<HTMLElement>,
-    newAlignment: string | null
-  ) => {
-    if (newAlignment !== null) {
-      setViewMode(newAlignment);
+  const handleChangeViewMode = (event: React.MouseEvent<HTMLElement>, newMode: string | null) => {
+    if (newMode !== null) {
+      setViewMode(newMode);
     }
   };
 
@@ -78,6 +75,24 @@ export default function EcommerceProductsView() {
     setMobileOpen(false);
   };
 
+  if (!isAuthenticated) {
+    return (
+      <Container>
+        <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ minHeight: '50vh' }}>
+          <Typography variant="h4">Please Login to View Products</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => router.push('/auth/login')}
+            startIcon={<Iconify icon="carbon:login" />}
+          >
+            Login
+          </Button>
+        </Stack>
+      </Container>
+    );
+  }
+
   return (
     <>
       <EcommerceHeader />
@@ -91,7 +106,7 @@ export default function EcommerceProductsView() {
             py: 5,
           }}
         >
-          <Typography variant="h3">Catalog</Typography>
+          <Typography variant="h3">Products</Typography>
 
           <Button
             color="inherit"
@@ -115,7 +130,22 @@ export default function EcommerceProductsView() {
         >
           <Stack spacing={5} divider={<Divider sx={{ borderStyle: 'dashed' }} />}>
             <EcommerceFilters mobileOpen={mobileOpen} onMobileClose={handleMobileClose} />
-            <EcommerceProductListBestSellers products={_products.slice(0, 3)} />
+            <EcommerceProductListBestSellers products={products.slice(0, 3).map(product => ({
+              id: product.id,
+              name: product.name,
+              coverImg: product.cover_url,
+              price: parseFloat(product.base_price),
+              priceSale: product.selling_price || 0,
+              sold: product.total_sold,
+              rating: product.total_ratings,
+              category: product.category.name,
+              caption: product.short_description,
+              description: product.description,
+              inStock: product.quantity,
+              review: product.total_reviews,
+              images: product.images,
+              label: product.tag[0] || '',
+            }))} />
           </Stack>
 
           <Box
@@ -164,11 +194,32 @@ export default function EcommerceProductsView() {
               </FormControl>
             </Stack>
 
-            <EcommerceProductList
-              loading={loading}
-              viewMode={viewMode}
-              products={_products.slice(0, 16)}
-            />
+            {error ? (
+              <Typography color="error" align="center">
+                {error}
+              </Typography>
+            ) : (
+              <EcommerceProductList
+                loading={loading}
+                viewMode={viewMode}
+                products={products.map(product => ({
+                  id: product.id,
+                  name: product.name,
+                  coverImg: product.cover_url,
+                  price: parseFloat(product.base_price),
+                  priceSale: product.selling_price || 0,
+                  sold: product.total_sold,
+                  rating: product.total_ratings,
+                  category: product.category.name,
+                  caption: product.short_description,
+                  description: product.description,
+                  inStock: product.quantity,
+                  review: product.total_reviews,
+                  images: product.images,
+                  label: product.tag[0] || '',
+                }))}
+              />
+            )}
           </Box>
         </Stack>
       </Container>

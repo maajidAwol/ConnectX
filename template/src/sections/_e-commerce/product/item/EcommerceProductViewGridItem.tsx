@@ -33,44 +33,45 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
       {...other}
     >
       {product.label === 'new' && (
-        <Label color="info" sx={{ position: 'absolute', m: 1, top: 0, right: 0, zIndex: 9 }}>
+        <Label color="info" sx={{ position: 'absolute', m: 1, top: 0, left: 0, zIndex: 9 }}>
           NEW
         </Label>
       )}
 
       {product.label === 'sale' && (
-        <Label color="error" sx={{ position: 'absolute', m: 1, top: 0, right: 0, zIndex: 9 }}>
+        <Label color="error" sx={{ position: 'absolute', m: 1, top: 0, left: 0, zIndex: 9 }}>
           SALE
         </Label>
       )}
 
-      <Box sx={{ position: 'relative', mb: 2 }}>
-        <Fab
-          component={NextLink}
-          href={paths.eCommerce.product}
-          className="add-to-cart"
-          color="primary"
-          size="medium"
-          sx={{
-            right: 8,
-            zIndex: 9,
-            bottom: 8,
-            opacity: 0,
-            position: 'absolute',
-            transition: (theme) =>
-              theme.transitions.create('opacity', {
-                easing: theme.transitions.easing.easeIn,
-                duration: theme.transitions.duration.shortest,
-              }),
-          }}
-        >
-          <Iconify icon="carbon:shopping-cart-plus" />
-        </Fab>
+      <Fab
+        component={NextLink}
+        href={`${paths.eCommerce.product}?id=${product.id}`}
+        className="add-to-cart"
+        color="primary"
+        size="medium"
+        sx={{
+          right: 8,
+          zIndex: 9,
+          top: 8,
+          opacity: 0,
+          position: 'absolute',
+          transition: (theme) =>
+            theme.transitions.create('opacity', {
+              easing: theme.transitions.easing.easeIn,
+              duration: theme.transitions.duration.shortest,
+            }),
+        }}
+      >
+        <Iconify icon="carbon:shopping-cart-plus" />
+      </Fab>
 
+      <Box sx={{ position: 'relative', mb: 2 }}>
         <Image
           src={product.coverImg}
+          alt={product.name}
+          ratio="1/1"
           sx={{
-            flexShrink: 0,
             borderRadius: 1.5,
             bgcolor: 'background.neutral',
           }}
@@ -82,7 +83,7 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
           {product.category}
         </TextMaxLine>
 
-        <Link component={NextLink} href={paths.eCommerce.product} color="inherit">
+        <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
           <TextMaxLine variant="body2" line={1} sx={{ fontWeight: 'fontWeightMedium' }}>
             {product.name}
           </TextMaxLine>

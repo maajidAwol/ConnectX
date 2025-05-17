@@ -11,23 +11,7 @@ import { paths } from 'src/routes/paths';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 //
-import { ProductColorPicker, ProductOptionPicker, ProductPrice } from '../../components';
-
-// ----------------------------------------------------------------------
-
-const COLOR_OPTIONS = [
-  { label: '#FA541C', value: 'red' },
-  { label: '#754FFE', value: 'violet' },
-  { label: '#00B8D9', value: 'cyan' },
-  { label: '#36B37E', value: 'green' },
-];
-
-const MEMORY_OPTIONS = [
-  { label: '128GB', value: '128gb' },
-  { label: '256GB', value: '256gb' },
-  { label: '512GB', value: '512gb' },
-  { label: '1TB', value: '1tb' },
-];
+import { ProductColorPicker, ProductPrice } from '../../components';
 
 // ----------------------------------------------------------------------
 
@@ -38,6 +22,8 @@ type Props = {
   review: number;
   priceSale: number;
   caption: string;
+  inStock: number;
+  colors: string[];
 };
 
 export default function EcommerceProductDetailsInfo({
@@ -47,25 +33,34 @@ export default function EcommerceProductDetailsInfo({
   review,
   priceSale,
   caption,
+  inStock,
+  colors,
 }: Props) {
   const isMdUp = useResponsive('up', 'md');
 
-  const [color, setColor] = useState('red');
-
-  const [memory, setMemory] = useState('128gb');
+  const [color, setColor] = useState(colors[0] || '');
+  const [quantity, setQuantity] = useState(1);
 
   const handleChangeColor = (event: React.ChangeEvent<HTMLInputElement>) => {
     setColor((event.target as HTMLInputElement).value);
   };
 
-  const handleChangeMemory = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMemory((event.target as HTMLInputElement).value);
+  const handleChangeQuantity = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuantity = Number(event.target.value);
+    if (newQuantity > 0 && newQuantity <= inStock) {
+      setQuantity(newQuantity);
+    }
   };
+
+  const colorOptions = colors.map(color => ({
+    label: color,
+    value: color,
+  }));
 
   return (
     <>
-      <Label color="success" sx={{ mb: 3 }}>
-        In Stock
+      <Label color={inStock > 0 ? "success" : "error"} sx={{ mb: 3 }}>
+        {inStock > 0 ? `In Stock (${inStock} available)` : 'Out of Stock'}
       </Label>
 
       <Stack spacing={1} sx={{ mb: 2 }}>
@@ -88,26 +83,22 @@ export default function EcommerceProductDetailsInfo({
         </Typography>
       </Stack>
 
-      <Stack spacing={3} sx={{ my: 5 }}>
-        <Stack spacing={2}>
-          <Typography variant="subtitle2">Color</Typography>
-          <ProductColorPicker value={color} onChange={handleChangeColor} options={COLOR_OPTIONS} />
+      {colorOptions.length > 0 && (
+        <Stack spacing={3} sx={{ my: 5 }}>
+          <Stack spacing={2}>
+            <Typography variant="subtitle2">Color</Typography>
+            <ProductColorPicker value={color} onChange={handleChangeColor} options={colorOptions} />
+          </Stack>
         </Stack>
-
-        <Stack spacing={2}>
-          <Typography variant="subtitle2">Memory</Typography>
-          <ProductOptionPicker
-            value={memory}
-            onChange={handleChangeMemory}
-            options={MEMORY_OPTIONS}
-          />
-        </Stack>
-      </Stack>
+      )}
 
       <Stack spacing={2} direction={{ xs: 'column', md: 'row' }} alignItems={{ md: 'center' }}>
         <TextField
           select
           hiddenLabel
+          value={quantity}
+          onChange={handleChangeQuantity}
+          disabled={inStock === 0}
           SelectProps={{
             native: true,
           }}
@@ -115,9 +106,9 @@ export default function EcommerceProductDetailsInfo({
             minWidth: 100,
           }}
         >
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((option) => (
-            <option key={option} value={option}>
-              {option}
+          {[...Array(Math.min(inStock, 10))].map((_, index) => (
+            <option key={index + 1} value={index + 1}>
+              {index + 1}
             </option>
           ))}
         </TextField>
@@ -131,6 +122,7 @@ export default function EcommerceProductDetailsInfo({
             color="inherit"
             variant="contained"
             startIcon={<Iconify icon="carbon:shopping-cart-plus" />}
+            disabled={inStock === 0}
           >
             Add to Cart
           </Button>
@@ -142,6 +134,7 @@ export default function EcommerceProductDetailsInfo({
             size="large"
             color="primary"
             variant="contained"
+            disabled={inStock === 0}
           >
             Buy Now
           </Button>
@@ -156,11 +149,11 @@ export default function EcommerceProductDetailsInfo({
         </Stack>
 
         <Stack direction="row" alignItems="center" sx={{ typography: 'subtitle2' }}>
-          <Iconify icon="carbon:favorite" sx={{ mr: 1 }} /> Compare
+          <Iconify icon="carbon:favorite" sx={{ mr: 1 }} /> Favorite
         </Stack>
 
         <Stack direction="row" alignItems="center" sx={{ typography: 'subtitle2' }}>
-          <Iconify icon="carbon:share" sx={{ mr: 1 }} /> Compare
+          <Iconify icon="carbon:share" sx={{ mr: 1 }} /> Share
         </Stack>
       </Stack>
     </>

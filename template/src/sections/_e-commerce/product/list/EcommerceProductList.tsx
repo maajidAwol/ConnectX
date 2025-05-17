@@ -2,6 +2,8 @@
 import { Box, Stack, Pagination } from '@mui/material';
 // types
 import { IProductItemProps } from 'src/types/product';
+// store
+import { useProductStore } from 'src/store/product';
 //
 import {
   EcommerceProductViewListItem,
@@ -19,6 +21,13 @@ type Props = {
 };
 
 export default function EcommerceProductList({ loading, viewMode, products }: Props) {
+  const { totalCount, currentPage, fetchProducts } = useProductStore();
+  const totalPages = Math.ceil(totalCount / 10); // 10 items per page from API
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+    fetchProducts(page);
+  };
+
   return (
     <>
       {viewMode === 'grid' ? (
@@ -49,9 +58,11 @@ export default function EcommerceProductList({ loading, viewMode, products }: Pr
       )}
 
       <Pagination
-        count={10}
+        page={currentPage}
+        count={totalPages}
         color="primary"
         size="large"
+        onChange={handlePageChange}
         sx={{
           mt: 10,
           mb: 5,

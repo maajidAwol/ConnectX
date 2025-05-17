@@ -1,61 +1,58 @@
 import * as Yup from 'yup';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 // @mui
 import { LoadingButton } from '@mui/lab';
 import { DatePicker } from '@mui/x-date-pickers';
-import { Box, Typography, Stack, IconButton, InputAdornment } from '@mui/material';
+import { Box, Typography, Stack, IconButton, InputAdornment, Alert } from '@mui/material';
 // assets
 import { countries } from 'src/assets/data';
 // components
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField, RHFSelect } from 'src/components/hook-form';
+// store
+import { useAuthStore } from 'src/store/auth';
 //
 import { EcommerceAccountLayout } from '../layout';
 
 // ----------------------------------------------------------------------
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+const API_URL = 'https://connectx-9agd.onrender.com/api';
 
 // ----------------------------------------------------------------------
 
 export default function EcommerceAccountPersonalView() {
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user, accessToken } = useAuthStore();
 
   const handleShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
   const EcommerceAccountPersonalSchema = Yup.object().shape({
-    firstName: Yup.string().required('First name is required'),
-    lastName: Yup.string().required('Last name is required'),
-    emailAddress: Yup.string().required('Email address is required'),
-    phoneNumber: Yup.string().required('Phone number is required'),
-    birthday: Yup.string().required('Birthday is required'),
-    gender: Yup.string().required('Gender is required'),
-    streetAddress: Yup.string().required('Street address is required'),
-    city: Yup.string().required('City is required'),
-    zipCode: Yup.string().required('Zip code is required'),
+    name: Yup.string().required('Name is required'),
+    email: Yup.string().required('Email address is required').email('Email must be valid'),
+    phone_number: Yup.string().nullable(),
+    bio: Yup.string().nullable(),
+    oldPassword: Yup.string(),
+    newPassword: Yup.string().min(4, 'Password must be at least 4 characters'),
+    confirmNewPassword: Yup.string().oneOf([Yup.ref('newPassword')], 'Passwords must match'),
   });
 
   const defaultValues = {
-    firstName: 'Jayvion',
-    lastName: 'Simon',
-    emailAddress: 'nannie_abernathy70@yahoo.com',
-    phoneNumber: '365-374-4961',
-    birthday: null,
-    gender: 'Male',
-    streetAddress: '',
-    zipCode: '',
-    city: '',
-    country: 'United States',
+    name: user?.name || '',
+    email: user?.email || '',
+    phone_number: user?.phone_number || '',
+    bio: user?.bio || '',
     oldPassword: '',
     newPassword: '',
     confirmNewPassword: '',
   };
 
-  const methods = useForm<typeof defaultValues>({
+  const methods = useForm({
     resolver: yupResolver(EcommerceAccountPersonalSchema),
     defaultValues,
   });
@@ -66,22 +63,75 @@ export default function EcommerceAccountPersonalView() {
     formState: { isSubmitting },
   } = methods;
 
+  useEffect(() => {
+    if (user) {
+      reset(defaultValues);
+    }
+  }, [user, reset]);
+
   const onSubmit = async (data: typeof defaultValues) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      console.log('DATA', data);
+      setError(null);
+      
+      // Only include password update if new password is provided
+      const updateData: any = {
+        name: data.name,
+        email: data.email,
+        phone_number: data.phone_number || null,
+        bio: data.bio || null,
+      };
+
+      if (data.newPassword) {
+        updateData.old_password = data.oldPassword;
+        updateData.new_password = data.newPassword;
+      }
+
+      const response = await fetch(`${API_URL}/users/me/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update profile');
+      }
+
+      const updatedUser = await response.json();
+      console.log('Profile updated:', updatedUser);
+      
+      // Reset password fields
+      reset({
+        ...data,
+        oldPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
+      });
     } catch (error) {
-      console.error(error);
+      console.error('Update error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update profile');
     }
   };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <EcommerceAccountLayout>
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Typography variant="h5" sx={{ mb: 3 }}>
-          Personal
+          Personal Information
         </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
 
         <Box
           rowGap={2.5}
@@ -89,53 +139,10 @@ export default function EcommerceAccountPersonalView() {
           display="grid"
           gridTemplateColumns={{ xs: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }}
         >
-          <RHFTextField name="firstName" label="First Name" />
-
-          <RHFTextField name="lastName" label="Last Name" />
-
-          <RHFTextField name="emailAddress" label="Email Address" />
-
-          <RHFTextField name="phoneNumber" label="Phone Number" />
-
-          <Controller
-            name="birthday"
-            render={({ field, fieldState: { error } }) => (
-              <DatePicker
-                label="Birthday"
-                slotProps={{
-                  textField: {
-                    helperText: error?.message,
-                    error: !!error?.message,
-                  },
-                }}
-                {...field}
-                value={field.value}
-              />
-            )}
-          />
-
-          <RHFSelect native name="gender" label="Gender">
-            {GENDER_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </RHFSelect>
-
-          <RHFTextField name="streetAddress" label="Street Address" />
-
-          <RHFTextField name="zipCode" label="Zip Code" />
-
-          <RHFTextField name="city" label="City" />
-
-          <RHFSelect native name="country" label="Country">
-            <option value="" />
-            {countries.map((country) => (
-              <option key={country.code} value={country.label}>
-                {country.label}
-              </option>
-            ))}
-          </RHFSelect>
+          <RHFTextField name="name" label="Full Name" />
+          <RHFTextField name="email" label="Email Address" />
+          <RHFTextField name="phone_number" label="Phone Number" />
+          <RHFTextField name="bio" label="Bio" multiline rows={3} />
         </Box>
 
         <Stack spacing={3} sx={{ my: 5 }}>
@@ -144,7 +151,7 @@ export default function EcommerceAccountPersonalView() {
           <Stack spacing={2.5}>
             <RHFTextField
               name="oldPassword"
-              label="Old Password"
+              label="Current Password"
               type={showPassword ? 'text' : 'password'}
               InputProps={{
                 endAdornment: (

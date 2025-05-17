@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 // @mui
-import { Container, Unstable_Grid2 as Grid } from '@mui/material';
-// _mock
-import { _products } from 'src/_mock';
+import { Container, Unstable_Grid2 as Grid, Typography, Stack, Button } from '@mui/material';
 // components
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import LoadingScreen from 'src/components/loading-screen';
+import Iconify from 'src/components/iconify';
+// store
+import { useProductStore } from 'src/store/product';
+import { useAuthStore } from 'src/store/auth';
 //
 import ReviewEcommerce from '../../review/e-commerce';
 import { EcommerceHeader } from '../layout';
@@ -17,21 +20,67 @@ import {
 
 // ----------------------------------------------------------------------
 
-const _mockProduct = _products[0];
-
 export default function EcommerceProductView() {
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const productId = searchParams.get('id');
+
+  const { currentProduct, loading, error, fetchProductById } = useProductStore();
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    const fakeLoading = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setLoading(false);
-    };
-    fakeLoading();
-  }, []);
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (productId) {
+      fetchProductById(productId);
+    }
+  }, [fetchProductById, productId, isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (loading) {
     return <LoadingScreen />;
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ minHeight: '50vh' }}>
+          <Typography color="error" variant="h6">
+            {error}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => router.back()}
+            startIcon={<Iconify icon="carbon:arrow-left" />}
+          >
+            Go Back
+          </Button>
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (!currentProduct) {
+    return (
+      <Container>
+        <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ minHeight: '50vh' }}>
+          <Typography variant="h6">Product not found</Typography>
+          <Button
+            variant="contained"
+            onClick={() => router.back()}
+            startIcon={<Iconify icon="carbon:arrow-left" />}
+          >
+            Go Back
+          </Button>
+        </Stack>
+      </Container>
+    );
   }
 
   return (
@@ -41,32 +90,28 @@ export default function EcommerceProductView() {
       <Container sx={{ overflow: 'hidden' }}>
         <CustomBreadcrumbs
           links={[
-            {
-              name: 'Home',
-            },
-            {
-              name: 'Mobile Phones',
-            },
-            {
-              name: 'Apple iPhone 14',
-            },
+            { name: 'Home' },
+            { name: currentProduct.category.name },
+            { name: currentProduct.name },
           ]}
           sx={{ my: 5 }}
         />
 
         <Grid container spacing={{ xs: 5, md: 8 }}>
           <Grid xs={12} md={6} lg={7}>
-            <EcommerceProductDetailsCarousel images={_mockProduct.images} />
+            <EcommerceProductDetailsCarousel images={[currentProduct.cover_url, ...currentProduct.images]} />
           </Grid>
 
           <Grid xs={12} md={6} lg={5}>
             <EcommerceProductDetailsInfo
-              name={_mockProduct.name}
-              price={_mockProduct.price}
-              rating={_mockProduct.rating}
-              review={_mockProduct.review}
-              priceSale={_mockProduct.priceSale}
-              caption={_mockProduct.caption}
+              name={currentProduct.name}
+              price={parseFloat(currentProduct.base_price)}
+              rating={currentProduct.total_ratings}
+              review={currentProduct.total_reviews}
+              priceSale={currentProduct.selling_price || 0}
+              caption={currentProduct.short_description}
+              inStock={currentProduct.quantity}
+              colors={currentProduct.colors}
             />
           </Grid>
         </Grid>
@@ -74,13 +119,13 @@ export default function EcommerceProductView() {
         <Grid container columnSpacing={{ md: 8 }}>
           <Grid xs={12} md={6} lg={7}>
             <EcommerceProductDetailsDescription
-              description={_mockProduct.description}
+              description={currentProduct.description}
               specifications={[
-                { label: 'Category', value: 'Mobile' },
-                { label: 'Manufacturer', value: 'Apple' },
-                { label: 'Warranty', value: '12 Months' },
-                { label: 'Serial number', value: '358607726380311' },
-                { label: 'Ships From', value: 'United States' },
+                { label: 'Category', value: currentProduct.category.name },
+                { label: 'Brand', value: currentProduct.brand || 'N/A' },
+                { label: 'Warranty', value: currentProduct.warranty || 'N/A' },
+                { label: 'SKU', value: currentProduct.sku },
+                { label: 'Stock', value: `${currentProduct.quantity} units` },
               ]}
             />
           </Grid>

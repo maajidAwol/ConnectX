@@ -93,7 +93,7 @@ export default function AuthButtons() {
 
         <MenuItem
           component={NextLink}
-          href={paths.eCommerce.account.root}
+          href="/e-commerce/account/personal"
           onClick={handleClose}
         >
           <ListItemIcon>
@@ -104,7 +104,7 @@ export default function AuthButtons() {
 
         <MenuItem
           component={NextLink}
-          href={paths.eCommerce.account.orders}
+          href="/e-commerce/account/orders"
           onClick={handleClose}
         >
           <ListItemIcon>
@@ -115,7 +115,7 @@ export default function AuthButtons() {
 
         <MenuItem
           component={NextLink}
-          href={paths.eCommerce.account.wishlist}
+          href="/e-commerce/account/wishlist"
           onClick={handleClose}
         >
           <ListItemIcon>
@@ -128,7 +128,7 @@ export default function AuthButtons() {
 
         <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
           <ListItemIcon>
-            <Iconify icon="solar:logout-3-bold" width={24} />
+            <Iconify icon="solar:logout-3-bold" width={24} sx={{ color: 'error.main' }} />
           </ListItemIcon>
           Logout
         </MenuItem>

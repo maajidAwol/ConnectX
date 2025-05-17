@@ -46,7 +46,7 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
 
       <Fab
         component={NextLink}
-        href={paths.eCommerce.product}
+        href={`${paths.eCommerce.product}?id=${product.id}`}
         className="add-to-cart"
         color="primary"
         size="medium"
@@ -68,6 +68,7 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
 
       <Image
         src={product.coverImg}
+        alt={product.name}
         sx={{
           mr: 2,
           width: 160,
@@ -83,7 +84,7 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
             {product.category}
           </TextMaxLine>
 
-          <Link component={NextLink} href={paths.eCommerce.product} color="inherit">
+          <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
             <TextMaxLine variant="h6" line={1}>
               {product.name}
             </TextMaxLine>
