@@ -19,6 +19,7 @@ django-cloudinary-storage = "*"
 python-dotenv = "*"
 django-filter = "*"
 pytest = "*"
+whitenoise = "*"
 
 [dev-packages]
 
