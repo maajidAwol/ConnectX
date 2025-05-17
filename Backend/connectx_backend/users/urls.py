@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, CustomTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
+from .verification import VerifyEmailView, ResendVerificationView
 
 # Create a router for UserViewSet
 router = DefaultRouter()
@@ -17,4 +18,11 @@ urlpatterns = [
     
     # User API Endpoints
     path("", include(router.urls)),
+      path("auth/verify-email/", VerifyEmailView.as_view(), name="verify-email"),
+    path(
+        "auth/resend-verification/",
+        ResendVerificationView.as_view(),
+        name="resend-verification",
+    ),
+
 ]

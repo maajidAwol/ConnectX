@@ -7,6 +7,8 @@ from rest_framework.exceptions import ValidationError
 User = get_user_model()
 
 
+class ResendEmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 class UserSerializer(serializers.ModelSerializer):
     tenant_name = serializers.StringRelatedField(source="tenant.name", read_only=True)
     tenant_id = serializers.UUIDField(source="tenant.id", read_only=True)

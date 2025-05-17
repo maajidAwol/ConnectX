@@ -31,6 +31,15 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         user = authenticate(request, email=email, password=password)
 
         if user:
+            if not user.is_verified:
+                return Response(
+                    {
+                        "error": "Please verify your email address before logging in. Check your email for the verification link.",
+                        "email": user.email,
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             refresh = RefreshToken.for_user(user)
             return Response(
                 {
