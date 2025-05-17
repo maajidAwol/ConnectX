@@ -19,6 +19,22 @@ import sys
 # Load environment variables from .env file
 load_dotenv()
 
+
+# email configuration
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+SITE_NAME = os.getenv("SITE_NAME")
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+
+print("emailhost:",EMAIL_HOST_USER, DEFAULT_FROM_EMAIL, EMAIL_HOST_PASSWORD, EMAIL_HOST, EMAIL_USE_TLS)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,12 +49,14 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
 # Application definition
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]  # dev static files
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")    # where collectstatic puts files
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # where collectstatic puts files
 # Enable WhiteNoise to serve compressed static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -80,7 +98,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -156,9 +174,6 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -235,6 +250,6 @@ LOGGING = {
 }
 
 # Chapa Payment Integration
-CHAPA_API_KEY = os.environ.get('CHAPA_API_KEY', 'YOUR_TEST_API_KEY_HERE')
-CHAPA_API_URL = 'https://api.chapa.co/v1/transaction/initialize'
-CHAPA_VERIFY_URL = 'https://api.chapa.co/v1/transaction/verify/'
+CHAPA_API_KEY = os.environ.get("CHAPA_API_KEY", "YOUR_TEST_API_KEY_HERE")
+CHAPA_API_URL = "https://api.chapa.co/v1/transaction/initialize"
+CHAPA_VERIFY_URL = "https://api.chapa.co/v1/transaction/verify/"
