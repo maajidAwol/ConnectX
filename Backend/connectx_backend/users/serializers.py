@@ -119,3 +119,40 @@ class UserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    class Meta:
+        swagger_schema_fields = {
+            "required": ["email"],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the user requesting password reset",
+                }
+            },
+        }
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
+
+    class Meta:
+        swagger_schema_fields = {
+            "required": ["token", "new_password"],
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "description": "Password reset token sent to the user's email",
+                },
+                "new_password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "New password for the user",
+                },
+            },
+        }

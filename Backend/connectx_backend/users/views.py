@@ -19,6 +19,16 @@ import os
 from pathlib import Path
 from utils import upload_image
 from rest_framework.decorators import action
+from django.contrib.auth import get_user_model
+from .serializers import PasswordResetRequestSerializer, PasswordResetSerializer
+from .utils.email_utils import send_password_reset_email
+from .utils.jwt_utils import decode_password_reset_token
+from django.utils.translation import gettext_lazy as _
+from rest_framework.permissions import AllowAny
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
+User = get_user_model()
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -126,3 +136,79 @@ class UserViewSet(viewsets.ModelViewSet):
         """Return the current authenticated user's data."""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        request_body=PasswordResetRequestSerializer,
+        responses={
+            200: openapi.Response(description="Password reset email sent"),
+            404: openapi.Response(description="User not found"),
+            500: openapi.Response(description="Failed to send email"),
+            400: openapi.Response(description="Invalid input"),
+        },
+    )
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response(
+                    {"error": _("User not found")},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if send_password_reset_email(user):
+                return Response(
+                    {"message": _("Password reset email sent")},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"error": _("Failed to send email")},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        request_body=PasswordResetSerializer,
+        responses={
+            200: openapi.Response(description="Password has been reset successfully"),
+            400: openapi.Response(
+                description="Invalid or expired token or invalid input"
+            ),
+            404: openapi.Response(description="User not found"),
+        },
+    )
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            token = serializer.validated_data["token"]
+            new_password = serializer.validated_data["new_password"]
+            payload = decode_password_reset_token(token)
+            if not payload:
+                return Response(
+                    {"error": _("Invalid or expired token")},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                user = User.objects.get(id=payload["user_id"], email=payload["email"])
+            except User.DoesNotExist:
+                return Response(
+                    {"error": _("User not found")},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            user.set_password(new_password)
+            user.save()
+            return Response(
+                {"message": _("Password has been reset successfully")},
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
