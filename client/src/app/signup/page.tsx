@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Logo } from "@/components/logo"
+import Link from "next/link"
 export default function SignUpPage() {
   const router = useRouter()
   const signup = useAuthStore((state) => state.signup)
@@ -104,6 +105,12 @@ export default function SignUpPage() {
               {isLoading ? "Creating account..." : "Create account"}
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="text-[#02569B] hover:underline">
+              Sign in
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
