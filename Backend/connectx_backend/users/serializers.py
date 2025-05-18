@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
+from .utils.email_utils import send_verification_email
 
 User = get_user_model()
 
@@ -95,6 +96,9 @@ class UserSerializer(serializers.ModelSerializer):
             # Add groups after user is created
             if groups:
                 user.groups.set(groups)
+
+            # Send verification email after user is created
+            send_verification_email(user)
 
             return user
 
