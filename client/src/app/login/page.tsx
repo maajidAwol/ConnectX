@@ -40,10 +40,10 @@ export default function LoginPage() {
       })
       
       // Get redirect path based on user role
-      setTimeout(() => {
+
         const redirectPath = getRedirectPath()
         router.push(redirectPath)
-      }, 2000)
+
     } catch (error) {
       toast.error("Invalid email or password. Please try again.", {
         className: "bg-red-500 text-white",

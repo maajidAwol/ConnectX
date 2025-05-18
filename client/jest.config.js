@@ -20,10 +20,5 @@ module.exports = {
     '**/__tests__/**/*.+(ts|tsx|js|jsx)',
     '**/?(*.)+(spec|test).+(ts|tsx|js|jsx)',
   ],
-  collectCoverage: true,
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/node_modules/**',
-  ],
+  collectCoverage: false
 }; 
