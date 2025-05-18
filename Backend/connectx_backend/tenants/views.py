@@ -10,6 +10,8 @@ from drf_yasg import openapi
 from .models import Tenant
 from .serializers import TenantSerializer, TenantCreateSerializer
 from .permissions import TenantPermission, IsTenantOwner, IsAdmin
+from users.utils.email_utils import send_verification_email
+
 
 
 # Define a custom serializer for the request body if needed
@@ -86,13 +88,15 @@ class TenantViewSet(viewsets.ModelViewSet):
         from users.models import User
 
         # Create a user for the tenant with required fields
-        User.objects.create(
+        tenant_owner=User.objects.create(
             name=data.get("fullname", "Tenant Owner"),  # Provide a default name
             email=tenant.email,
             password=data.get("password", ""),  # Password will be hashed in the model
             tenant=tenant,
             role="owner",
         )
+        #send verification email
+        send_verification_email(tenant_owner)
 
         headers = self.get_success_headers(serializer.data)
         return Response(
