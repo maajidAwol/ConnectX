@@ -83,8 +83,12 @@ class UserViewSet(viewsets.ModelViewSet):
             return User.objects.none()
         if self.request.user.is_staff or self.request.user.role == User.ADMIN:
             return User.objects.all()
-        return User.objects.filter(tenant=self.request.user.tenant)
-
+        elif self.request.user.role == User.OWNER:
+            return User.objects.filter(tenant=self.request.user.tenant)
+        else :
+            # Customers can only see their own tenant
+            return User.objects.filter(id=self.request.user.id)
+        
     # Simple profile update with file upload
     @action(
         detail=True,
