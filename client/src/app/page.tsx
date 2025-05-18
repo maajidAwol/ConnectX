@@ -32,9 +32,11 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-white h-11">
-                    Get Started Free
-                  </Button>
+                  <Link href="/signup">
+                    <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-white h-11 w-full" name="Sign Up">
+                      Get Started Free
+                    </Button>
+                  </Link>
                   <Link href="/docs" className="">
                     <Button variant="outline" className="border-[#02569B] text-[#02569B] hover:bg-[#02569B]/10 h-11 w-full">
                       View Documentation
