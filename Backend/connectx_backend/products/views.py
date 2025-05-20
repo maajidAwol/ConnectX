@@ -29,7 +29,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "sku", "description"]
     filterset_fields = ["category__name", "owner", "is_public"]
     authentication_classes = [JWTAuthentication]
-
+    
     def get_permissions(self):
         """Allow all authenticated users to read, but only tenant owners can write."""
 
@@ -156,13 +156,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # No tenant -> return nothing (invalid API key or bad setup)
-        if tenant is None:
+        if tenant is None and not user.is_authenticated:
             return Product.objects.none()
 
         filter_type = self.request.query_params.get("filter_type", "public_owned")
 
         if user.is_authenticated:
             # Authenticated access (JWT)
+            tenant = self.request.user.tenant
             if self.action in ["update", "partial_update", "destroy"]:
                 queryset = Product.objects.filter(owner=tenant)
             else:
