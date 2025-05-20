@@ -43,6 +43,7 @@ urlpatterns = [
     path("api/", include("categories.urls")),
     path("api/", include("analytics.urls")),
     path("api/", include("reviews.urls")),
+    path("api/", include("api_keys.urls")),
     
 ]
 

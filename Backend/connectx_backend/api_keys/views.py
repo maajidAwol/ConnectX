@@ -42,8 +42,7 @@ class ApiKeyViewSet(viewsets.ModelViewSet):
 
         if not api_key.is_active:
             return Response(
-                {"detail": "API key is already revoked."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "API key is already revoked."}
             )
 
         api_key.is_active = False
@@ -51,5 +50,5 @@ class ApiKeyViewSet(viewsets.ModelViewSet):
         api_key.save()
 
         return Response(
-            {"detail": "API key revoked successfully."}, status=status.HTTP_200_OK
+            {"detail": "API key revoked successfully."}
         )
