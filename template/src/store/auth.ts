@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface User {
   id: string;
@@ -33,6 +33,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  updateUser: (userData: User) => void;
 }
 
 const API_URL = 'https://connectx-9agd.onrender.com/api';
@@ -120,6 +121,15 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      updateUser: (userData: User) => {
+        set((state) => ({
+          user: {
+            ...state.user,
+            ...userData,
+          },
+        }));
+      },
+
       logout: () => {
         set({
           user: null,
@@ -136,6 +146,13 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 ); 

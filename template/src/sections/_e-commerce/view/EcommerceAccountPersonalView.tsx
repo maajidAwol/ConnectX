@@ -4,13 +4,10 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useState, useEffect } from 'react';
 // @mui
 import { LoadingButton } from '@mui/lab';
-import { DatePicker } from '@mui/x-date-pickers';
-import { Box, Typography, Stack, IconButton, InputAdornment, Alert } from '@mui/material';
-// assets
-import { countries } from 'src/assets/data';
+import { Box, Typography, Stack, IconButton, InputAdornment, Alert, Button } from '@mui/material';
 // components
 import Iconify from 'src/components/iconify';
-import FormProvider, { RHFTextField, RHFSelect } from 'src/components/hook-form';
+import FormProvider, { RHFTextField } from 'src/components/hook-form';
 // store
 import { useAuthStore } from 'src/store/auth';
 //
@@ -18,15 +15,16 @@ import { EcommerceAccountLayout } from '../layout';
 
 // ----------------------------------------------------------------------
 
-const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 const API_URL = 'https://connectx-9agd.onrender.com/api';
 
 // ----------------------------------------------------------------------
 
 export default function EcommerceAccountPersonalView() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, accessToken } = useAuthStore();
+  const [success, setSuccess] = useState<string | null>(null);
+  const { user, accessToken, updateUser } = useAuthStore();
 
   const handleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -37,9 +35,18 @@ export default function EcommerceAccountPersonalView() {
     email: Yup.string().required('Email address is required').email('Email must be valid'),
     phone_number: Yup.string().nullable(),
     bio: Yup.string().nullable(),
-    oldPassword: Yup.string(),
-    newPassword: Yup.string().min(4, 'Password must be at least 4 characters'),
-    confirmNewPassword: Yup.string().oneOf([Yup.ref('newPassword')], 'Passwords must match'),
+    oldPassword: Yup.string().when('showPasswordSection', {
+      is: true,
+      then: (schema) => schema.required('Current password is required'),
+    }),
+    newPassword: Yup.string().when('showPasswordSection', {
+      is: true,
+      then: (schema) => schema.min(4, 'Password must be at least 4 characters'),
+    }),
+    confirmNewPassword: Yup.string().when('showPasswordSection', {
+      is: true,
+      then: (schema) => schema.oneOf([Yup.ref('newPassword')], 'Passwords must match'),
+    }),
   });
 
   const defaultValues = {
@@ -50,6 +57,7 @@ export default function EcommerceAccountPersonalView() {
     oldPassword: '',
     newPassword: '',
     confirmNewPassword: '',
+    showPasswordSection: false,
   };
 
   const methods = useForm({
@@ -60,6 +68,7 @@ export default function EcommerceAccountPersonalView() {
   const {
     reset,
     handleSubmit,
+    setValue,
     formState: { isSubmitting },
   } = methods;
 
@@ -69,47 +78,104 @@ export default function EcommerceAccountPersonalView() {
     }
   }, [user, reset]);
 
+  useEffect(() => {
+    setValue('showPasswordSection', showPasswordSection);
+  }, [showPasswordSection, setValue]);
+
   const onSubmit = async (data: typeof defaultValues) => {
     try {
       setError(null);
+      setSuccess(null);
       
-      // Only include password update if new password is provided
-      const updateData: any = {
-        name: data.name,
-        email: data.email,
-        phone_number: data.phone_number || null,
-        bio: data.bio || null,
-      };
-
-      if (data.newPassword) {
-        updateData.old_password = data.oldPassword;
-        updateData.new_password = data.newPassword;
+      if (!user?.id) {
+        throw new Error('User ID not found');
       }
 
-      const response = await fetch(`${API_URL}/users/me/`, {
-        method: 'PATCH',
+      // Get the current access token
+      const currentAccessToken = accessToken;
+      if (!currentAccessToken) {
+        throw new Error('Authentication required. Please login again.');
+      }
+
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('email', data.email);
+      formData.append('phone_number', data.phone_number || '');
+      formData.append('bio', data.bio || '');
+      if (showPasswordSection && data.newPassword) {
+        formData.append('password', data.newPassword);
+      }
+      formData.append('role', user.role);
+
+      const response = await fetch(`${API_URL}/users/update-profile/`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${currentAccessToken}`,
         },
-        body: JSON.stringify(updateData),
+        body: formData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to update profile');
-      }
+      if (response.status === 401) {
+        // Token might be expired, try to refresh
+        const refreshResponse = await fetch(`${API_URL}/auth/refresh/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refresh: useAuthStore.getState().refreshToken }),
+        });
 
-      const updatedUser = await response.json();
-      console.log('Profile updated:', updatedUser);
+        if (!refreshResponse.ok) {
+          throw new Error('Session expired. Please login again.');
+        }
+
+        const { access } = await refreshResponse.json();
+        
+        // Update the access token in the store
+        useAuthStore.setState({ accessToken: access });
+
+        // Retry the original request with the new token
+        const retryResponse = await fetch(`${API_URL}/users/update-profile/`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${access}`,
+          },
+          body: formData,
+        });
+
+        if (!retryResponse.ok) {
+          throw new Error('Failed to update profile after token refresh');
+        }
+
+        const updatedUser = await retryResponse.json();
+        updateUser(updatedUser);
+      } else if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || errorData.message || 'Failed to update profile';
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      } else {
+        const updatedUser = await response.json();
+        updateUser(updatedUser);
+      }
       
-      // Reset password fields
+      setSuccess('Profile updated successfully');
+      
+      // Reset password fields and hide password section
       reset({
         ...data,
         oldPassword: '',
         newPassword: '',
         confirmNewPassword: '',
+        showPasswordSection: false,
       });
+      setShowPasswordSection(false);
     } catch (error) {
       console.error('Update error:', error);
       setError(error instanceof Error ? error.message : 'Failed to update profile');
@@ -133,6 +199,12 @@ export default function EcommerceAccountPersonalView() {
           </Alert>
         )}
 
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
+            {success}
+          </Alert>
+        )}
+
         <Box
           rowGap={2.5}
           columnGap={2}
@@ -145,9 +217,17 @@ export default function EcommerceAccountPersonalView() {
           <RHFTextField name="bio" label="Bio" multiline rows={3} />
         </Box>
 
-        <Stack spacing={3} sx={{ my: 5 }}>
-          <Typography variant="h5"> Change Password </Typography>
+        <Box sx={{ mt: 3, mb: 3 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setShowPasswordSection(!showPasswordSection)}
+            startIcon={<Iconify icon={showPasswordSection ? 'carbon:subtract' : 'carbon:add'} />}
+          >
+            {showPasswordSection ? 'Hide Password Change' : 'Change Password'}
+          </Button>
+        </Box>
 
+        {showPasswordSection && (
           <Stack spacing={2.5}>
             <RHFTextField
               name="oldPassword"
@@ -194,9 +274,10 @@ export default function EcommerceAccountPersonalView() {
               }}
             />
           </Stack>
-        </Stack>
+        )}
 
         <LoadingButton
+          sx={{ mt: 3 }}
           color="inherit"
           size="large"
           type="submit"
