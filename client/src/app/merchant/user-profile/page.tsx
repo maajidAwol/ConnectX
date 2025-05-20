@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,14 +12,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import { useAuthStore } from "@/store/authStore"
 import { toast } from "sonner"
-import { Bell, Eye, EyeOff, Key, Lock, Mail, Shield, User, UserCog } from "lucide-react"
+import { Bell, Eye, EyeOff, Key, Lock, Mail, Shield, User, UserCog, Loader2, Upload } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
 export default function UserProfilePage() {
   const router = useRouter()
-  const { user,} = useAuthStore()
+  const { user, changePassword, updateProfile, isLoading: isAuthLoading, error: authError, validateToken, fetchUserProfile } = useAuthStore()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -29,25 +30,43 @@ export default function UserProfilePage() {
     newPassword: "",
     confirmPassword: ""
   })
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([])
+  const [profileErrors, setProfileErrors] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  // Check token validity and fetch user data on mount
+  useEffect(() => {
+    if (!validateToken()) {
+      router.push('/login')
+    } else {
+      fetchUserProfile()
+    }
+  }, [validateToken, router, fetchUserProfile])
 
   // Form state
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: user?.phone || "",
+    phone_number: user?.phone_number || "",
     bio: user?.bio || "",
-    title: user?.title || "",
-    department: user?.department || "",
-    notifications: {
-      email: true,
-      push: true,
-      marketing: false,
-    },
-    security: {
-      twoFactor: false,
-      loginAlerts: true,
-    },
+    role: user?.role || "",
   })
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        phone_number: user.phone_number || "",
+        bio: user.bio || "",
+        role: user.role || "",
+      })
+      setPreviewUrl(user.avatar_url)
+    }
+  }, [user])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -55,26 +74,49 @@ export default function UserProfilePage() {
       ...prev,
       [name]: value
     }))
+    // Clear errors when user starts typing
+    setProfileErrors([])
   }
 
-  const handleNotificationChange = (key: keyof typeof formData.notifications) => {
-    setFormData(prev => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [key]: !prev.notifications[key]
-      }
-    }))
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      // Create preview URL
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+    }
   }
 
-  const handleSecurityChange = (key: keyof typeof formData.security) => {
-    setFormData(prev => ({
-      ...prev,
-      security: {
-        ...prev.security,
-        [key]: !prev.security[key]
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setProfileErrors([])
+
+    try {
+      const formDataToSend = new FormData()
+      formDataToSend.append('name', formData.name)
+      formDataToSend.append('bio', formData.bio)
+      formDataToSend.append('phone_number', formData.phone_number)
+      if (selectedFile) {
+        formDataToSend.append('avatar', selectedFile)
       }
-    }))
+
+      await updateProfile(formDataToSend)
+      
+      toast.success("Profile updated successfully", {
+        className: "bg-[#02569B] text-white",
+      })
+      setIsEditing(false)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update profile"
+      setProfileErrors([errorMessage])
+      toast.error(errorMessage, {
+        className: "bg-red-500 text-white",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,42 +129,52 @@ export default function UserProfilePage() {
 
   const handlePasswordSubmit = async () => {
     try {
-      // For demo purposes, auto-fill with a secure password
-      const securePassword = "SecurePass123!";
+      setIsChangingPassword(true)
+      setPasswordErrors([])
+
+      // Validate password requirements
+      const newPassword = passwordData.newPassword
+      const hasLetter = /[a-zA-Z]/.test(newPassword)
+      const hasNumber = /[0-9]/.test(newPassword)
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword)
+      const isLongEnough = newPassword.length >= 8
+
+      // Show all validation errors at once
+      const errors = []
+      if (!isLongEnough) errors.push("Password must be at least 8 characters long")
+      if (!hasLetter) errors.push("Password must contain at least one letter")
+      if (!hasNumber) errors.push("Password must contain at least one number")
+      if (!hasSpecialChar) errors.push("Password must contain at least one special character")
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        errors.push("New passwords do not match")
+      }
+
+      if (errors.length > 0) {
+        setPasswordErrors(errors)
+        return
+      }
+
+      await changePassword(passwordData.currentPassword, passwordData.newPassword)
+
+      // Clear password fields on success
       setPasswordData({
-        currentPassword: "currentPassword123",
-        newPassword: securePassword,
-        confirmPassword: securePassword
-      });
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      })
+      setPasswordErrors([])
 
-      // Log the password change
-      console.log("Password change attempt:", {
-        currentPassword: passwordData.currentPassword,
-        newPassword: securePassword,
-        confirmPassword: securePassword,
-        timestamp: new Date().toISOString()
-      });
-
-      toast.success("Password changed successfully");
+      toast.success("Password changed successfully", {
+        className: "bg-[#02569B] text-white",
+      })
     } catch (error) {
-      toast.error("Failed to change password");
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      // Here you would typically make an API call to update the user profile
-      // await updateUser(formData)
-      
-      toast.success("Profile updated successfully")
-      setIsEditing(false)
-    } catch (error) {
-      toast.error("Failed to update profile")
+      const errorMessage = error instanceof Error ? error.message : "Failed to change password"
+      setPasswordErrors([errorMessage])
+      toast.error(errorMessage, {
+        className: "bg-red-500 text-white",
+      })
     } finally {
-      setIsLoading(false)
+      setIsChangingPassword(false)
     }
   }
 
@@ -147,7 +199,6 @@ export default function UserProfilePage() {
       <Tabs defaultValue="profile" className="space-y-4" onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          {/* <TabsTrigger value="notifications">Notifications</TabsTrigger> */}
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
@@ -159,18 +210,43 @@ export default function UserProfilePage() {
                 <CardDescription>Update your personal details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {profileErrors.length > 0 && (
+                  <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+                    <h4 className="mb-2 font-medium text-red-800">Please fix the following errors:</h4>
+                    <ul className="list-disc pl-4 space-y-1 text-sm text-red-700">
+                      {profileErrors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={user?.avatar_url} alt={user?.name} />
-                    <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={previewUrl || undefined} alt={formData.name} />
+                    <AvatarFallback>{formData.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-medium">{user?.name}</h3>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    <h3 className="font-medium">{formData.name}</h3>
+                    <p className="text-sm text-muted-foreground">{formData.email}</p>
                     {isEditing && (
-                      <Button variant="outline" size="sm" className="mt-2">
-                        Change Avatar
-                      </Button>
+                      <div className="mt-2 space-y-2">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Change Avatar
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -184,6 +260,7 @@ export default function UserProfilePage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      className={profileErrors.length > 0 ? "border-red-500" : ""}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -193,18 +270,19 @@ export default function UserProfilePage() {
                       name="email"
                       type="email"
                       value={formData.email}
-                      onChange={handleInputChange}
-                      disabled={!isEditing}
+                      disabled={true}
+                      className="bg-muted"
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone_number">Phone</Label>
                     <Input
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
+                      id="phone_number"
+                      name="phone_number"
+                      value={formData.phone_number}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      className={profileErrors.length > 0 ? "border-red-500" : ""}
                     />
                   </div>
                 </div>
@@ -218,23 +296,13 @@ export default function UserProfilePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="title">Job Title</Label>
+                  <Label htmlFor="role">Role</Label>
                   <Input
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    disabled={true}
+                    className="bg-muted"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -246,61 +314,13 @@ export default function UserProfilePage() {
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     rows={4}
+                    className={profileErrors.length > 0 ? "border-red-500" : ""}
                   />
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
-
-        {/* <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Manage how you receive notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive notifications via email
-                  </p>
-                </div>
-                <Switch
-                  checked={formData.notifications.email}
-                  onCheckedChange={() => handleNotificationChange('email')}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive push notifications
-                  </p>
-                </div>
-                <Switch
-                  checked={formData.notifications.push}
-                  onCheckedChange={() => handleNotificationChange('push')}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Marketing Emails</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive marketing and promotional emails
-                  </p>
-                </div>
-                <Switch
-                  checked={formData.notifications.marketing}
-                  onCheckedChange={() => handleNotificationChange('marketing')}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent> */}
 
         <TabsContent value="security">
           <Card>
@@ -310,6 +330,27 @@ export default function UserProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <div className="rounded-lg bg-muted p-4">
+                  <h4 className="mb-2 font-medium">Password Requirements:</h4>
+                  <ul className="list-disc pl-4 space-y-1 text-sm text-muted-foreground">
+                    <li>At least 8 characters long</li>
+                    <li>Contains at least one letter</li>
+                    <li>Contains at least one number</li>
+                    <li>Contains at least one special character</li>
+                  </ul>
+                </div>
+
+                {passwordErrors.length > 0 && (
+                  <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+                    <h4 className="mb-2 font-medium text-red-800">Please fix the following errors:</h4>
+                    <ul className="list-disc pl-4 space-y-1 text-sm text-red-700">
+                      {passwordErrors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Current Password</Label>
                   <div className="relative">
@@ -319,6 +360,8 @@ export default function UserProfilePage() {
                       placeholder="Enter your current password"
                       value={passwordData.currentPassword}
                       onChange={handlePasswordChange}
+                      disabled={isChangingPassword}
+                      className={passwordErrors.length > 0 ? "border-red-500" : ""}
                     />
                     <Button
                       type="button"
@@ -326,6 +369,7 @@ export default function UserProfilePage() {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      disabled={isChangingPassword}
                     >
                       {showCurrentPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -344,6 +388,8 @@ export default function UserProfilePage() {
                       placeholder="Enter your new password"
                       value={passwordData.newPassword}
                       onChange={handlePasswordChange}
+                      disabled={isChangingPassword}
+                      className={passwordErrors.length > 0 ? "border-red-500" : ""}
                     />
                     <Button
                       type="button"
@@ -351,6 +397,7 @@ export default function UserProfilePage() {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowNewPassword(!showNewPassword)}
+                      disabled={isChangingPassword}
                     >
                       {showNewPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -369,6 +416,8 @@ export default function UserProfilePage() {
                       placeholder="Confirm your new password"
                       value={passwordData.confirmPassword}
                       onChange={handlePasswordChange}
+                      disabled={isChangingPassword}
+                      className={passwordErrors.length > 0 ? "border-red-500" : ""}
                     />
                     <Button
                       type="button"
@@ -376,6 +425,7 @@ export default function UserProfilePage() {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      disabled={isChangingPassword}
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -385,9 +435,22 @@ export default function UserProfilePage() {
                     </Button>
                   </div>
                 </div>
-                <Button onClick={handlePasswordSubmit} className="w-full">
-                  <Key className="mr-2 h-4 w-4" />
-                  Change Password
+                <Button 
+                  onClick={handlePasswordSubmit} 
+                  className="w-full"
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Changing Password...
+                    </>
+                  ) : (
+                    <>
+                      <Key className="mr-2 h-4 w-4" />
+                      Change Password
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -401,7 +464,14 @@ export default function UserProfilePage() {
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Changes"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </Button>
         </div>
       )}
