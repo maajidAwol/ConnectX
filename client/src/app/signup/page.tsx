@@ -8,12 +8,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
+import { Toaster } from "sonner"
 import { Logo } from "@/components/logo"
 import Link from "next/link"
+import { Mail } from "lucide-react"
+
 export default function SignUpPage() {
   const router = useRouter()
-  const signup = useAuthStore((state) => state.signup)
-  const [isLoading, setIsLoading] = useState(false)
+  const { signup, isLoading, error, clearError } = useAuthStore()
+  const [showSuccess, setShowSuccess] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,16 +26,19 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    clearError()
 
     try {
       await signup(formData)
-      toast.success("Account created successfully!")
-      router.push("/login")
+      toast.success("Account created successfully! Please check your email for verification.", {
+        className: "bg-[#02569B] text-white",
+        duration: 5000, // Show for 5 seconds
+      })
+      setShowSuccess(true)
     } catch (error) {
-      toast.error("Failed to create account. Please try again.")
-    } finally {
-      setIsLoading(false)
+      toast.error("Failed to create account. Please try again.", {
+        className: "bg-red-500 text-white",
+      })
     }
   }
 
@@ -41,10 +47,53 @@ export default function SignUpPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  if (showSuccess) {
+    return (
+      <div className="container flex h-screen w-screen flex-col items-center justify-center">
+        <Toaster position="top-center" richColors />
+        <Card className="w-full max-w-md">
+          <div className="flex justify-center items-center py-4">
+            <Logo />
+          </div>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
+            <CardDescription>
+              We've sent a verification link to {formData.email}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="rounded-full bg-blue-100 p-3">
+                <Mail className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Please check your email and click the verification link to activate your account.
+                  The link will expire in 1 hour.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  If you don't see the email, check your spam folder or click the resend button below.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/login")}
+                className="w-full"
+              >
+                Return to login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <Toaster position="top-center" richColors />
       <Card className="w-full max-w-md">
-      <div className="flex justify-center items-center py-4">
+        <div className="flex justify-center items-center py-4">
           <Logo />
         </div>
         <CardHeader className="space-y-1">
@@ -99,9 +148,10 @@ export default function SignUpPage() {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                minLength={8}
               />
             </div>
-            <Button className="w-full" type="submit" disabled={isLoading}>
+            <Button className="w-full bg-[#02569B] hover:bg-[#02569B]/90" type="submit" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create account"}
             </Button>
           </form>
