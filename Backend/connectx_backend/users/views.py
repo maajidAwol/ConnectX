@@ -134,6 +134,41 @@ class UpdateProfileView(APIView):
         responses={200: UserSerializer},
     )
     def put(self, request):
+        return self._update_profile(request)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                "name",
+                openapi.IN_FORM,
+                description="Full name",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "bio",
+                openapi.IN_FORM,
+                description="Bio",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "phone_number",
+                openapi.IN_FORM,
+                description="Phone number",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "avatar",
+                openapi.IN_FORM,
+                description="Avatar image",
+                type=openapi.TYPE_FILE,
+            ),
+        ],
+        responses={200: UserSerializer},
+    )
+    def post(self, request):
+        return self._update_profile(request)
+
+    def _update_profile(self, request):
         user = request.user
         data = request.data.copy()
         # Handle avatar image upload if provided
