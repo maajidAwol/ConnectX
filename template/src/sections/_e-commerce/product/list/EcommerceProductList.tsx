@@ -1,5 +1,5 @@
 // @mui
-import { Box, Stack, Pagination } from '@mui/material';
+import { Box, Stack, Pagination, Typography } from '@mui/material';
 // types
 import { IProductItemProps } from 'src/types/product';
 // store
@@ -21,12 +21,30 @@ type Props = {
 };
 
 export default function EcommerceProductList({ loading, viewMode, products }: Props) {
-  const { totalCount, currentPage, fetchProducts } = useProductStore();
+  const { totalCount, currentPage, fetchProducts, error } = useProductStore();
   const totalPages = Math.ceil(totalCount / 10); // 10 items per page from API
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
     fetchProducts(page);
   };
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="error" variant="h6">
+          Error: {error}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!loading && (!products || products.length === 0)) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6">No products found</Typography>
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -57,20 +75,22 @@ export default function EcommerceProductList({ loading, viewMode, products }: Pr
         </Stack>
       )}
 
-      <Pagination
-        page={currentPage}
-        count={totalPages}
-        color="primary"
-        size="large"
-        onChange={handlePageChange}
-        sx={{
-          mt: 10,
-          mb: 5,
-          '& .MuiPagination-ul': {
-            justifyContent: 'center',
-          },
-        }}
-      />
+      {totalPages > 1 && (
+        <Pagination
+          page={currentPage}
+          count={totalPages}
+          color="primary"
+          size="large"
+          onChange={handlePageChange}
+          sx={{
+            mt: 10,
+            mb: 5,
+            '& .MuiPagination-ul': {
+              justifyContent: 'center',
+            },
+          }}
+        />
+      )}
     </>
   );
 }

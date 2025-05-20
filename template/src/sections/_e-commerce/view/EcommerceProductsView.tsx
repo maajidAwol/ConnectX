@@ -130,22 +130,9 @@ export default function EcommerceProductsView() {
         >
           <Stack spacing={5} divider={<Divider sx={{ borderStyle: 'dashed' }} />}>
             <EcommerceFilters mobileOpen={mobileOpen} onMobileClose={handleMobileClose} />
-            <EcommerceProductListBestSellers products={products.slice(0, 3).map(product => ({
-              id: product.id,
-              name: product.name,
-              coverImg: product.cover_url,
-              price: parseFloat(product.base_price),
-              priceSale: product.selling_price || 0,
-              sold: product.total_sold,
-              rating: product.total_ratings,
-              category: product.category.name,
-              caption: product.short_description,
-              description: product.description,
-              inStock: product.quantity,
-              review: product.total_reviews,
-              images: product.images,
-              label: product.tag[0] || '',
-            }))} />
+            <EcommerceProductListBestSellers 
+              products={products.slice(0, 3)} 
+            />
           </Stack>
 
           <Box
@@ -202,22 +189,7 @@ export default function EcommerceProductsView() {
               <EcommerceProductList
                 loading={loading}
                 viewMode={viewMode}
-                products={products.map(product => ({
-                  id: product.id,
-                  name: product.name,
-                  coverImg: product.cover_url,
-                  price: parseFloat(product.base_price),
-                  priceSale: product.selling_price || 0,
-                  sold: product.total_sold,
-                  rating: product.total_ratings,
-                  category: product.category.name,
-                  caption: product.short_description,
-                  description: product.description,
-                  inStock: product.quantity,
-                  review: product.total_reviews,
-                  images: product.images,
-                  label: product.tag[0] || '',
-                }))}
+                products={products}
               />
             )}
           </Box>

@@ -45,6 +45,7 @@ export const getApiHeaders = (includeAuth = false, accessToken?: string) => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
   };
 
   if (includeAuth && accessToken) {
@@ -87,11 +88,17 @@ export const apiRequest = async <T>(
     // Ensure endpoint starts with a forward slash
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     
-    const response = await fetch(`${API_URL}${normalizedEndpoint}`, {
+    // Add cache-busting for GET requests
+    const timestamp = new Date().getTime();
+    const url = `${API_URL}${normalizedEndpoint}${normalizedEndpoint.includes('?') ? '&' : '?'}_t=${timestamp}`;
+    
+    const response = await fetch(url, {
       ...options,
       headers: {
         ...headers,
         ...options.headers,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
       },
     });
 

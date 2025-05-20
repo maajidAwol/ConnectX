@@ -16,22 +16,40 @@ export type IProductItemCompareProps = {
   details: string[];
 };
 
-export type IProductItemProps = {
+export interface IProductItemProps {
   id: string;
+  tenant: string[];
+  owner: string;
+  sku: string;
   name: string;
-  label: string;
-  caption: string;
+  base_price: string;
+  profit_percentage: number | null;
+  selling_price: number | null;
+  quantity: number;
+  category: {
+    id: string;
+    name: string;
+    description: string;
+    created_at: string;
+    updated_at: string;
+  };
+  is_public: boolean;
   description: string;
-  coverImg: string;
-  category: string;
-  sold: number;
-  price: number;
-  rating: number;
-  priceSale: number;
-  inStock: number;
-  review: number;
+  short_description: string;
+  tag: string[];
+  brand: string;
+  additional_info: Record<string, any>;
+  warranty: string;
+  cover_url: string;
   images: string[];
-};
+  colors: string[];
+  sizes: string[];
+  total_sold: number;
+  total_ratings: number;
+  total_reviews: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export type IProductFiltersProps = {
   filterTag: string[];

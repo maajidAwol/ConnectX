@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useAuthStore } from './auth';
+import { apiRequest } from '../lib/api-config';
 
 interface Category {
   id: string;
@@ -56,13 +57,11 @@ interface ProductState {
   currentPage: number;
   loading: boolean;
   error: string | null;
-  fetchProducts: (page?: number) => Promise<void>;
+  fetchProducts: (page?: number, filters?: Record<string, any>) => Promise<void>;
   fetchFeaturedProducts: () => Promise<void>;
   fetchProductById: (id: string) => Promise<void>;
   clearError: () => void;
 }
-
-const API_URL = 'https://connectx-9agd.onrender.com/api';
 
 // Placeholder image for products without images
 const PLACEHOLDER_IMAGE = '/assets/placeholder.jpg';
@@ -83,34 +82,33 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   loading: false,
   error: null,
 
-  fetchProducts: async (page = 1) => {
+  fetchProducts: async (page = 1, filters = {}) => {
     try {
       set({ loading: true, error: null });
       
+      // Get access token from auth store
       const accessToken = useAuthStore.getState().accessToken;
-      
       if (!accessToken) {
-        throw new Error('Authentication required');
+        throw new Error('No access token available');
       }
-
-      const response = await fetch(`${API_URL}/products/?page=${page}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
+      
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        ...filters,
       });
 
-      if (response.status === 401) {
-        throw new Error('Please login to view products');
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-
-      const data: ProductResponse = await response.json();
+      const data = await apiRequest<ProductResponse>(
+        `/products/?${queryParams.toString()}`,
+        {},
+        true, // Include authentication
+        accessToken // Pass the access token
+      );
       
+      if (!data || !data.results) {
+        throw new Error('Invalid response format from API');
+      }
+
       // Process images for each product
       const processedProducts = data.results.map(product => ({
         ...product,
@@ -120,7 +118,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
 
       set({
         products: processedProducts,
-        totalCount: data.count,
+        totalCount: data.count || 0,
         currentPage: page,
         loading: false,
       });
@@ -128,6 +126,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       set({
         error: error instanceof Error ? error.message : 'An error occurred',
         loading: false,
+        products: [],
+        totalCount: 0,
       });
     }
   },
@@ -136,27 +136,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     try {
       set({ loading: true, error: null });
       
-      const accessToken = useAuthStore.getState().accessToken;
-      
-      if (!accessToken) {
-        throw new Error('Authentication required');
-      }
-
-      // You can modify this to use a specific endpoint for featured products
-      // For now, we'll just get the first page and filter by most sold/rated
-      const response = await fetch(`${API_URL}/products/?page=1`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch featured products');
-      }
-
-      const data: ProductResponse = await response.json();
+      const data = await apiRequest<ProductResponse>('/products/?page=1&is_public=true');
       
       // Process images and sort by total_sold to get featured products
       const processedProducts = data.results
@@ -183,29 +163,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     try {
       set({ loading: true, error: null });
       
-      const accessToken = useAuthStore.getState().accessToken;
-      
-      if (!accessToken) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await fetch(`${API_URL}/products/${id}/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.status === 401) {
-        throw new Error('Please login to view product details');
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch product details');
-      }
-
-      const product: Product = await response.json();
+      const product = await apiRequest<Product>(`/products/${id}/`);
       
       // Process images for the product
       const processedProduct = {

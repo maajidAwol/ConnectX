@@ -21,6 +21,9 @@ interface Props extends StackProps {
 }
 
 export default function EcommerceProductViewGridItem({ product, sx, ...other }: Props) {
+  const isNew = new Date(product.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days
+  const isSale = product.selling_price && Number(product.selling_price) < Number(product.base_price);
+
   return (
     <Stack
       sx={{
@@ -32,13 +35,13 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
       }}
       {...other}
     >
-      {product.label === 'new' && (
+      {isNew && (
         <Label color="info" sx={{ position: 'absolute', m: 1, top: 0, left: 0, zIndex: 9 }}>
           NEW
         </Label>
       )}
 
-      {product.label === 'sale' && (
+      {isSale && (
         <Label color="error" sx={{ position: 'absolute', m: 1, top: 0, left: 0, zIndex: 9 }}>
           SALE
         </Label>
@@ -68,7 +71,7 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
 
       <Box sx={{ position: 'relative', mb: 2 }}>
         <Image
-          src={product.coverImg}
+          src={product.cover_url}
           alt={product.name}
           ratio="1/1"
           sx={{
@@ -80,7 +83,7 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
 
       <Stack spacing={0.5}>
         <TextMaxLine variant="caption" line={1} sx={{ color: 'text.disabled' }}>
-          {product.category}
+          {product.category.name}
         </TextMaxLine>
 
         <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
@@ -89,9 +92,15 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
           </TextMaxLine>
         </Link>
 
-        <ProductPrice price={product.price} priceSale={product.priceSale} />
+        <ProductPrice 
+          price={Number(product.base_price)} 
+          priceSale={product.selling_price ? Number(product.selling_price) : undefined} 
+        />
 
-        <ProductRating rating={product.rating} label={`${product.sold} sold`} />
+        <ProductRating 
+          rating={product.total_ratings / (product.total_reviews || 1)} 
+          label={`${product.total_sold} sold`} 
+        />
       </Stack>
     </Stack>
   );
