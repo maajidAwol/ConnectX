@@ -2,6 +2,24 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { apiRequest, User, Tenant } from '../lib/api-config';
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone_number?: string;
+  role: string;
+  tenant: string;
+  bio?: string;
+  tenant_name: string;
+  tenant_id: string;
+  avatar_url?: string;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  groups: string[];
+}
+
 interface LoginResponse {
   access: string;
   refresh: string;

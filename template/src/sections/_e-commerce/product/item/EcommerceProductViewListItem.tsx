@@ -11,6 +11,8 @@ import Label from 'src/components/label';
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import TextMaxLine from 'src/components/text-max-line';
+// store
+import { useCartStore } from 'src/store/cart';
 //
 import { ProductRating, ProductPrice } from '../../components';
 
@@ -21,8 +23,23 @@ interface Props extends StackProps {
 }
 
 export default function EcommerceProductViewListItem({ product, ...other }: Props) {
+  const { addItem } = useCartStore();
   const isNew = new Date(product.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days
   const isSale = product.selling_price && Number(product.selling_price) < Number(product.base_price);
+
+  const handleAddToCart = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: Number(product.base_price),
+      quantity: 1,
+      cover_url: product.cover_url,
+      color: product.colors[0],
+    });
+  };
 
   return (
     <Stack
@@ -47,12 +64,29 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
         </Label>
       )}
 
-      <Fab
+      <Link
         component={NextLink}
         href={`${paths.eCommerce.product}?id=${product.id}`}
+        sx={{ display: 'block' }}
+      >
+        <Image
+          src={product.cover_url}
+          alt={product.name}
+          sx={{
+            mr: 2,
+            width: 160,
+            flexShrink: 0,
+            borderRadius: 1.5,
+            bgcolor: 'background.neutral',
+          }}
+        />
+      </Link>
+
+      <Fab
         className="add-to-cart"
         color="primary"
         size="medium"
+        onClick={handleAddToCart}
         sx={{
           right: 8,
           zIndex: 9,
@@ -69,30 +103,16 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
         <Iconify icon="carbon:shopping-cart-plus" />
       </Fab>
 
-      <Image
-        src={product.cover_url}
-        alt={product.name}
-        sx={{
-          mr: 2,
-          width: 160,
-          flexShrink: 0,
-          borderRadius: 1.5,
-          bgcolor: 'background.neutral',
-        }}
-      />
+      <Stack spacing={0.5} flexGrow={1}>
+        <TextMaxLine variant="caption" line={1} sx={{ color: 'text.disabled' }}>
+          {product.category.name}
+        </TextMaxLine>
 
-      <Stack spacing={1}>
-        <Stack spacing={0.5}>
-          <TextMaxLine variant="caption" line={1} sx={{ color: 'text.disabled' }}>
-            {product.category.name}
+        <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
+          <TextMaxLine variant="h6" line={1}>
+            {product.name}
           </TextMaxLine>
-
-          <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
-            <TextMaxLine variant="h6" line={1}>
-              {product.name}
-            </TextMaxLine>
-          </Link>
-        </Stack>
+        </Link>
 
         <ProductRating 
           rating={product.total_ratings / (product.total_reviews || 1)} 

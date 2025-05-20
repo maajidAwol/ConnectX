@@ -3,23 +3,21 @@ import { alpha } from '@mui/material/styles';
 import {
   Box,
   Stack,
-  Button,
   Divider,
-  TextField,
   Typography,
   StackProps,
   IconButton,
-  InputAdornment,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // utils
-import { fCurrency, fPercent } from 'src/utils/formatNumber';
-// types
-import { IProductItemProps } from 'src/types/product';
+import { fCurrency } from 'src/utils/formatNumber';
 // components
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import TextMaxLine from 'src/components/text-max-line';
+// store
+import { useCartStore } from 'src/store/cart';
+import { useAuthStore } from 'src/store/auth';
 
 // ----------------------------------------------------------------------
 
@@ -29,7 +27,7 @@ type Props = {
   subtotal: number;
   shipping: number;
   discount: number;
-  products?: IProductItemProps[];
+  products?: any[];
   loading?: boolean;
 };
 
@@ -42,6 +40,9 @@ export default function EcommerceCheckoutOrderSummary({
   products,
   loading,
 }: Props) {
+  const { removeItem } = useCartStore();
+  const { user } = useAuthStore();
+
   return (
     <Stack
       spacing={3}
@@ -53,10 +54,33 @@ export default function EcommerceCheckoutOrderSummary({
     >
       <Typography variant="h6"> Order Summary </Typography>
 
+      {user && (
+        <Stack spacing={1}>
+          <Typography variant="subtitle2">Customer Details</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {user.name}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {user.email}
+          </Typography>
+          {user.phone_number && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {user.phone_number}
+            </Typography>
+          )}
+        </Stack>
+      )}
+
+      <Divider sx={{ borderStyle: 'dashed' }} />
+
       {!!products?.length && (
         <>
           {products.map((product) => (
-            <ProductItem key={product.id} product={product} />
+            <ProductItem 
+              key={product.id} 
+              product={product} 
+              onRemove={() => removeItem(product.id)}
+            />
           ))}
 
           <Divider sx={{ borderStyle: 'dashed' }} />
@@ -65,25 +89,14 @@ export default function EcommerceCheckoutOrderSummary({
 
       <Stack spacing={2}>
         <Row label="Subtotal" value={fCurrency(subtotal)} />
-
         <Row label="Shipping" value={fCurrency(shipping)} />
-
-        <Row label="Discount (15%)" value={`-${fCurrency(discount)}`} />
-
-        <Row label="Tax" value={fPercent(tax)} />
+        {discount > 0 && (
+          <Row label="Discount" value={`-${fCurrency(discount)}`} />
+        )}
+        {tax > 0 && (
+          <Row label="Tax" value={fCurrency(tax)} />
+        )}
       </Stack>
-
-      <TextField
-        hiddenLabel
-        placeholder="Discount Code"
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <Button>Apply</Button>
-            </InputAdornment>
-          ),
-        }}
-      />
 
       <Divider sx={{ borderStyle: 'dashed' }} />
 
@@ -103,7 +116,7 @@ export default function EcommerceCheckoutOrderSummary({
         type="submit"
         loading={loading}
       >
-        Order Now
+        Place Order
       </LoadingButton>
     </Stack>
   );
@@ -112,14 +125,15 @@ export default function EcommerceCheckoutOrderSummary({
 // ----------------------------------------------------------------------
 
 type ProductItemProps = StackProps & {
-  product: IProductItemProps;
+  product: any;
+  onRemove: () => void;
 };
 
-function ProductItem({ product, ...other }: ProductItemProps) {
+function ProductItem({ product, onRemove, ...other }: ProductItemProps) {
   return (
     <Stack direction="row" alignItems="flex-start" {...other}>
       <Image
-        src={product.coverImg}
+        src={product.cover_url}
         sx={{
           mr: 2,
           width: 64,
@@ -139,24 +153,12 @@ function ProductItem({ product, ...other }: ProductItemProps) {
           {fCurrency(product.price)}
         </Typography>
 
-        <TextField
-          select
-          size="small"
-          variant="outlined"
-          SelectProps={{
-            native: true,
-          }}
-          sx={{ width: 80 }}
-        >
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </TextField>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Qty: {product.quantity}
+        </Typography>
       </Stack>
 
-      <IconButton>
+      <IconButton onClick={onRemove}>
         <Iconify icon="carbon:trash-can" />
       </IconButton>
     </Stack>

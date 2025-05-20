@@ -16,18 +16,29 @@ import {
 import { fCurrency, fPercent } from 'src/utils/formatNumber';
 // routes
 import { paths } from 'src/routes/paths';
+// store
+import { useCartStore } from 'src/store/cart';
 
 // ----------------------------------------------------------------------
 
-type Props = {
-  tax: number;
-  total: number;
-  subtotal: number;
-  shipping: number;
-  discount: number;
+type Props = StackProps & {
+  tax?: number;
+  total?: number;
+  subtotal?: number;
+  shipping?: number;
+  discount?: number;
 };
 
-export default function EcommerceCartSummary({ tax, total, subtotal, shipping, discount }: Props) {
+export default function EcommerceCartSummary({
+  tax = 0,
+  total = 0,
+  subtotal = 0,
+  shipping = 0,
+  discount = 0,
+  ...other
+}: Props) {
+  const { getTotalPrice } = useCartStore();
+
   return (
     <Stack
       spacing={3}
@@ -36,17 +47,19 @@ export default function EcommerceCartSummary({ tax, total, subtotal, shipping, d
         borderRadius: 2,
         border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.24)}`,
       }}
+      {...other}
     >
-      <Typography variant="h6"> Summary </Typography>
+      <Typography variant="h6"> Order Summary </Typography>
 
       <Stack spacing={2}>
-        <Row label="Subtotal" value={fCurrency(subtotal)} />
-
-        <Row label="Shipping" value={fCurrency(shipping)} />
-
-        <Row label="Discount (15%)" value={`-${fCurrency(discount)}`} />
-
-        <Row label="Tax" value={fPercent(tax)} />
+        <Row label="Subtotal" value={fCurrency(getTotalPrice())} />
+        <Row label="Shipping" value={fCurrency(50)} />
+        {discount > 0 && (
+          <Row label="Discount" value={`-${fCurrency(discount)}`} />
+        )}
+        {tax > 0 && (
+          <Row label="Tax" value={fCurrency(tax)} />
+        )}
       </Stack>
 
       <TextField
@@ -65,7 +78,7 @@ export default function EcommerceCartSummary({ tax, total, subtotal, shipping, d
 
       <Row
         label="Total"
-        value={fCurrency(total)}
+        value={fCurrency(getTotalPrice() + 50)}
         sx={{
           typography: 'h6',
           '& span': { typography: 'h6' },

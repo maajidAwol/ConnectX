@@ -11,6 +11,8 @@ import Label from 'src/components/label';
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import TextMaxLine from 'src/components/text-max-line';
+// store
+import { useCartStore } from 'src/store/cart';
 //
 import { ProductRating, ProductPrice } from '../../components';
 
@@ -21,11 +23,27 @@ interface Props extends StackProps {
 }
 
 export default function EcommerceProductViewGridItem({ product, sx, ...other }: Props) {
+  const { addItem } = useCartStore();
   const isNew = new Date(product.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days
   const isSale = product.selling_price && Number(product.selling_price) < Number(product.base_price);
 
+  const handleAddToCart = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: Number(product.base_price),
+      quantity: 1,
+      cover_url: product.cover_url,
+      color: product.colors[0],
+    });
+  };
+
   return (
     <Stack
+      spacing={2.5}
       sx={{
         position: 'relative',
         '&:hover .add-to-cart': {
@@ -47,12 +65,26 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
         </Label>
       )}
 
-      <Fab
+      <Link
         component={NextLink}
         href={`${paths.eCommerce.product}?id=${product.id}`}
+        sx={{ display: 'block' }}
+      >
+        <Image
+          src={product.cover_url}
+          alt={product.name}
+          sx={{
+            borderRadius: 1.5,
+            bgcolor: 'background.neutral',
+          }}
+        />
+      </Link>
+
+      <Fab
         className="add-to-cart"
         color="primary"
         size="medium"
+        onClick={handleAddToCart}
         sx={{
           right: 8,
           zIndex: 9,
@@ -68,18 +100,6 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
       >
         <Iconify icon="carbon:shopping-cart-plus" />
       </Fab>
-
-      <Box sx={{ position: 'relative', mb: 2 }}>
-        <Image
-          src={product.cover_url}
-          alt={product.name}
-          ratio="1/1"
-          sx={{
-            borderRadius: 1.5,
-            bgcolor: 'background.neutral',
-          }}
-        />
-      </Box>
 
       <Stack spacing={0.5}>
         <TextMaxLine variant="caption" line={1} sx={{ color: 'text.disabled' }}>
