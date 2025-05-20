@@ -62,15 +62,11 @@ export const handleApiError = async (response: Response) => {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const errorData = await response.json();
-        const sanitizedError = sanitizeResponseData(errorData);
-        console.log('Error response data:', sanitizedError);
         errorMessage = errorData.error || errorData.message || errorData.detail || errorMessage;
       } else {
-        console.log('Error response text: [text response]');
         errorMessage = response.statusText || errorMessage;
       }
     } catch (e) {
-      console.error('Error parsing error response');
       errorMessage = response.statusText || errorMessage;
     }
     throw new Error(errorMessage);
@@ -91,17 +87,6 @@ export const apiRequest = async <T>(
     // Ensure endpoint starts with a forward slash
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     
-    // Log request without sensitive data
-    console.log('Making API request:', {
-      url: `${API_URL}${normalizedEndpoint}`,
-      method: options.method || 'GET',
-      headers: {
-        ...headers,
-        Authorization: headers.Authorization ? '***' : undefined,
-        'X-API-KEY': '***'
-      }
-    });
-
     const response = await fetch(`${API_URL}${normalizedEndpoint}`, {
       ...options,
       headers: {
@@ -110,27 +95,17 @@ export const apiRequest = async <T>(
       },
     });
 
-    console.log('Response status:', response.status);
-
     await handleApiError(response);
     
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const data = await response.json();
-      // Sanitize sensitive data before logging
-      const sanitizedData = sanitizeResponseData(data);
-      console.log('Response data:', sanitizedData);
       return data;
     } else {
       const text = await response.text();
-      console.log('Response text: [text response]');
       throw new Error(`Unexpected response type: ${contentType}`);
     }
   } catch (error) {
-    console.error('API request error:', {
-      endpoint,
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
     throw error;
   }
 };
