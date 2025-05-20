@@ -49,7 +49,7 @@ interface ProductState {
   setFilterType: (filterType: FilterType) => void
   setCategory: (category: string) => void
   setCurrentPage: (page: number) => void
-  listProduct: (productId: string) => Promise<{ detail: string }>
+  listProduct: (productId: string, profitPercentage: number) => Promise<{ detail: string }>
   unlistProduct: (productId: string) => Promise<{ detail: string }>
   deleteProduct: (productId: string) => Promise<{ detail: string }>
   createProduct: (productData: Omit<Product, 'id' | 'tenant' | 'owner' | 'profit_percentage' | 'selling_price' | 'total_sold' | 'total_ratings' | 'total_reviews' | 'created_at' | 'updated_at'>) => Promise<Product>
@@ -156,7 +156,7 @@ const useProductStore = create<ProductState>((set, get) => ({
     get().fetchProducts({ page })
   },
   
-  listProduct: async (productId: string) => {
+  listProduct: async (productId: string, profitPercentage: number) => {
     try {
       const { accessToken } = useAuthStore.getState();
       
@@ -165,7 +165,7 @@ const useProductStore = create<ProductState>((set, get) => ({
       }
 
       const response = await fetch(
-        `${API_URL}/products/${productId}/list-to-tenant/`,
+        `${API_URL}/products/${productId}/list-to-tenant/?profit_percentage=${profitPercentage}`,
         {
           method: 'GET',
           headers: {
@@ -176,7 +176,8 @@ const useProductStore = create<ProductState>((set, get) => ({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to list product');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to list product');
       }
 
       const data = await response.json();
