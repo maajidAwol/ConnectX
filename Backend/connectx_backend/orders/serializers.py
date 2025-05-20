@@ -313,6 +313,8 @@ class WriteOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
+            "id",
+            "order_number",
             "selling_tenant_id",
             "status",
             "subtotal",
@@ -325,6 +327,7 @@ class WriteOrderSerializer(serializers.ModelSerializer):
             "shipping_address",
             "items",
         ]
+        read_only_fields = ["id", "order_number"]
         swagger_schema_fields = {
             "example": {
                 "selling_tenant_id": "tenant-uuid",
