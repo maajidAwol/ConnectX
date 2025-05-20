@@ -36,7 +36,11 @@ export default function AuthRegisterForm() {
     email: Yup.string().required('Email is required').email('That is not an email'),
     password: Yup.string()
       .required('Password is required')
-      .min(6, 'Password should be of minimum 6 characters length'),
+      .min(6, 'Password should be of minimum 6 characters length')
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
+        'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
+      ),
     confirmPassword: Yup.string()
       .required('Confirm password is required')
       .oneOf([Yup.ref('password')], "Password's not match"),
@@ -69,10 +73,23 @@ export default function AuthRegisterForm() {
   const onSubmit = async (data: FormValuesProps) => {
     try {
       setLocalError(null);
+      
+      // Register the user under the tenant
       await registerUser(data.fullName, data.email, data.password);
-      router.push('/auth/login-illustration'); // Redirect to login page after successful registration
+      
+      // Show success message
+      setLocalError('Registration successful! Redirecting to login...');
+      
+      // Reset form
+      reset();
+      
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push('/auth/login-illustration');
+      }, 2000);
+      
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Registration failed');
       setLocalError(error instanceof Error ? error.message : 'Registration failed');
     }
   };
@@ -81,7 +98,10 @@ export default function AuthRegisterForm() {
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={2.5}>
         {(error || localError) && (
-          <Alert severity="error" onClose={() => { clearError(); setLocalError(null); }}>
+          <Alert 
+            severity={localError?.includes('successful') ? 'success' : 'error'} 
+            onClose={() => { clearError(); setLocalError(null); }}
+          >
             {error || localError}
           </Alert>
         )}
@@ -127,6 +147,7 @@ export default function AuthRegisterForm() {
           type="submit"
           variant="contained"
           loading={isSubmitting || isLoading}
+          disabled={isSubmitting || isLoading}
         >
           Register
         </LoadingButton>

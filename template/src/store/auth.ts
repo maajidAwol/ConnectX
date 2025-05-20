@@ -1,20 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  is_verified: boolean;
-  avatar_url: string | null;
-  last_login: string | null;
-  bio: string | null;
-  phone_number: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { apiRequest, User, Tenant } from '../lib/api-config';
 
 interface LoginResponse {
   access: string;
@@ -24,6 +10,7 @@ interface LoginResponse {
 
 interface AuthState {
   user: User | null;
+  tenant: Tenant | null;
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
@@ -34,14 +21,14 @@ interface AuthState {
   logout: () => void;
   clearError: () => void;
   updateUser: (userData: User) => void;
+  fetchTenantDetails: () => Promise<void>;
 }
-
-const API_URL = 'https://connectx-9agd.onrender.com/api';
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      tenant: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
@@ -52,27 +39,16 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
           
-          const response = await fetch(`${API_URL}/users/`, {
+          const userData = await apiRequest<User>('/users/', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
               name,
               email,
               password,
               role: 'customer',
-              is_verified: true,
-              avatar_url: null,
             }),
           });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || 'Registration failed');
-          }
-
-          const userData = await response.json();
           set({
             user: userData,
             isLoading: false,
@@ -82,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
             error: error instanceof Error ? error.message : 'An error occurred',
             isLoading: false,
           });
-          throw error; // Re-throw to handle in the component
+          throw error;
         }
       },
 
@@ -90,20 +66,13 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
           
-          const response = await fetch(`${API_URL}/auth/login/`, {
+          const data = await apiRequest<LoginResponse>('/auth/login/', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ 
+              email, 
+              password,
+            }),
           });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || 'Login failed');
-          }
-
-          const data: LoginResponse = await response.json();
           
           set({
             user: data.user,
@@ -112,12 +81,31 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          // Fetch tenant details after successful login
+          const store = useAuthStore.getState();
+          await store.fetchTenantDetails();
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : 'An error occurred',
             isLoading: false,
           });
-          throw error; // Re-throw to handle in the component
+          throw error;
+        }
+      },
+
+      fetchTenantDetails: async () => {
+        try {
+          const store = useAuthStore.getState();
+          if (!store.accessToken) return;
+
+          const tenantData = await apiRequest<Tenant>('/tenants/me/', {
+            method: 'GET',
+          }, true, store.accessToken);
+
+          set({ tenant: tenantData });
+        } catch (error) {
+          console.error('Failed to fetch tenant details');
         }
       },
 
@@ -133,6 +121,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         set({
           user: null,
+          tenant: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
@@ -149,6 +138,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
+        tenant: state.tenant,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
