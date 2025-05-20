@@ -55,7 +55,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "password": {"write_only": True},
             "email": {"required": True},
-            "tenant": {"required": True},
+           
         }
         read_only_fields = [
             "id",
@@ -83,13 +83,8 @@ class UserSerializer(serializers.ModelSerializer):
                 },
                 "role": {
                     "type": "string",
-                    "enum": ["admin", "customer", "owner"],
+                    "enum": [ "customer","admin", "owner"],
                     "description": "Role of the user in the system",
-                },
-                "tenant": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the tenant the user belongs to",
                 },
             },
         }

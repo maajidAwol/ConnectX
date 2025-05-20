@@ -75,6 +75,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Allow unauthenticated users to create a new user."""
         if self.action == "create":
+            # Allow any user (authenticated or unauthenticated) to hit the create endpoint.
+            # The actual permission/role check happens within the create method.
             return [permissions.AllowAny()]
         if self.action == "destroy":
             return [permissions.IsAdminUser()]
@@ -89,8 +91,104 @@ class UserViewSet(viewsets.ModelViewSet):
         elif self.request.user.role == User.OWNER:
             return User.objects.filter(tenant=self.request.user.tenant)
         else:
-            # Customers can only see their own tenant
+            # Customers and Members can only see their own profile
             return User.objects.filter(id=self.request.user.id)
+
+    def create(self, request, *args, **kwargs):
+        # Check if the request is authenticated
+        if request.user.is_authenticated:
+            # Authenticated user is creating a new user
+            creator_role = request.user.role
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            validated_data = serializer.validated_data
+
+            if creator_role == User.OWNER:
+                # Owner creating a member for their tenant
+                validated_data["role"] = User.MEMBER
+                validated_data["tenant"] = request.user.tenant
+            elif creator_role == User.ADMIN:
+                # Admin creating a user, can specify role (including other admins)
+                # Ensure tenant is handled correctly for admin creation (optional or specified in data)
+                # If tenant is not provided for an admin creation, assume it's a global admin (no tenant)
+                if "role" in validated_data and validated_data["role"] not in [
+                    User.ADMIN,
+                    User.OWNER,
+                    User.CUSTOMER,
+                    User.MEMBER,
+                ]:
+                    return Response(
+                        {
+                            "error": "Admin can only create users with roles: admin, owner, customer, or member."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                elif "role" not in validated_data:
+                    # Default role when admin creates if not specified? Or require explicit role?
+                    # Let's require explicit role for admin creation for clarity.
+                    return Response(
+                        {
+                            "error": "Role must be specified when an admin creates a user."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Tenant assignment for admin created users:
+                # If tenant is provided in data, use it. Otherwise, if creating an admin, set tenant to None.
+                if (
+                    "tenant" not in validated_data
+                    and validated_data["role"] == User.ADMIN
+                ):
+                    validated_data["tenant"] = None  # Global admin
+                elif (
+                    "tenant" not in validated_data
+                    and validated_data["role"] != User.ADMIN
+                ):
+                    return Response(
+                        {
+                            "error": "Tenant must be specified when creating a non-admin user as an admin."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            else:
+                # Other authenticated roles (customer, member) are not allowed to create users
+                return Response(
+                    {"error": "You do not have permission to create users."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            user = serializer.save()
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            )
+
+        else:
+            # Anonymous user is creating a new user
+            # Assuming a middleware or similar process validates the API key and sets request.tenant
+            # Placeholder for API key validation logic:
+            if hasattr(request, "tenant") and request.tenant is not None:
+                # Valid API key found and tenant is set
+                serializer = self.get_serializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                validated_data = serializer.validated_data
+
+                # Anonymous user with API key creates a customer for the tenant
+                validated_data["role"] = User.CUSTOMER
+                validated_data["tenant"] = request.tenant
+
+                user = serializer.save()
+                headers = self.get_success_headers(serializer.data)
+                return Response(
+                    serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                )
+            else:
+                # No valid API key or tenant not set, disallow creation
+                return Response(
+                    {"error": "API key required to create a user anonymously."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
     @action(detail=False, methods=["get"], url_path="me")
     def me(self, request):
