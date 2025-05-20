@@ -36,18 +36,28 @@ interface TenantData {
   updated_at: string
 }
 
+interface SignupData {
+  name: string
+  email: string
+  password: string
+  fullname: string
+}
+
 interface AuthState {
   isAuthenticated: boolean
   user: User | null
   tenantData: TenantData | null
   accessToken: string | null
   refreshToken: string | null
-  signup: (data: { name: string; email: string; password: string; fullname: string }) => Promise<void>
+  isLoading: boolean
+  error: string | null
+  signup: (data: SignupData) => Promise<void>
   login: (data: { email: string; password: string }) => Promise<void>
   logout: () => void
   getRedirectPath: () => string
   fetchTenantData: () => Promise<void>
   isTenantVerified: () => boolean
+  clearError: () => void
 }
 
 // In Next.js, cookies need to be set server-side
@@ -103,28 +113,52 @@ const loadStateFromCookies = () => {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   ...loadStateFromCookies(),
-  signup: async (data) => {
+  isLoading: false,
+  error: null,
+
+  signup: async (data: SignupData) => {
+    set({ isLoading: true, error: null });
     try {
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('email', data.email);
+      formData.append('password', data.password);
+      formData.append('fullname', data.fullname);
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'accept': 'application/json',
         },
-        body: JSON.stringify(data),
-      })
+        body: formData,
+      });
+
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error('Signup failed')
+        throw new Error(responseData.message || 'Signup failed');
       }
 
-      const userData = await response.json()
-      set({ user: userData, isAuthenticated: true })
+      // Don't set authentication state on signup
+      // User needs to verify email and login first
+      set({ 
+        isLoading: false,
+        error: null
+      });
+
+      return responseData;
     } catch (error) {
-      console.error('Signup error:', error)
-      throw error
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      });
+      throw error;
     }
   },
+
   login: async (data) => {
+    set({ isLoading: true, error: null });
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login/`, {
         method: 'POST',
@@ -132,13 +166,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-      })
+      });
+
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error('Invalid credentials')
+        // Check if the error is due to unverified email
+        if (responseData.error?.includes("verify your email")) {
+          throw new Error(responseData.error);
+        }
+        throw new Error(responseData.message || 'Invalid credentials');
       }
 
-      const { access, refresh, user } = await response.json()
+      const { access, refresh, user } = responseData;
       
       // Set cookies with expiration - 7 days for refresh token, 24 hours for access token
       setCookie('accessToken', access, 1); // 1 day
@@ -150,16 +190,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user, 
         accessToken: access,
         refreshToken: refresh,
-        isAuthenticated: true 
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
       });
 
       // Fetch tenant data after successful login
       await get().fetchTenantData();
     } catch (error) {
-      console.error('Login error:', error)
-      throw error
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      });
+      throw error;
     }
   },
+
   logout: () => {
     // Clear cookies
     deleteCookie('accessToken');
@@ -173,7 +219,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      tenantData: null
+      tenantData: null,
+      error: null
     });
     
     // Redirect to home page after logout
@@ -181,25 +228,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       window.location.href = '/';
     }
   },
+
   getRedirectPath: () => {
-    const { user } = get()
-    if (!user) return '/login'
+    const { user } = get();
+    if (!user) return '/login';
     
     // Redirect based on user role
     if (user.role === 'owner') {
-      return '/merchant'
+      return '/merchant';
     } else if (user.role === 'admin') {
-      return '/admin'
+      return '/admin';
     }
     
-    return '/'
+    return '/';
   },
+
   fetchTenantData: async () => {
+    set({ isLoading: true, error: null });
     try {
       const { accessToken, user } = get();
       if (!accessToken || !user?.tenant) {
-        console.warn('No access token or tenant ID available for fetching tenant data');
-        return;
+        throw new Error('No access token or tenant ID available');
       }
 
       const response = await fetch(
@@ -213,19 +262,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       );
 
       if (!response.ok) {
-        console.error('Failed to fetch tenant data:', response.status);
-        return;
+        throw new Error('Failed to fetch tenant data');
       }
 
       const tenantData = await response.json();
       
       // Store tenant data in state and cookie
-      set({ tenantData });
+      set({ 
+        tenantData,
+        isLoading: false,
+        error: null
+      });
       setCookie('tenantData', encodeURIComponent(JSON.stringify(tenantData)), 7);
     } catch (error) {
-      console.error('Error fetching tenant data:', error);
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch tenant data'
+      });
+      throw error;
     }
   },
+
   isTenantVerified: () => {
     const { tenantData } = get();
     if (!tenantData) {
@@ -234,5 +291,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     }
     return tenantData.is_verified || false;
+  },
+
+  clearError: () => {
+    set({ error: null });
   }
 }))
