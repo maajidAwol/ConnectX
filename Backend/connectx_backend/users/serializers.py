@@ -55,7 +55,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "password": {"write_only": True},
             "email": {"required": True},
-            "tenant": {"required": True},
+           
         }
         read_only_fields = [
             "id",
