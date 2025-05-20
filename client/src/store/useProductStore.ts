@@ -26,6 +26,12 @@ export type Product = {
   updated_at: string
 }
 
+// Type for product creation with file uploads
+export type ProductCreateData = Omit<Product, 'id' | 'tenant' | 'owner' | 'profit_percentage' | 'selling_price' | 'total_sold' | 'total_ratings' | 'total_reviews' | 'created_at' | 'updated_at'> & {
+  cover_image_upload?: File
+  images_upload?: File | File[]
+}
+
 export type FilterType = 'all' | 'public' | 'owned' | 'listed'
 
 interface ProductState {
@@ -52,7 +58,7 @@ interface ProductState {
   listProduct: (productId: string, profitPercentage: number) => Promise<{ detail: string }>
   unlistProduct: (productId: string) => Promise<{ detail: string }>
   deleteProduct: (productId: string) => Promise<{ detail: string }>
-  createProduct: (productData: Omit<Product, 'id' | 'tenant' | 'owner' | 'profit_percentage' | 'selling_price' | 'total_sold' | 'total_ratings' | 'total_reviews' | 'created_at' | 'updated_at'>) => Promise<Product>
+  createProduct: (productData: ProductCreateData) => Promise<Product>
 }
 
 // In a production environment, this would be loaded from environment variables
@@ -265,18 +271,51 @@ const useProductStore = create<ProductState>((set, get) => ({
         throw new Error('Authentication required');
       }
 
+      // Create FormData object
+      const formData = new FormData();
+
+      // Add all text fields
+      Object.entries(productData).forEach(([key, value]) => {
+        if (key === 'tag' || key === 'colors' || key === 'sizes') {
+          // Handle arrays by converting to JSON string
+          formData.append(key, JSON.stringify(value));
+        } else if (key === 'additional_info') {
+          // Handle additional_info object by converting to JSON string
+          formData.append(key, JSON.stringify(value));
+        } else if (key !== 'cover_image_upload' && key !== 'images_upload') {
+          // Add all other fields except file uploads
+          formData.append(key, value as string);
+        }
+      });
+
+      // Add cover image if exists
+      if (productData.cover_image_upload) {
+        formData.append('cover_image_upload', productData.cover_image_upload);
+      }
+
+      // Add additional images if exist
+      if (productData.images_upload) {
+        if (Array.isArray(productData.images_upload)) {
+          productData.images_upload.forEach((file: File) => {
+            formData.append('images_upload', file);
+          });
+        } else {
+          formData.append('images_upload', productData.images_upload);
+        }
+      }
+
       const response = await fetch(`${API_URL}/products/`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${accessToken}`,
           'accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
         },
-        body: JSON.stringify(productData)
+        body: formData
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.log(errorData)
         throw new Error(errorData.detail || 'Failed to create product');
       }
 

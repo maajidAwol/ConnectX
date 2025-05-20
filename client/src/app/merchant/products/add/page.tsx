@@ -351,7 +351,8 @@ export default function AddProductPage() {
     if (!formData.quantity) newErrors.quantity = "Quantity is required";
     
     // Validate step 2 (Images)
-    if (!coverImage) newErrors.cover_url = "Cover image is required";
+    if (!coverImage?.file) newErrors.cover_url = "Cover image is required";
+    // if (images.length === 0) newErrors.cover_url = "At least one product image is required";
     
     // Set errors
     setErrors(newErrors);
@@ -409,19 +410,15 @@ export default function AddProductPage() {
       // Prepare the data for submission
       const submitData = {
         ...formData,
-        // cover_url: coverImage?.preview || "",
-        // images: images.map(img => img.preview),
-        cover_url: "https://example.com/image.jpg",
-        images: [
-          "https://example.com/image1.jpg",
-          "https://example.com/image2.jpg"
-        ],
         base_price: formData.base_price,
         quantity: parseInt(formData.quantity),
         tag: [...formData.tag], // Create a new array to prevent reference issues
         colors: [...formData.colors],
         sizes: [...formData.sizes],
-        additional_info: additionalInfoCopy
+        additional_info: additionalInfoCopy,
+        // Add file uploads
+        cover_image_upload: coverImage?.file,
+        images_upload: images.map(img => img.file)
       };
 
       // Console log the data
