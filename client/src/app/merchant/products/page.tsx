@@ -15,6 +15,8 @@ import { useAuthStore } from "@/store/authStore"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { toast } from "sonner"
+import { ListProductModal } from "@/components/modals/ListProductModal"
+import type { Product } from "@/store/useProductStore"
 
 export default function ProductManagement() {
   const { 
@@ -446,6 +448,7 @@ function ProductListCard({
   showActions = false
 }: ProductListCardProps) {
   const [loadingProducts, setLoadingProducts] = useState<Record<string, boolean>>({});
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { user } = useAuthStore();
   const currentTenantId = user?.tenant;
   const { listProduct, unlistProduct, deleteProduct } = useProductStore();
@@ -458,16 +461,15 @@ function ProductListCard({
     return "Uncategorized";
   };
 
-  const handleListProduct = async (product: any) => {
+  const handleListProduct = async (productId: string, profitPercentage: number) => {
     try {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
-      const data = await listProduct(product.id);
-      toast.success(data.detail || 'Product listed successfully', { className: 'bg-[#02569B] text-white' });
+      setLoadingProducts(prev => ({ ...prev, [productId]: true }));
+      await listProduct(productId, profitPercentage);
     } catch (error) {
       console.error('Error listing product:', error);
-      toast.error('Failed to list product. Please try again.', { className: 'bg-red-500 text-white' });
+      throw error;
     } finally {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
+      setLoadingProducts(prev => ({ ...prev, [productId]: false }));
     }
   };
 
@@ -506,132 +508,134 @@ function ProductListCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="p-8 flex justify-center">
-            <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
-          </div>
-        ) : (
-          <div className="rounded-md border">
-            <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
-              <div className="col-span-5">Product</div>
-              <div className="col-span-2">Category</div>
-              <div className="col-span-1">Price</div>
-              <div className="col-span-1">Stock</div>
-              <div className="col-span-2">{showSales ? "Sales" : (showStatus ? "Status" : "Sales")}</div>
-              <div className="col-span-1 text-right">Actions</div>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="p-8 flex justify-center">
+              <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
             </div>
-            <div className="divide-y">
-              {products.length > 0 ? (
-                products.map((product) => {
-                  if (!product || typeof product !== 'object') {
-                    return null;
-                  }
+          ) : (
+            <div className="rounded-md border">
+              <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                <div className="col-span-5">Product</div>
+                <div className="col-span-2">Category</div>
+                <div className="col-span-1">Price</div>
+                <div className="col-span-1">Stock</div>
+                <div className="col-span-2">{showSales ? "Sales" : (showStatus ? "Status" : "Sales")}</div>
+                <div className="col-span-1 text-right">Actions</div>
+              </div>
+              <div className="divide-y">
+                {products.length > 0 ? (
+                  products.map((product) => {
+                    if (!product || typeof product !== 'object') {
+                      return null;
+                    }
 
-                  const isListed = isProductListed(product);
-                  const isLoading = loadingProducts[product.id];
-                  const isOwned = isProductOwned(product);
+                    const isListed = isProductListed(product);
+                    const isLoading = loadingProducts[product.id];
+                    const isOwned = isProductOwned(product);
 
-                  return (
-                    <div key={product.id} className="grid grid-cols-12 items-center p-3">
-                      <div className="col-span-5 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-md bg-muted overflow-hidden">
-                          <Image
-                            src={product.cover_url || "/placeholder.svg"}
-                            alt={product.name || "Product image"}
-                            width={40}
-                            height={40}
-                            className="h-full w-full object-cover"
-                          />
+                    return (
+                      <div key={product.id} className="grid grid-cols-12 items-center p-3">
+                        <div className="col-span-5 flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-md bg-muted overflow-hidden">
+                            <Image
+                              src={product.cover_url || "/placeholder.svg"}
+                              alt={product.name || "Product image"}
+                              width={40}
+                              height={40}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <div className="font-medium">{product.name || "Unnamed Product"}</div>
+                            <div className="text-sm text-muted-foreground">{product.sku || "No SKU"}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-medium">{product.name || "Unnamed Product"}</div>
-                          <div className="text-sm text-muted-foreground">{product.sku || "No SKU"}</div>
-                        </div>
-                      </div>
-                      <div className="col-span-2">{getCategoryName(product.category)}</div>
-                      <div className="col-span-1">{product.base_price || "0.00"} ETB</div>
-                      <div className="col-span-1">{product.quantity || 0}</div>
-                      <div className="col-span-2">
-                        {showStatus ? (
-                          product.is_public ? (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Public
-                            </Badge>
+                        <div className="col-span-2">{getCategoryName(product.category)}</div>
+                        <div className="col-span-1">{product.base_price || "0.00"} ETB</div>
+                        <div className="col-span-1">{product.quantity || 0}</div>
+                        <div className="col-span-2">
+                          {showStatus ? (
+                            product.is_public ? (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                Public
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                Private
+                              </Badge>
+                            )
                           ) : (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Private
-                            </Badge>
-                          )
-                        ) : (
-                          <span>{product.total_sold || 0} units</span>
-                        )}
+                            <span>{product.total_sold || 0} units</span>
+                          )}
+                        </div>
+                        <div className="col-span-1 flex justify-between gap-2">
+                          {isOwned && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteProduct(product)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          )}
+                          {isListed ? (
+                            <Button 
+                              variant="ghost" 
+                              size="lg"
+                              onClick={() => handleUnlistProduct(product)}
+                              className="text-red-600 hover:text-red-800"
+                              disabled={isLoading}
+                            >
+                              {isLoading ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Unlisting...
+                                </>
+                              ) : (
+                                'Unlist'
+                              )}
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="ghost" 
+                              size="lg"
+                              onClick={() => setSelectedProduct(product)}
+                              className="text-blue-600 hover:text-blue-800"
+                              disabled={isLoading}
+                            >
+                              List
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="col-span-1 flex justify-between gap-2">
-                        {isOwned && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleDeleteProduct(product)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        )}
-                        {isListed ? (
-                          <Button 
-                            variant="ghost" 
-                            size="lg"
-                            onClick={() => handleUnlistProduct(product)}
-                            className="text-red-600 hover:text-red-800"
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Unlisting...
-                              </>
-                            ) : (
-                              'Unlist'
-                            )}
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="ghost" 
-                            size="lg"
-                            onClick={() => handleListProduct(product)}
-                            className="text-blue-600 hover:text-blue-800"
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Listing...
-                              </>
-                            ) : (
-                              'List'
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="p-4 text-center text-muted-foreground">
-                  No products found matching your search.
-                </div>
-              )}
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground">
+                    No products found matching your search.
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      <ListProductModal
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        product={selectedProduct}
+        onList={handleListProduct}
+      />
+    </>
   )
 }

@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "shipping",
     "analytics",
     "reviews",
+    "api_keys",
     "django_extensions",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -95,6 +96,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "api_keys.middleware.APIKeyTenantMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -216,6 +218,7 @@ SWAGGER_SETTINGS = {
             "in": "header",
             "description": 'JWT Authorization header using the Bearer scheme. Example: "Bearer {token}"',
         },
+        "ApiKeyAuth": {"type": "apiKey", "in": "header", "name": "X-API-KEY"},
     },
     "USE_SESSION_AUTH": False,
 }

@@ -74,7 +74,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Allow unauthenticated users to create a new user."""
-        print(self.request.headers.get("Authorization"))
         if self.action == "create":
             # Allow any user (authenticated or unauthenticated) to hit the create endpoint.
             # The actual permission/role check happens within the create method.

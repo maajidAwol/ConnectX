@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from .models import Product, ProductListing
 from .serializers import ProductSerializer
 from users.permissions import IsTenantOwner
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from categories.models import Category
 from django.db.models import Q
@@ -14,7 +15,8 @@ from rest_framework.exceptions import PermissionDenied
 from core.pagination import CustomPagination
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-
+from api_keys.permissions import HasValidAPIKey
+from users.models import User
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -26,27 +28,22 @@ class ProductViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["name", "sku", "description"]
     filterset_fields = ["category__name", "owner", "is_public"]
-
+    authentication_classes = [JWTAuthentication]
+    
     def get_permissions(self):
-        """
-        Get the list of permissions that the current action requires.
+        """Allow all authenticated users to read, but only tenant owners can write."""
 
-        - List/Retrieve: Any authenticated user
-        - Create: Tenant owner or admin
-        - Update/Delete: Owner of the product
-        - List/Unlist: Owner of the product or tenant with listing
-        """
         if self.action in ["list", "retrieve", "by_category"]:
+            if self.request.user.is_anonymous or self.request.user.role == User.CUSTOMER:
+                return [HasValidAPIKey()]
             return [permissions.IsAuthenticated()]
-        elif self.action == "create":
-            return [permissions.IsAuthenticated(), IsTenantOwner()]
-        elif self.action in ["update", "partial_update", "destroy"]:
+        elif self.action in ["create", "update", "partial_update", "destroy"]:
             return [permissions.IsAuthenticated(), IsTenantOwner()]
         return [permissions.IsAuthenticated()]
 
     @swagger_auto_schema(
         operation_summary="List product under current tenant",
-        operation_description="""
+        operation_description="""   
         Associates a product with the current user's tenant with an optional profit percentage or selling price.
         
         Allowed if:
@@ -152,25 +149,33 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        if (
-            getattr(self, "swagger_fake_view", False)
-            or not self.request.user.is_authenticated
-        ):
+        if getattr(self, "swagger_fake_view", False):
             return Product.objects.none()
 
-        tenant = self.request.user.tenant
+        tenant = getattr(self.request, "tenant", None)
         user = self.request.user
+
+        # No tenant -> return nothing (invalid API key or bad setup)
+        if tenant is None and not user.is_authenticated:
+            return Product.objects.none()
+
         filter_type = self.request.query_params.get("filter_type", "public_owned")
 
-        # Base queryset - products owned by tenant or public products
-        if self.action in ["update", "partial_update", "destroy"]:
-            # For update/delete, only show products owned by the tenant
-            queryset = Product.objects.filter(owner=tenant)
+        if user.is_authenticated:
+            # Authenticated access (JWT)
+            tenant = self.request.user.tenant
+            if self.action in ["update", "partial_update", "destroy"]:
+                queryset = Product.objects.filter(owner=tenant)
+            else:
+                queryset = Product.objects.filter(Q(owner=tenant) | Q(is_public=True))
         else:
-            # For other actions, show owned products and public products
-            queryset = Product.objects.filter(Q(owner=tenant) | Q(is_public=True))
+            # Unauthenticated (API key access)
+            # Only show products that are listed under the tenant
+            listings = ProductListing.objects.filter(tenant=tenant)
+            product_ids = listings.values_list("product_id", flat=True)
+            queryset = Product.objects.filter(id__in=product_ids)
 
-        # Apply additional filters based on filter_type
+        # Filter by filter_type
         if filter_type == "listed":
             listings = ProductListing.objects.filter(tenant=tenant)
             product_ids = listings.values_list("product_id", flat=True)
@@ -180,7 +185,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         elif filter_type == "public":
             queryset = queryset.filter(is_public=True)
 
-        # Apply price and category filters
+        # Filter by price and category
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
         category = self.request.query_params.get("category")
@@ -213,16 +218,53 @@ class ProductViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    def perform_create(self, serializer):
-        """Set the owner to the current user's tenant."""
-        serializer.save(owner=self.request.user.tenant)
+    @swagger_auto_schema(
+        operation_summary="Create a new product",
+        request_body=ProductSerializer,
+        responses={
+            201: openapi.Response(
+                description="Product created successfully", schema=ProductSerializer
+            ),
+            400: openapi.Response(description="Bad Request"),
+            401: openapi.Response(description="Unauthorized"),
+            403: openapi.Response(description="Permission Denied"),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
-    def perform_update(self, serializer):
-        """Ensure only the owner can update the product."""
-        instance = self.get_object()
-        if instance.owner != self.request.user.tenant:
-            raise PermissionDenied("You can only update products you own.")
-        serializer.save()
+    @swagger_auto_schema(
+        operation_summary="Update an existing product",
+        request_body=ProductSerializer,
+        responses={
+            200: openapi.Response(
+                description="Product updated successfully", schema=ProductSerializer
+            ),
+            400: openapi.Response(description="Bad Request"),
+            401: openapi.Response(description="Unauthorized"),
+            403: openapi.Response(description="Permission Denied"),
+            404: openapi.Response(description="Not Found"),
+        },
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Partially update an existing product",
+        request_body=ProductSerializer,
+        responses={
+            200: openapi.Response(
+                description="Product partially updated successfully",
+                schema=ProductSerializer,
+            ),
+            400: openapi.Response(description="Bad Request"),
+            401: openapi.Response(description="Unauthorized"),
+            403: openapi.Response(description="Permission Denied"),
+            404: openapi.Response(description="Not Found"),
+        },
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_description="Get products filtered by category ID",
@@ -250,14 +292,18 @@ class ProductViewSet(viewsets.ModelViewSet):
     )
     def by_category(self, request, category_id=None):
         """Get products filtered by category ID."""
-        try:
-            category = Category.objects.get(id=category_id)
-            queryset = self.get_queryset().filter(category=category)
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-            serializer = self.get_serializer(queryset, many=True)
-            return Response({"results": serializer.data})
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        category = get_object_or_404(Category, id=category_id)
+        products = self.get_queryset().filter(category=category)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+    def perform_create(self, serializer):
+        """Set the owner to the current user's tenant."""
+        serializer.save(owner=self.request.user.tenant)
+
+    def perform_update(self, serializer):
+        """Ensure only the owner can update the product."""
+        instance = self.get_object()
+        if instance.owner != self.request.user.tenant:
+            raise PermissionDenied("You can only update products you own.")
+        serializer.save()
