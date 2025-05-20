@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, CustomTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
 from .verification import VerifyEmailView, ResendVerificationView
-from .views import PasswordResetRequestView, PasswordResetView
+from .views import PasswordResetRequestView, PasswordResetView, ChangePasswordView
 
 # Create a router for UserViewSet
 router = DefaultRouter()
@@ -33,4 +33,5 @@ urlpatterns = [
         name="password-reset-request",
     ),
     path("auth/password-reset/", PasswordResetView.as_view(), name="password-reset"),
+    path("auth/change-password/", ChangePasswordView.as_view(), name="change-password"),
 ]

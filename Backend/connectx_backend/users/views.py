@@ -4,7 +4,7 @@ from .models import User
 from .serializers import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from django.contrib.auth import authenticate
 from .models import User
@@ -20,7 +20,7 @@ from pathlib import Path
 from utils import upload_image
 from rest_framework.decorators import action
 from django.contrib.auth import get_user_model
-from .serializers import PasswordResetRequestSerializer, PasswordResetSerializer
+from .serializers import PasswordResetRequestSerializer, PasswordResetSerializer, ChangePasswordSerializer
 from .utils.email_utils import send_password_reset_email
 from .utils.jwt_utils import decode_password_reset_token
 from django.utils.translation import gettext_lazy as _
@@ -215,4 +215,28 @@ class PasswordResetView(APIView):
                 {"message": _("Password has been reset successfully")},
                 status=status.HTTP_200_OK,
             )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=ChangePasswordSerializer,
+        responses={
+            200: openapi.Response(description="Password changed successfully"),
+            400: openapi.Response(description="Invalid input or incorrect old password"),
+        },
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            old_password = serializer.validated_data["old_password"]
+            new_password = serializer.validated_data["new_password"]
+            if not user.check_password(old_password):
+                return Response({"error": _( "Old password is incorrect" )}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(new_password)
+            user.save()
+            return Response({"message": _( "Password changed successfully" )}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
