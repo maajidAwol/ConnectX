@@ -24,6 +24,14 @@ export default function EcommerceAccountPersonalView() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // New state for avatar editing
+  const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+  const [avatarFileToUpload, setAvatarFileToUpload] = useState<File | null>(null);
+  const [avatarPreviewToUpload, setAvatarPreviewToUpload] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
   const { user, accessToken, updateUser } = useAuthStore();
 
   const handleShowPassword = () => {
@@ -82,11 +90,139 @@ export default function EcommerceAccountPersonalView() {
     setValue('showPasswordSection', showPasswordSection);
   }, [showPasswordSection, setValue]);
 
+  // Handlers for Avatar Update
+  const handleEditAvatarClick = () => {
+    setIsEditingAvatar(true);
+    setAvatarError(null);
+  };
+
+  const handleCancelAvatarClick = () => {
+    setIsEditingAvatar(false);
+    setAvatarFileToUpload(null);
+    setAvatarPreviewToUpload(null);
+    setAvatarError(null);
+  };
+
+  const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFileToUpload(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreviewToUpload(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setAvatarFileToUpload(null);
+      setAvatarPreviewToUpload(null);
+    }
+    setAvatarError(null);
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFileToUpload) {
+      setAvatarError('Please select an image to upload.');
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      setAvatarError(null);
+
+      if (!user?.id) {
+        throw new Error('User ID not found');
+      }
+
+      const currentAccessToken = accessToken;
+      if (!currentAccessToken) {
+        throw new Error('Authentication required. Please login again.');
+      }
+
+      const formData = new FormData();
+      formData.append('avatar', avatarFileToUpload);
+
+      const response = await fetch(`${API_URL}/users/update-profile/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${currentAccessToken}`,
+        },
+        body: formData,
+      });
+
+      if (response.status === 401) {
+         // Token might be expired, try to refresh
+         const refreshResponse = await fetch(`${API_URL}/auth/refresh/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            refresh: useAuthStore.getState().refreshToken
+          }),
+        });
+
+        if (!refreshResponse.ok) {
+          throw new Error('Session expired. Please login again.');
+        }
+
+        const {
+          access
+        } = await refreshResponse.json();
+
+        // Update the access token in the store
+        useAuthStore.setState({
+          accessToken: access
+        });
+
+        // Retry the original request with the new token
+        const retryResponse = await fetch(`${API_URL}/users/update-profile/`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${access}`,
+          },
+          body: formData,
+        });
+
+        if (!retryResponse.ok) {
+          throw new Error('Failed to update avatar after token refresh');
+        }
+
+        const updatedUser = await retryResponse.json();
+        updateUser(updatedUser);
+      } else if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || errorData.message || 'Failed to update avatar';
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      } else {
+        const updatedUser = await response.json();
+        updateUser(updatedUser);
+      }
+
+      // Success
+      setIsEditingAvatar(false);
+      setAvatarFileToUpload(null);
+      setAvatarPreviewToUpload(null);
+      setSuccess('Avatar updated successfully');
+
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      setAvatarError(error instanceof Error ? error.message : 'Failed to upload avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const onSubmit = async (data: typeof defaultValues) => {
     try {
       setError(null);
       setSuccess(null);
-      
+
       if (!user?.id) {
         throw new Error('User ID not found');
       }
@@ -97,7 +233,7 @@ export default function EcommerceAccountPersonalView() {
         throw new Error('Authentication required. Please login again.');
       }
 
-      // Create FormData object
+      // Create FormData object for main profile update
       const formData = new FormData();
       formData.append('name', data.name);
       formData.append('email', data.email);
@@ -106,6 +242,7 @@ export default function EcommerceAccountPersonalView() {
       if (showPasswordSection && data.newPassword) {
         formData.append('password', data.newPassword);
       }
+      // Do NOT include avatar here anymore, it's handled separately
       formData.append('role', user.role);
 
       const response = await fetch(`${API_URL}/users/update-profile/`, {
@@ -123,17 +260,23 @@ export default function EcommerceAccountPersonalView() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ refresh: useAuthStore.getState().refreshToken }),
+          body: JSON.stringify({
+            refresh: useAuthStore.getState().refreshToken
+          }),
         });
 
         if (!refreshResponse.ok) {
           throw new Error('Session expired. Please login again.');
         }
 
-        const { access } = await refreshResponse.json();
-        
+        const {
+          access
+        } = await refreshResponse.json();
+
         // Update the access token in the store
-        useAuthStore.setState({ accessToken: access });
+        useAuthStore.setState({
+          accessToken: access
+        });
 
         // Retry the original request with the new token
         const retryResponse = await fetch(`${API_URL}/users/update-profile/`, {
@@ -164,9 +307,9 @@ export default function EcommerceAccountPersonalView() {
         const updatedUser = await response.json();
         updateUser(updatedUser);
       }
-      
+
       setSuccess('Profile updated successfully');
-      
+
       // Reset password fields and hide password section
       reset({
         ...data,
@@ -188,10 +331,88 @@ export default function EcommerceAccountPersonalView() {
 
   return (
     <EcommerceAccountLayout>
+      <Typography variant="h5" sx={{ mb: 3 }}>
+        Personal Information
+      </Typography>
+
+      {/* Avatar Section */}
+      <Stack direction="column" alignItems="center" spacing={2} sx={{ mb: 5 }}>
+        <Box sx={{ position: 'relative', width: 120, height: 120 }}>
+          <img
+            src={avatarPreviewToUpload || user.avatar_url || '/placeholder-avatar.jpg'} // Use preview if available, otherwise user's avatar or placeholder
+            alt="Avatar"
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #e0e0e0',
+            }}
+          />
+          {!isEditingAvatar && (
+            <IconButton
+              onClick={handleEditAvatarClick}
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                bgcolor: 'background.paper',
+                '&:hover': { bgcolor: 'background.neutral' },
+              }}
+            >
+              <Iconify icon="carbon:edit" width={20} />
+            </IconButton>
+          )}
+        </Box>
+
+        {isEditingAvatar && (
+          <Stack direction="column" alignItems="center" spacing={1.5}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarFileChange}
+              style={{ display: 'none' }}
+              id="avatar-upload"
+            />
+            <label htmlFor="avatar-upload">
+              <Button variant="outlined" component="span">
+                {avatarFileToUpload ? avatarFileToUpload.name : 'Choose New Avatar'}
+              </Button>
+            </label>
+
+            {avatarFileToUpload && avatarPreviewToUpload && (
+              <Box sx={{ mt: 1, textAlign: 'center' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>Preview:</Typography>
+                 {/* Preview is now handled by the main img tag using avatarPreviewToUpload */}
+              </Box>
+            )}
+
+            <Stack direction="row" spacing={1}>
+              <LoadingButton
+                variant="contained"
+                color="primary"
+                onClick={handleAvatarUpload}
+                loading={isUploadingAvatar}
+                disabled={!avatarFileToUpload}
+              >
+                Save
+              </LoadingButton>
+              <Button variant="outlined" color="inherit" onClick={handleCancelAvatarClick} disabled={isUploadingAvatar}>
+                Cancel
+              </Button>
+            </Stack>
+            {avatarError && (
+              <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                {avatarError}
+              </Typography>
+            )}
+          </Stack>
+        )}
+
+      </Stack>
+
+      {/* Main Profile Form */}
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        <Typography variant="h5" sx={{ mb: 3 }}>
-          Personal Information
-        </Typography>
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
@@ -209,13 +430,17 @@ export default function EcommerceAccountPersonalView() {
           rowGap={2.5}
           columnGap={2}
           display="grid"
-          gridTemplateColumns={{ xs: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }}
+          gridTemplateColumns={{
+            xs: 'repeat(1, 1fr)',
+            md: 'repeat(2, 1fr)',
+          }}
         >
           <RHFTextField name="name" label="Full Name" />
           <RHFTextField name="email" label="Email Address" />
           <RHFTextField name="phone_number" label="Phone Number" />
           <RHFTextField name="bio" label="Bio" multiline rows={3} />
         </Box>
+
 
         <Box sx={{ mt: 3, mb: 3 }}>
           <Button
