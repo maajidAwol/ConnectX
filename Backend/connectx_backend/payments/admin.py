@@ -1,34 +1,33 @@
 from django.contrib import admin
-from .models import OrderPayment, PaymentHistory
+from .models import Payment, PaymentHistory
 
 
 class PaymentHistoryInline(admin.TabularInline):
     model = PaymentHistory
     extra = 0
     readonly_fields = ['created_at']
+    can_delete = False
 
 
-@admin.register(OrderPayment)
-class OrderPaymentAdmin(admin.ModelAdmin):
-    list_display = ['order', 'tenant', 'payment_method', 'amount', 'status', 'created_at']
-    list_filter = ['payment_method', 'status', 'tenant', 'created_at']
-    search_fields = ['order__order_number', 'transaction_reference']
-    readonly_fields = ['created_at', 'updated_at']
-    inlines = [PaymentHistoryInline]
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['transaction_id', 'order', 'amount', 'payment_method', 'status', 'created_at']
+    list_filter = ['payment_method', 'status', 'created_at']
+    search_fields = ['transaction_id', 'order__order_number']
+    readonly_fields = ['created_at', 'updated_at', 'verification_data', 'webhook_data']
     date_hierarchy = 'created_at'
+    inlines = [PaymentHistoryInline]
+    
     fieldsets = (
         ('Basic Information', {
-            'fields': ('order', 'tenant', 'payment_method', 'status', 'created_at', 'updated_at')
+            'fields': ('transaction_id', 'order', 'amount', 'payment_method', 'status', 'created_at', 'updated_at')
         }),
-        ('Financial Information', {
-            'fields': ('amount',)
-        }),
-        ('Chapa Details', {
-            'fields': ('transaction_reference', 'checkout_url'),
+        ('Verification Data', {
+            'fields': ('verification_data',),
             'classes': ('collapse',),
         }),
-        ('Additional Information', {
-            'fields': ('notes',),
+        ('Webhook Data', {
+            'fields': ('webhook_data',),
             'classes': ('collapse',),
         }),
     )
@@ -36,8 +35,8 @@ class OrderPaymentAdmin(admin.ModelAdmin):
 
 @admin.register(PaymentHistory)
 class PaymentHistoryAdmin(admin.ModelAdmin):
-    list_display = ['payment', 'status', 'created_at']
-    list_filter = ['status', 'created_at']
-    search_fields = ['payment__order__order_number', 'description']
+    list_display = ['payment', 'old_status', 'new_status', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['payment__transaction_id']
     readonly_fields = ['created_at']
     date_hierarchy = 'created_at'
