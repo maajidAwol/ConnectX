@@ -213,16 +213,53 @@ class ProductViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    def perform_create(self, serializer):
-        """Set the owner to the current user's tenant."""
-        serializer.save(owner=self.request.user.tenant)
+    @swagger_auto_schema(
+        operation_summary="Create a new product",
+        request_body=ProductSerializer,
+        responses={
+            201: openapi.Response(
+                description="Product created successfully", schema=ProductSerializer
+            ),
+            400: openapi.Response(description="Bad Request"),
+            401: openapi.Response(description="Unauthorized"),
+            403: openapi.Response(description="Permission Denied"),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
-    def perform_update(self, serializer):
-        """Ensure only the owner can update the product."""
-        instance = self.get_object()
-        if instance.owner != self.request.user.tenant:
-            raise PermissionDenied("You can only update products you own.")
-        serializer.save()
+    @swagger_auto_schema(
+        operation_summary="Update an existing product",
+        request_body=ProductSerializer,
+        responses={
+            200: openapi.Response(
+                description="Product updated successfully", schema=ProductSerializer
+            ),
+            400: openapi.Response(description="Bad Request"),
+            401: openapi.Response(description="Unauthorized"),
+            403: openapi.Response(description="Permission Denied"),
+            404: openapi.Response(description="Not Found"),
+        },
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Partially update an existing product",
+        request_body=ProductSerializer,
+        responses={
+            200: openapi.Response(
+                description="Product partially updated successfully",
+                schema=ProductSerializer,
+            ),
+            400: openapi.Response(description="Bad Request"),
+            401: openapi.Response(description="Unauthorized"),
+            403: openapi.Response(description="Permission Denied"),
+            404: openapi.Response(description="Not Found"),
+        },
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_description="Get products filtered by category ID",
@@ -250,14 +287,18 @@ class ProductViewSet(viewsets.ModelViewSet):
     )
     def by_category(self, request, category_id=None):
         """Get products filtered by category ID."""
-        try:
-            category = Category.objects.get(id=category_id)
-            queryset = self.get_queryset().filter(category=category)
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-            serializer = self.get_serializer(queryset, many=True)
-            return Response({"results": serializer.data})
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        category = get_object_or_404(Category, id=category_id)
+        products = self.get_queryset().filter(category=category)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+    def perform_create(self, serializer):
+        """Set the owner to the current user's tenant."""
+        serializer.save(owner=self.request.user.tenant)
+
+    def perform_update(self, serializer):
+        """Ensure only the owner can update the product."""
+        instance = self.get_object()
+        if instance.owner != self.request.user.tenant:
+            raise PermissionDenied("You can only update products you own.")
+        serializer.save()
