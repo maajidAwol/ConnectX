@@ -16,7 +16,7 @@ class TestUserAPI:
         return {
             "name": "Test User",
             "email": "testuser@example.com",
-            "password": "password123",
+            "password": "Str0ngP@ssw0rd!2024",
             "role": User.CUSTOMER,
             "tenant": tenant.id,
         }
@@ -121,7 +121,7 @@ class TestUserAPI:
         Test that users can update their own profile.
         """
         client, user = auth_client
-        url = reverse("user-update-profile", kwargs={"pk": user.id})
+        url = reverse("user-profile-update")
 
         # Remove tenant from update data since it's not allowed in profile updates
         if "tenant" in user_update_data:
@@ -199,7 +199,7 @@ class TestUserAPI:
         Test the 'update-profile' endpoint.
         """
         client, user = auth_client
-        url = reverse("user-update-profile", kwargs={"pk": user.id})
+        url = reverse("user-profile-update")
         update_data = {"name": "Updated Profile Name", "bio": "Updated profile bio"}
 
         response = client.put(url, update_data)
@@ -217,13 +217,16 @@ class TestUserAPI:
         client, _ = auth_client
         other_user = user_factory.create()
 
-        url = reverse("user-update-profile", kwargs={"pk": other_user.id})
+        url = reverse("user-profile-update")
         update_data = {"name": "Attempt to update other user"}
 
+        # Authenticate as a different user and try to update
         response = client.put(url, update_data)
 
-        # Should either return 403 (forbidden) or 404 (not found, if filtered by tenant)
-        assert response.status_code in [
-            status.HTTP_403_FORBIDDEN,
-            status.HTTP_404_NOT_FOUND,
-        ]
+        # Should only update the authenticated user's own profile, not others
+        # So the name should not be updated for the other user
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["name"] == update_data["name"]
+        # Optionally, check that the other user's name did not change
+        other_user.refresh_from_db()
+        assert other_user.name != update_data["name"]

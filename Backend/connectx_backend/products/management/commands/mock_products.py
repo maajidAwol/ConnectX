@@ -54,7 +54,7 @@ class Command(BaseCommand):
                 "name": "Mock Owner",
                 "password": "password",
                 "tenant": tenant,
-                "role": User.OWNER,
+                "role": User.CUSTOMER,
             },
         )
         if created:

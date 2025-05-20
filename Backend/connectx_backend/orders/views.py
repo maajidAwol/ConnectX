@@ -1,26 +1,41 @@
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import viewsets, permissions, status
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 from django.utils import timezone
 import datetime
 import uuid
+from django_filters.rest_framework import DjangoFilterBackend
+
+# Import for custom filter set
+from django_filters import FilterSet, CharFilter, ModelChoiceFilter
 
 from .models import Order, OrderHistory
 from .serializers import OrderSerializer, OrderHistorySerializer, OrderListSerializer, WriteOrderSerializer
 from users.permissions import IsTenantOwner
-from django_filters.rest_framework import DjangoFilterBackend
 from core.pagination import CustomPagination
+from users.models import User
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 
+# Custom FilterSet to avoid _set_choices issues
+class OrderFilter(FilterSet):
+    status = CharFilter(field_name='status')
+    user = ModelChoiceFilter(queryset=User.objects.all())
+    
+    class Meta:
+        model = Order
+        fields = ['status', 'user']
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = CustomPagination
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'user']
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = OrderFilter  # Use custom FilterSet instead of filterset_fields
     search_fields = ['order_number', 'user__name', 'user__email']
     ordering_fields = ['created_at', 'updated_at', 'total_amount']
     ordering = ['-created_at']

@@ -12,6 +12,7 @@ export function middleware(request: NextRequest) {
   const isPublicPath = path === '/login' || 
                        path === '/signup' || 
                        path === '/' || 
+                       path.startsWith('/verify-email') ||
                        path.startsWith('/docs') || 
                        path.startsWith('/templates') || 
                        path.startsWith('/pricing') || 

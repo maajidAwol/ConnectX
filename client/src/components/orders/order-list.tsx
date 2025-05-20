@@ -19,19 +19,21 @@ export function OrderList({ orders, emptyMessage = "No orders found matching you
           <ArrowUpDown className="h-3 w-3" />
         </div>
       ),
-      cell: (order: any) => <div className="font-medium">{order.id}</div>,
-      className: "col-span-2",
+      cell: (order: any) => (
+        <div className="font-medium whitespace-nowrap">{order.id}</div>
+      ),
+      className: "w-[120px]",
     },
     {
       id: "customer",
       header: "Customer",
       cell: (order: any) => (
-        <div>
-          <div>{order.customer}</div>
-          <div className="text-sm text-muted-foreground">{order.email}</div>
+        <div className="space-y-1">
+          <div className="font-medium">{order.customer}</div>
+          <div className="text-sm text-muted-foreground truncate max-w-[200px]">{order.email}</div>
         </div>
       ),
-      className: "col-span-3",
+      className: "min-w-[200px]",
     },
     {
       id: "date",
@@ -42,44 +44,54 @@ export function OrderList({ orders, emptyMessage = "No orders found matching you
         </div>
       ),
       cell: (order: any) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <span>{order.date}</span>
         </div>
       ),
-      className: "col-span-2",
+      className: "w-[150px]",
     },
     {
       id: "amount",
       header: "Amount",
-      cell: (order: any) => <div className="font-medium">{order.amount}</div>,
-      className: "col-span-1",
+      cell: (order: any) => (
+        <div className="font-medium whitespace-nowrap">{order.amount}</div>
+      ),
+      className: "w-[100px] text-right",
     },
     {
       id: "status",
       header: "Status",
       cell: (order: any) => <StatusBadge status={order.status} />,
-      className: "col-span-2",
+      className: "w-[120px]",
     },
     {
       id: "actions",
       header: <div className="text-right">Actions</div>,
       cell: (order: any) => (
         <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="h-8">
             <Link href={`/merchant/orders/${order.id.replace("#", "")}`}>View</Link>
           </Button>
           {order.status === "Processing" && (
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="h-8">
               <Truck className="h-4 w-4 mr-1" />
               <span>Ship</span>
             </Button>
           )}
         </div>
       ),
-      className: "col-span-2 text-right",
+      className: "w-[160px] text-right",
     },
   ]
 
-  return <DataTable columns={columns} data={orders} emptyMessage={emptyMessage} />
+  return (
+    <div className="w-full overflow-x-auto min-w-[900px]">
+      <DataTable 
+        columns={columns} 
+        data={orders} 
+        emptyMessage={emptyMessage}
+      />
+    </div>
+  )
 }
