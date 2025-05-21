@@ -34,6 +34,7 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from core.pagination import CustomPagination
+from .permissions import CanDeleteMember
 
 
 User = get_user_model()
@@ -84,7 +85,7 @@ class UserViewSet(viewsets.ModelViewSet):
             # The actual permission/role check happens within the create method.
             return [permissions.AllowAny()]
         if self.action == "destroy":
-            return [permissions.IsAdminUser()| IsTenantOwner]
+            return [CanDeleteMember()]
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
@@ -191,26 +192,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """Only admins and owners can delete users."""
-        if not request.user.is_authenticated:
-            return Response(
-                {"error": "Authentication required."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+        instance = self.get_object()
 
-        if request.user.role not in [User.ADMIN, User.OWNER]:
+        # Check if the user being deleted is a member
+        if instance.role != "member":
             return Response(
-                {"error": "Only admins and owners can delete users."},
+                {"error": "Only members can be deleted."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-
-        # If user is an owner, they can only delete users from their tenant
-        if request.user.role == User.OWNER:
-            instance = self.get_object()
-            if instance.tenant != request.user.tenant:
-                return Response(
-                    {"error": "You can only delete users from your own tenant."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
 
         return super().destroy(request, *args, **kwargs)
 

@@ -3,16 +3,26 @@
 import Link from "next/link"
 import { ArrowUpRight, Clock, DollarSign, Package, ShoppingCart, TrendingUp, Users } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { products, orders, salesData, merchantActivity } from "@/lib/data"
+import { products, salesData, merchantActivity } from "@/lib/data"
 import ProtectedRoute from "@/components/protected-route"
+import useOrderStore from "@/store/useOrderStore"
+import { useEffect } from "react"
+import { format } from "date-fns"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function MerchantPage() {
+  const { orders, isLoading, error, fetchRecentOrders, recentOrders, isLoadingRecent } = useOrderStore()
+
+  useEffect(() => {
+    fetchRecentOrders()
+  }, [fetchRecentOrders])
+
   // In a real application, this data would be fetched from an API
   // For example:
   // const { data: salesData, isLoading } = useSWR('/api/sales', fetcher)
 
   return (
-    <ProtectedRoute requiredRole="owner">
+    <ProtectedRoute requiredRoles={["owner", "member"]}>
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Merchant Dashboard</h2>
@@ -86,26 +96,47 @@ export default function MerchantPage() {
               <CardDescription>Latest customer orders requiring attention</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {orders.slice(0, 4).map((order) => (
-                  <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                    <div className="space-y-1">
-                      <p className="font-medium">{order.id}</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <span>{order.customer}</span>
-                        <span className="mx-2">•</span>
-                        <span>{order.status}</span>
+              {isLoadingRecent ? (
+                <div className="space-y-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-3 w-[150px]" />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-[100px]" />
+                        <Skeleton className="h-4 w-[40px]" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="font-medium">{order.amount}</span>
-                      <Link href="#" className="text-sm font-medium text-blue-600 hover:underline">
-                        View
-                      </Link>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="text-center py-4 text-red-500">{error}</div>
+              ) : (
+                <div className="space-y-4">
+                  {recentOrders.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-1">
+                        <p className="font-medium">{order.order_number}</p>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <span>{order.first_item.product_name}</span>
+                          <span className="mx-2">•</span>
+                          <span className="capitalize">{order.status}</span>
+                          <span className="mx-2">•</span>
+                          <span>{order.payment_status.display_status}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-medium">${parseFloat(order.total_amount).toLocaleString()}</span>
+                        <Link href={`/merchant/orders/${order.id}`} className="text-sm font-medium text-blue-600 hover:underline">
+                          View
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
