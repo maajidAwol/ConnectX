@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../models/product_model.dart';
 import '../models/category_model.dart';
 
@@ -15,79 +17,63 @@ abstract class ProductRemoteDataSource {
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   final http.Client client;
   final String baseUrl;
+  final StorageService storageService;
 
   ProductRemoteDataSourceImpl({
     required this.client,
     required this.baseUrl,
+    required this.storageService,
   });
+
+  Map<String, String> get _headers {
+    final token = storageService.getAccessToken();
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-API-KEY': API_KEY,
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   @override
   Future<List<ProductModel>> getProducts() async {
     try {
       final response = await client.get(
-        Uri.parse('https://api.korecha.com.et/api/products/list'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        Uri.parse('$baseUrl/products/'),
+        headers: _headers,
       );
-
+      print(response.body);
+      print(response.statusCode);
       if (response.statusCode == 200) {
-        // print('Response body: ${response.body}');
         final decodedResponse = json.decode(response.body);
-        // print("decodedResponse");
-        // print({decodedResponse});
 
-        // Handle both cases: direct array or nested in products field
-        List<dynamic> productsJson;
-        if (decodedResponse is Map<String, dynamic>) {
-          productsJson = decodedResponse['products'] as List<dynamic>;
-          // print("productsJson");
-          // print(productsJson);
-        } else if (decodedResponse is List) {
-          // print("decodedResponse is List");
-          // print(decodedResponse);
-          productsJson = decodedResponse;
-          // print("productsJson");
-          // print(productsJson);
-        } else {
-          // print(productsJson);
-          throw ServerException('Invalid response format');
-        }
+        // New API returns paginated results with 'results' field
+        final List<dynamic> productsJson = decodedResponse['results'];
 
-        return productsJson.map((json) {
-          try {
-            return ProductModel.fromJson(json);
-          } catch (e) {
-            // print('Error parsing product: $e');
-            // print('Product JSON: $json');
-            rethrow;
-          }
-        }).toList();
+        return productsJson.map((json) => ProductModel.fromJson(json)).toList();
       } else {
-        throw ServerException('Failed to load products');
+        throw ServerException(
+          'Failed to load products: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      // print('Error fetching products: $e');
       throw ServerException(e.toString());
     }
   }
+
   @override
   Future<List<ProductModel>> getProductBySearch(String query) async {
     try {
       final response = await client.get(
-        Uri.parse('https://api.korecha.com.et/api/products/search?q=$query'),
-        );
-        print(response.body);
-        print(response.statusCode);
-        
+        Uri.parse('$baseUrl/products/?search=$query'),
+        headers: _headers,
+      );
+
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
-        final products = decodedResponse['products'] as List<dynamic>;
-        final productsList = (products)
-            .map<ProductModel>((json) => ProductModel.fromJson(json))
-            .toList();
-        return productsList;
+        final List<dynamic> productsJson = decodedResponse['results'];
+
+        return productsJson.map((json) => ProductModel.fromJson(json)).toList();
       } else {
         throw ServerException('Failed to load products by search');
       }
@@ -99,44 +85,18 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<ProductModel> getProductById(String productId) async {
     try {
-      // final response = await client.get(
-      //   Uri.parse('$baseUrl/api/products/details'),
-      //   headers: {
-      //     'Accept': 'application/json',
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: json.encode({'productId': productId}),
-      // );
-      final uri = Uri.parse('https://api.korecha.com.et/api/products/details');
-      final request = http.Request('GET', uri)
-        ..headers.addAll({
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        })
-        ..body = json.encode({'productId': productId});
+      final response = await client.get(
+        Uri.parse('$baseUrl/products/$productId/'),
+        headers: _headers,
+      );
 
-      final response = await client.send(request);
-      final responseBody = await response.stream.bytesToString();
-
-      // print("response");
-      // print(responseBody);
-      // print(response.statusCode);
-
-      if (response.statusCode == 201) {
-        final decodedResponse = json.decode(responseBody);
-        final product = decodedResponse['product'];
-        // final productJson = json.decode(product);
-        // print("product");
-        // print(product);
-        final result = ProductModel.fromJson(product);
-        print("result");
-        print(result.colors );
-        for (var color in result.colors) {
-          print(color);
-        }
-        return result;
+      if (response.statusCode == 200) {
+        final productJson = json.decode(response.body);
+        return ProductModel.fromJson(productJson);
       } else {
-        throw ServerException('Failed to load product');
+        throw ServerException(
+          'Failed to load product details: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw ServerException(e.toString());
@@ -145,32 +105,38 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<List<CategoryModel>> getProductCategories() async {
+    print("getProductCategories");
+
     try {
       final response = await client.get(
-        Uri.parse('https://api.korecha.com.et/api/categories'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        Uri.parse('$baseUrl/products/listed-categories/'),
+        headers: _headers,
       );
-
-      print(response.headers);
       print(response.body);
-
+      print(response.statusCode);
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
-        // final categories = decodedResponse['categories'] as List<dynamic>;
-        
-        final categoriesList = (decodedResponse as List<dynamic>)
-            .map<CategoryModel>((json) => CategoryModel.fromJson(json))
+        List<dynamic> categoriesJson;
+
+        // Handle both paginated and non-paginated response
+        if (decodedResponse is Map<String, dynamic> &&
+            decodedResponse.containsKey('results')) {
+          categoriesJson = decodedResponse['results'] as List<dynamic>;
+        } else if (decodedResponse is List) {
+          categoriesJson = decodedResponse;
+        } else {
+          categoriesJson = [];
+        }
+
+        return categoriesJson
+            .map((json) => CategoryModel.fromJson(json))
             .toList();
-       
-        return categoriesList;
       } else {
-        throw ServerException('Failed to load product categories');
+        throw ServerException(
+          'Failed to load product categories: ${response.statusCode}',
+        );
       }
     } catch (e) {
-     
       throw ServerException(e.toString());
     }
   }
@@ -179,22 +145,18 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<List<ProductModel>> getProductsByCategoryId(String categoryId) async {
     try {
       final response = await client.get(
-        Uri.parse('https://api.korecha.com.et/api/products/filter?categoryId=${int.parse(categoryId)}'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        Uri.parse('$baseUrl/products/by-category/$categoryId/'),
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {
-        final decodedResponse = json.decode(response.body);
-        final products = decodedResponse['products'] as List<dynamic>;
-        final productsList = (products)
-            .map<ProductModel>((json) => ProductModel.fromJson(json))
-            .toList();
-        return productsList;
+        final List<dynamic> productsJson = json.decode(response.body);
+
+        return productsJson.map((json) => ProductModel.fromJson(json)).toList();
       } else {
-        throw ServerException('Failed to load products by category id');
+        throw ServerException(
+          'Failed to load products by category: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw ServerException(e.toString());

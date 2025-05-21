@@ -44,7 +44,7 @@ import '../../features/cart/domain/usecases/create_chapa_order.dart';
 import '../../features/cart/domain/usecases/get_orders.dart';
 
 final sl = GetIt.instance;
-const baseUrl = 'https://api.korecha.com.et';
+const baseUrl = 'https://connectx-9agd.onrender.com/api';
 
 Future<void> init() async {
   // External Dependencies
@@ -98,10 +98,7 @@ Future<void> init() async {
     ),
   );
   sl.registerLazySingleton<OrderRepository>(
-    () => OrderRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
+    () => OrderRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
   );
 
   // Use cases
@@ -135,11 +132,7 @@ Future<void> init() async {
       logout: sl(),
     ),
   );
-  sl.registerFactory(
-    () => ProfileBloc(
-      getProfile: sl(),
-    ),
-  );
+  sl.registerFactory(() => ProfileBloc(getProfile: sl()));
   sl.registerFactory(
     () => AddressBloc(
       addAddress: sl(),
@@ -155,10 +148,7 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(
-    () => DiscoverBloc(
-      loadCategories: sl(),
-      getProductBySearchUseCase: sl(),
-    ),
+    () => DiscoverBloc(loadCategories: sl(), getProductBySearchUseCase: sl()),
   );
 
   // Features - Product
@@ -167,22 +157,17 @@ Future<void> init() async {
     () => ProductRemoteDataSourceImpl(
       client: sl(),
       baseUrl: baseUrl,
-    ),
-  );
-
-  sl.registerLazySingleton<OrderRemoteDataSource>(
-    () => OrderRemoteDataSourceImpl(
-      client: sl(),
       storageService: sl(),
     ),
   );
 
+  sl.registerLazySingleton<OrderRemoteDataSource>(
+    () => OrderRemoteDataSourceImpl(client: sl(), storageService: sl()),
+  );
+
   // Repository
   sl.registerLazySingleton<ProductRepository>(
-    () => ProductRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
+    () => ProductRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
   );
 
   // Use cases
@@ -203,9 +188,5 @@ Future<void> init() async {
       getProductCategories: sl(),
     ),
   );
-  sl.registerFactory(
-    () => DetailsBloc(
-      getProductById: sl(),
-    ),
-  );
+  sl.registerFactory(() => DetailsBloc(getProductById: sl()));
 }

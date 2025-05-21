@@ -45,7 +45,6 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   // Updated signup implementation
   Future<Either<Failure, User>> signup({
-    required String tenant,
     required String name,
     required String email,
     required String password,
@@ -55,7 +54,6 @@ class AuthRepositoryImpl implements AuthRepository {
       try {
         // Call remote data source with new parameters
         final user = await remoteDataSource.signup(
-          tenant: tenant,
           name: name,
           email: email,
           password: password,

@@ -17,17 +17,24 @@ class CategoryModel extends Category {
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
       id: json['id'].toString(),
-      name: json['name'],
-      slug: json['slug'],
-      group: json['group'],
-      description: json['description'],
-      coverImg: json['coverImg'],
-      isActive: json['isActive'],
-      children: (json['children'] as List?)
-          ?.map((child) => CategoryModel.fromJson(child))
-          .toList(),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      name: json['name'] as String? ?? '',
+      slug:
+          json['slug'] as String? ??
+          json['name']?.toString()?.toLowerCase().replaceAll(' ', '-') ??
+          '',
+      group: json['tenant'] != null ? json['tenant'].toString() : '',
+      description: json['description'] as String? ?? '',
+      coverImg: json['icon'] as String?,
+      isActive: true, // Default as API doesn't have isActive field
+      children: null, // No children in current API response
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'].toString())
+              : DateTime.now(),
+      updatedAt:
+          json['updated_at'] != null
+              ? DateTime.parse(json['updated_at'].toString())
+              : DateTime.now(),
     );
   }
 

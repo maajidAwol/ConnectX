@@ -1,5 +1,6 @@
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_entities.dart';
+import '../models/category_model.dart';
 
 class ProductModel extends Product {
   ProductModel({
@@ -37,51 +38,62 @@ class ProductModel extends Product {
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     try {
+      // Handle category field which is now an object instead of string
+      String categoryName = "uncategorized";
+      if (json['category'] != null &&
+          json['category'] is Map<String, dynamic>) {
+        categoryName = json['category']['name'] as String? ?? 'uncategorized';
+      }
+
       return ProductModel(
         id: json['id'] as String? ?? '',
         name: json['name'] as String? ?? '',
         sku: json['sku'] as String?,
         code: json['code'] as String?,
         description: json['description'] as String? ?? '',
-        subDescription: json['subDescription'] as String? ?? '',
-        publish: json['publish'] as String? ?? 'draft',
-        price: (json['price'] as num?)?.toDouble() ?? 0.0,
-        priceSale: (json['priceSale'] as num?)?.toDouble(),
-        taxes: (json['taxes'] as num?)?.toDouble() ?? 0.0,
-        coverUrl: json['coverUrl'] as String? ?? '',
-        tags: (json['tags'] as List<dynamic>?)
+        subDescription: json['short_description'] as String? ?? '',
+        publish: json['is_public'] == true ? 'published' : 'draft',
+        price: double.tryParse(json['base_price']?.toString() ?? '0.0') ?? 0.0,
+        priceSale: double.tryParse(json['selling_price']?.toString() ?? '0.0'),
+        taxes: 0.0, // Default value as the API doesn't return taxes
+        coverUrl: json['cover_url'] as String? ?? '',
+        tags:
+            (json['tag'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        sizes: (json['sizes'] as List<dynamic>?)
+        sizes:
+            (json['sizes'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        colors: (json['colors'] as List<dynamic>?)
+        colors:
+            (json['colors'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        gender: (json['gender'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [],
-        inventoryType: json['inventoryType'] as String? ?? 'in_stock',
-        quantity: (json['quantity'] as num?)?.toInt() ?? 0,
-        available: (json['available'] as num?)?.toInt() ?? 0,
-        totalSold: (json['totalSold'] as num?)?.toInt() ?? 0,
-        totalRatings: (json['totalRatings'] as num?)?.toDouble() ?? 0.0,
-        totalReviews: (json['totalReviews'] as num?)?.toInt() ?? 0,
+        gender: [], // Default value as the API doesn't return gender
+        inventoryType:
+            json['quantity'] != null && (json['quantity'] as int) > 0
+                ? 'in_stock'
+                : 'out_of_stock',
+        quantity: json['quantity'] as int? ?? 0,
+        available: json['quantity'] as int? ?? 0,
+        totalSold: json['total_sold'] as int? ?? 0,
+        totalRatings: (json['total_ratings'] as num?)?.toDouble() ?? 0.0,
+        totalReviews: json['total_reviews'] as int? ?? 0,
         images: _parseImages(json['images']),
-        vendor: _parseVendor(json['vendor']),
-        category: json['category'] as String? ?? 'uncategorized',
-        reviews: _parseReviews(json['reviews']),
-        ratings: _parseRatings(json['ratings']),
-        newLabel: _parseLabel(json['newLabel']),
-        saleLabel: _parseSaleLabel(json['saleLabel']),
-        createdAt: json['createdAt'] != null
-            ? DateTime.parse(json['createdAt'].toString())
-            : DateTime.now(),
-        brand: _parseBrand(json['brand']),
+        vendor: Vendor(name: json['owner'] as String? ?? ''),
+        category: categoryName,
+        reviews: [], // Default value as the API doesn't return reviews
+        ratings: [], // Default value as the API doesn't return ratings
+        newLabel: Label(enabled: false), // Default value
+        saleLabel: SaleLabel(enabled: false), // Default value
+        createdAt:
+            json['created_at'] != null
+                ? DateTime.parse(json['created_at'].toString())
+                : DateTime.now(),
+        brand: Brand(name: json['brand'] as String? ?? ''),
       );
     } catch (e) {
       print('Error parsing ProductModel: $e');
@@ -172,5 +184,4 @@ class ProductModel extends Product {
     }
     return SaleLabel.empty();
   }
-  
 }
