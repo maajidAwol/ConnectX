@@ -1,241 +1,217 @@
-import { DocPageHeader } from "../../components/doc-page-header"
-import { DocsPager } from "../../components/pager"
-import { DocSection } from "../../components/doc-section"
-import { PlatformCode } from "../../components/platform-code"
+'use client';
 
-export default function OrderOverviewPage() {
+import { useState } from 'react';
+import { DocPageHeader } from "../../components/doc-page-header";
+import { DocsPager } from "../../components/pager";
+import { DocSection } from "../../components/doc-section";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
+
+interface CurlExample {
+  title: string;
+  description: string;
+  command: string;
+  response?: string;
+}
+
+const curlExamples: CurlExample[] = [
+  {
+    title: "List Orders",
+    description: "Get a list of all orders",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/orders/?status=pending' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json'`,
+    response: `{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "order_number": "ORD-2024-001",
+      "user": "123e4567-e89b-12d3-a456-426614174001",
+      "tenant": "123e4567-e89b-12d3-a456-426614174002",
+      "status": "pending",
+      "total_amount": 1999.98,
+      "items": [
+        {
+          "id": "123e4567-e89b-12d3-a456-426614174003",
+          "product": "123e4567-e89b-12d3-a456-426614174004",
+          "quantity": 2,
+          "price": 999.99
+        }
+      ],
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174005",
+      "order_number": "ORD-2024-002",
+      "user": "123e4567-e89b-12d3-a456-426614174001",
+      "tenant": "123e4567-e89b-12d3-a456-426614174002",
+      "status": "processing",
+      "total_amount": 1499.99,
+      "items": [
+        {
+          "id": "123e4567-e89b-12d3-a456-426614174006",
+          "product": "123e4567-e89b-12d3-a456-426614174007",
+          "quantity": 1,
+          "price": 1499.99
+        }
+      ],
+      "created_at": "2024-01-02T00:00:00Z",
+      "updated_at": "2024-01-02T00:00:00Z"
+    }
+  ]
+}`
+  },
+  {
+    title: "Create Order",
+    description: "Create a new order",
+    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/orders/' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "items": [
+      {
+        "product_id": "123e4567-e89b-12d3-a456-426614174004",
+        "quantity": 2
+      }
+    ]
+  }'`,
+    response: `{
+  "id": "123e4567-e89b-12d3-a456-426614174008",
+  "order_number": "ORD-2024-003",
+  "user": "123e4567-e89b-12d3-a456-426614174001",
+  "tenant": "123e4567-e89b-12d3-a456-426614174002",
+  "status": "pending",
+  "total_amount": 1999.98,
+  "items": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174009",
+      "product": "123e4567-e89b-12d3-a456-426614174004",
+      "quantity": 2,
+      "price": 999.99
+    }
+  ],
+  "created_at": "2024-01-03T00:00:00Z",
+  "updated_at": "2024-01-03T00:00:00Z"
+}`
+  }
+];
+
+export default function OrdersOverviewPage() {
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const renderExample = (example: CurlExample) => {
+    const id = `curl-${example.title}`;
+    return (
+      <div key={id} className="space-y-4">
+        <p className="text-gray-700 dark:text-gray-300">{example.description}</p>
+        
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Command</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyToClipboard(example.command, `${id}-command`)}
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              {copied === `${id}-command` ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              )}
+            </Button>
+          </div>
+          <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+            <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">{example.command}</code>
+          </pre>
+        </div>
+
+        {example.response && (
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Response</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(example.response!, `${id}-response`)}
+                className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {copied === `${id}-response` ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                )}
+              </Button>
+            </div>
+            <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+              <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">{example.response}</code>
+            </pre>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       <DocPageHeader
-        heading="Order API Overview"
-        text="Learn how to manage orders using the ConnectX Order API."
+        heading="Orders API Overview"
+        text="Learn how to interact with the ConnectX Orders API"
       />
 
       <DocSection title="Introduction" defaultOpen={true}>
-        <p className="text-gray-700 mb-4">
-          The Order API allows you to manage customer orders programmatically. You can create, retrieve, update, and track orders, as well as manage their status and fulfillment.
-        </p>
-        <p className="text-gray-700 mb-4">
-          All endpoints require authentication using your API key. Make sure to include it in the Authorization header of your requests.
+        <p className="text-gray-700 dark:text-gray-300 mb-4">
+          The Orders API allows you to manage orders in your ConnectX store. You can create and list orders using simple HTTP requests.
         </p>
       </DocSection>
 
-      <DocSection title="Base URL">
-        <p className="text-gray-700 mb-4">
+      <DocSection title="Authentication" defaultOpen={true}>
+        <p className="text-gray-700 dark:text-gray-300 mb-4">
+          All API requests require authentication using a Bearer token. Include your access token in the Authorization header:
+        </p>
+        <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">Authorization: Bearer YOUR_ACCESS_TOKEN</code>
+        </pre>
+      </DocSection>
+
+      <DocSection title="Base URL" defaultOpen={true}>
+        <p className="text-gray-700 dark:text-gray-300 mb-4">
           All API endpoints are relative to the base URL:
         </p>
-        <PlatformCode
-          webCode={`https://api.connectx.com/v1`}
-          mobileCode={`https://api.connectx.com/v1`}
-          title="Base URL"
-        />
+        <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">https://connectx-backend-4o0i.onrender.com/api</code>
+        </pre>
       </DocSection>
 
-      <DocSection title="Authentication">
-        <p className="text-gray-700 mb-4">
-          Include your API key in the Authorization header:
-        </p>
-        <PlatformCode
-          webCode={`Authorization: Bearer YOUR_API_KEY`}
-          mobileCode={`Authorization: Bearer YOUR_API_KEY`}
-          title="Authentication Header"
-        />
-      </DocSection>
-
-      <DocSection title="Available Endpoints">
+      <DocSection title="Endpoints" defaultOpen={true}>
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Create Order</h4>
-            <p className="text-gray-700 mb-2">POST /orders</p>
-            <p className="text-sm text-gray-600">Create a new order with customer and product details</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">List Orders</h4>
-            <p className="text-gray-700 mb-2">GET /orders</p>
-            <p className="text-sm text-gray-600">Retrieve a paginated list of orders with filtering options</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Get Order</h4>
-            <p className="text-gray-700 mb-2">GET /orders/{'{order_id}'}</p>
-            <p className="text-sm text-gray-600">Retrieve a specific order by ID</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Update Order</h4>
-            <p className="text-gray-700 mb-2">PATCH /orders/{'{order_id}'}</p>
-            <p className="text-sm text-gray-600">Update an existing order's details or status</p>
+            <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Orders</h3>
+            <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /orders/</code> - List all orders</li>
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /orders/</code> - Create a new order</li>
+            </ul>
           </div>
         </div>
       </DocSection>
 
-      <DocSection title="Order Status Flow">
-        <p className="text-gray-700 mb-4">
-          Orders progress through the following statuses:
-        </p>
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">pending</h4>
-            <p className="text-sm text-gray-600">Order has been created but payment is pending</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">processing</h4>
-            <p className="text-sm text-gray-600">Payment received, order is being prepared</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">shipped</h4>
-            <p className="text-sm text-gray-600">Order has been shipped to the customer</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">delivered</h4>
-            <p className="text-sm text-gray-600">Order has been delivered to the customer</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">cancelled</h4>
-            <p className="text-sm text-gray-600">Order has been cancelled</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">refunded</h4>
-            <p className="text-sm text-gray-600">Order has been refunded</p>
-          </div>
+      <DocSection title="cURL Examples" defaultOpen={true}>
+        <div className="space-y-8">
+          {curlExamples.map((example) => renderExample(example))}
         </div>
       </DocSection>
 
-      <DocSection title="Response Format">
-        <p className="text-gray-700 mb-4">
-          All endpoints return JSON responses in the following format:
-        </p>
-        <PlatformCode
-          webCode={`// Success Response
-{
-  "data": {
-    "id": "order_123",
-    "customer": {
-      "id": "cust_123",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "phone": "+1234567890"
-    },
-    "items": [
-      {
-        "product_id": "prod_123",
-        "name": "Premium Headphones",
-        "quantity": 1,
-        "price": 149.99,
-        "total": 149.99
-      }
-    ],
-    "shipping_address": {
-      "street": "123 Main St",
-      "city": "New York",
-      "state": "NY",
-      "zip": "10001",
-      "country": "US"
-    },
-    "payment_method": "credit_card",
-    "status": "pending",
-    "total": 149.99,
-    "currency": "USD",
-    "created_at": "2024-03-20T10:00:00Z",
-    "updated_at": "2024-03-20T10:00:00Z"
-  }
-}
-
-// List Response
-{
-  "data": [...],
-  "meta": {
-    "total": 100,
-    "page": 1,
-    "per_page": 20,
-    "total_pages": 5
-  }
-}
-
-// Error Response
-{
-  "error": {
-    "code": "error_code",
-    "message": "Error description",
-    "field": "field_name" // Optional
-  }
-}`}
-          mobileCode={`// Success Response
-{
-  "data": {
-    "id": "order_123",
-    "customer": {
-      "id": "cust_123",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "phone": "+1234567890"
-    },
-    "items": [
-      {
-        "product_id": "prod_123",
-        "name": "Premium Headphones",
-        "quantity": 1,
-        "price": 149.99,
-        "total": 149.99
-      }
-    ],
-    "shipping_address": {
-      "street": "123 Main St",
-      "city": "New York",
-      "state": "NY",
-      "zip": "10001",
-      "country": "US"
-    },
-    "payment_method": "credit_card",
-    "status": "pending",
-    "total": 149.99,
-    "currency": "USD",
-    "created_at": "2024-03-20T10:00:00Z",
-    "updated_at": "2024-03-20T10:00:00Z"
-  }
-}
-
-// List Response
-{
-  "data": [...],
-  "meta": {
-    "total": 100,
-    "page": 1,
-    "per_page": 20,
-    "total_pages": 5
-  }
-}
-
-// Error Response
-{
-  "error": {
-    "code": "error_code",
-    "message": "Error description",
-    "field": "field_name" // Optional
-  }
-}`}
-          title="Response Format"
-        />
-      </DocSection>
-
-      <DocSection title="Rate Limits">
-        <p className="text-gray-700 mb-4">
-          The Order API has the following rate limits:
-        </p>
-        <ul className="list-disc pl-6 text-gray-700 space-y-2">
-          <li>100 requests per minute for standard plans</li>
-          <li>1000 requests per minute for enterprise plans</li>
-          <li>Rate limit headers are included in all responses</li>
-        </ul>
-      </DocSection>
-
-      <DocsPager
-        next={{
-          label: "Create Order",
-          href: "/docs/order-api/create",
-        }}
-      />
+      <DocsPager />
     </div>
-  )
-} 
+  );
+}

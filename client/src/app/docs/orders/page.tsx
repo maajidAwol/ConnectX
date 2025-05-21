@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { DocPageHeader } from "../components/doc-page-header"
-import { DocsPager } from "../components/pager"
-import { DocSection } from "../components/doc-section"
-import { Button } from "@/components/ui/button"
-import { Copy, Check } from "lucide-react"
+import { DocPageHeader } from "../components/doc-page-header";
+import { DocsPager } from "../components/pager";
+import { DocSection } from "../components/doc-section";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
 
 interface CurlExample {
   title: string;
@@ -14,36 +14,59 @@ interface CurlExample {
   response?: string;
 }
 
-const authExamples: CurlExample[] = [
+const orderExamples: CurlExample[] = [
   {
-    title: "Login",
-    description: "Authenticate and get access token",
-    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/auth/login/' \\
+    title: "Create Order",
+    description: "Create a new order with items",
+    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/orders/' \\
   -H 'Content-Type: application/json' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
   -d '{
-    "email": "user@example.com",
-    "password": "yourpassword"
+    "items": [
+      {
+        "product_id": "123e4567-e89b-12d3-a456-426614174000",
+        "quantity": 2
+      }
+    ]
   }'`,
     response: `{
-  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "order_number": "ORD-2024-001",
+  "status": "pending",
+  "total_amount": 199.98,
+  "items": [
+    {
+      "product_id": "123e4567-e89b-12d3-a456-426614174000",
+      "quantity": 2,
+      "price": 99.99
+    }
+  ],
+  "created_at": "2024-01-01T00:00:00Z"
 }`
   },
   {
-    title: "Refresh Token",
-    description: "Get new access token using refresh token",
-    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/auth/token/refresh/' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-    "refresh": "your_refresh_token"
-  }'`,
+    title: "List Orders",
+    description: "Get a list of orders with pagination",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/orders/?page=1&size=10' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'`,
     response: `{
-  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+  "count": 25,
+  "next": "https://connectx-backend-4o0i.onrender.com/api/orders/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "order_number": "ORD-2024-001",
+      "status": "pending",
+      "total_amount": 199.98,
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ]
 }`
   }
 ];
 
-export default function AuthenticationPage() {
+export default function OrdersPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, id: string) => {
@@ -53,7 +76,7 @@ export default function AuthenticationPage() {
   };
 
   const renderExample = (example: CurlExample) => {
-    const id = `auth-${example.title}`;
+    const id = `order-${example.title}`;
     return (
       <DocSection key={id} title={example.title} defaultOpen={true}>
         <div className="space-y-4">
@@ -108,15 +131,15 @@ export default function AuthenticationPage() {
   return (
     <div className="space-y-8">
       <DocPageHeader
-        heading="Authentication API"
-        text="Example cURL commands for authentication endpoints"
+        heading="Orders API"
+        text="Example cURL commands for order endpoints"
       />
 
       <div className="space-y-4">
-        {authExamples.map((example) => renderExample(example))}
+        {orderExamples.map((example) => renderExample(example))}
       </div>
 
       <DocsPager />
     </div>
-  )
+  );
 } 

@@ -1,185 +1,199 @@
-import { DocPageHeader } from "../../components/doc-page-header"
-import { DocsPager } from "../../components/pager"
-import { DocSection } from "../../components/doc-section"
-import { PlatformCode } from "../../components/platform-code"
+'use client';
 
-export default function ProductOverviewPage() {
+import { useState } from 'react';
+import { DocPageHeader } from "../../components/doc-page-header";
+import { DocsPager } from "../../components/pager";
+import { DocSection } from "../../components/doc-section";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
+
+interface CurlExample {
+  title: string;
+  description: string;
+  command: string;
+  response?: string;
+}
+
+const curlExamples: CurlExample[] = [
+  {
+    title: "List Products",
+    description: "Get a list of all products",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/products/?filter_type=public' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json'`,
+    response: `{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Smartphone X",
+      "description": "Latest model smartphone with advanced features",
+      "sku": "SP-X-001",
+      "base_price": 999.99,
+      "category": "electronics",
+      "owner": "123e4567-e89b-12d3-a456-426614174001",
+      "is_public": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174002",
+      "name": "Laptop Pro",
+      "description": "High-performance laptop for professionals",
+      "sku": "LP-P-001",
+      "base_price": 1499.99,
+      "category": "electronics",
+      "owner": "123e4567-e89b-12d3-a456-426614174001",
+      "is_public": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}`
+  },
+  {
+    title: "Create Product",
+    description: "Create a new product",
+    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/products/' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "name": "New Smartphone",
+    "description": "Latest model with advanced features",
+    "sku": "SP-NEW-001",
+    "base_price": 899.99,
+    "category": "electronics",
+    "is_public": true
+  }'`,
+    response: `{
+  "id": "123e4567-e89b-12d3-a456-426614174003",
+  "name": "New Smartphone",
+  "description": "Latest model with advanced features",
+  "sku": "SP-NEW-001",
+  "base_price": 899.99,
+  "category": "electronics",
+  "owner": "123e4567-e89b-12d3-a456-426614174001",
+  "is_public": true,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}`
+  }
+];
+
+export default function ProductsOverviewPage() {
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const renderExample = (example: CurlExample) => {
+    const id = `curl-${example.title}`;
+    return (
+      <div key={id} className="space-y-4">
+        <p className="text-gray-700 dark:text-gray-300">{example.description}</p>
+        
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Command</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyToClipboard(example.command, `${id}-command`)}
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              {copied === `${id}-command` ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              )}
+            </Button>
+          </div>
+          <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+            <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">{example.command}</code>
+          </pre>
+        </div>
+
+        {example.response && (
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Response</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(example.response!, `${id}-response`)}
+                className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {copied === `${id}-response` ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                )}
+              </Button>
+            </div>
+            <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+              <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">{example.response}</code>
+            </pre>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       <DocPageHeader
-        heading="Product API Overview"
-        text="Learn how to manage your products using the ConnectX Product API."
+        heading="Products API Overview"
+        text="Learn how to interact with the ConnectX Products API"
       />
 
       <DocSection title="Introduction" defaultOpen={true}>
-        <p className="text-gray-700 mb-4">
-          The Product API allows you to manage your product catalog programmatically. You can create, retrieve, update, and delete products, as well as manage their inventory and attributes.
-        </p>
-        <p className="text-gray-700 mb-4">
-          All endpoints require authentication using your API key. Make sure to include it in the Authorization header of your requests.
+        <p className="text-gray-700 dark:text-gray-300 mb-4">
+          The Products API allows you to manage products in your ConnectX store. You can create, read, update, and delete products using simple HTTP requests.
         </p>
       </DocSection>
 
-      <DocSection title="Base URL">
-        <p className="text-gray-700 mb-4">
+      <DocSection title="Authentication" defaultOpen={true}>
+        <p className="text-gray-700 dark:text-gray-300 mb-4">
+          All API requests require authentication using a Bearer token. Include your access token in the Authorization header:
+        </p>
+        <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">Authorization: Bearer YOUR_ACCESS_TOKEN</code>
+        </pre>
+      </DocSection>
+
+      <DocSection title="Base URL" defaultOpen={true}>
+        <p className="text-gray-700 dark:text-gray-300 mb-4">
           All API endpoints are relative to the base URL:
         </p>
-        <PlatformCode
-          webCode={`https://api.connectx.com/v1`}
-          mobileCode={`https://api.connectx.com/v1`}
-          title="Base URL"
-        />
+        <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
+          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">https://connectx-backend-4o0i.onrender.com/api</code>
+        </pre>
       </DocSection>
 
-      <DocSection title="Authentication">
-        <p className="text-gray-700 mb-4">
-          Include your API key in the Authorization header:
-        </p>
-        <PlatformCode
-          webCode={`Authorization: Bearer YOUR_API_KEY`}
-          mobileCode={`Authorization: Bearer YOUR_API_KEY`}
-          title="Authentication Header"
-        />
-      </DocSection>
-
-      <DocSection title="Available Endpoints">
+      <DocSection title="Endpoints" defaultOpen={true}>
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Create Product</h4>
-            <p className="text-gray-700 mb-2">POST /products</p>
-            <p className="text-sm text-gray-600">Create a new product in your catalog</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">List Products</h4>
-            <p className="text-gray-700 mb-2">GET /products</p>
-            <p className="text-sm text-gray-600">Retrieve a paginated list of products with filtering options</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Get Product</h4>
-            <p className="text-gray-700 mb-2">GET /products/{'{product_id}'}</p>
-            <p className="text-sm text-gray-600">Retrieve a specific product by ID</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Update Product</h4>
-            <p className="text-gray-700 mb-2">PATCH /products/{'{product_id}'}</p>
-            <p className="text-sm text-gray-600">Update an existing product's details</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Delete Product</h4>
-            <p className="text-gray-700 mb-2">DELETE /products/{'{product_id}'}</p>
-            <p className="text-sm text-gray-600">Remove a product from your catalog</p>
+            <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Products</h3>
+            <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /products/</code> - List all products</li>
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /products/</code> - Create a new product</li>
+            </ul>
           </div>
         </div>
       </DocSection>
 
-      <DocSection title="Response Format">
-        <p className="text-gray-700 mb-4">
-          All endpoints return JSON responses in the following format:
-        </p>
-        <PlatformCode
-          webCode={`// Success Response
-{
-  "data": {
-    "id": "prod_123",
-    "name": "Premium Headphones",
-    "description": "High-quality wireless headphones",
-    "price": 149.99,
-    "category": "electronics",
-    "stock_quantity": 100,
-    "images": ["https://example.com/headphones.jpg"],
-    "attributes": {
-      "color": "black",
-      "brand": "AudioPro",
-      "wireless": true
-    },
-    "created_at": "2024-03-20T10:00:00Z",
-    "updated_at": "2024-03-20T10:00:00Z"
-  }
-}
-
-// List Response
-{
-  "data": [...],
-  "meta": {
-    "total": 100,
-    "page": 1,
-    "per_page": 20,
-    "total_pages": 5
-  }
-}
-
-// Error Response
-{
-  "error": {
-    "code": "error_code",
-    "message": "Error description",
-    "field": "field_name" // Optional
-  }
-}`}
-          mobileCode={`// Success Response
-{
-  "data": {
-    "id": "prod_123",
-    "name": "Premium Headphones",
-    "description": "High-quality wireless headphones",
-    "price": 149.99,
-    "category": "electronics",
-    "stock_quantity": 100,
-    "images": ["https://example.com/headphones.jpg"],
-    "attributes": {
-      "color": "black",
-      "brand": "AudioPro",
-      "wireless": true
-    },
-    "created_at": "2024-03-20T10:00:00Z",
-    "updated_at": "2024-03-20T10:00:00Z"
-  }
-}
-
-// List Response
-{
-  "data": [...],
-  "meta": {
-    "total": 100,
-    "page": 1,
-    "per_page": 20,
-    "total_pages": 5
-  }
-}
-
-// Error Response
-{
-  "error": {
-    "code": "error_code",
-    "message": "Error description",
-    "field": "field_name" // Optional
-  }
-}`}
-          title="Response Format"
-        />
+      <DocSection title="cURL Examples" defaultOpen={true}>
+        <div className="space-y-8">
+          {curlExamples.map((example) => renderExample(example))}
+        </div>
       </DocSection>
 
-      <DocSection title="Rate Limits">
-        <p className="text-gray-700 mb-4">
-          The Product API has the following rate limits:
-        </p>
-        <ul className="list-disc pl-6 text-gray-700 space-y-2">
-          <li>100 requests per minute for standard plans</li>
-          <li>1000 requests per minute for enterprise plans</li>
-          <li>Rate limit headers are included in all responses</li>
-        </ul>
-      </DocSection>
-
-      <DocsPager
-        next={{
-          label: "Create Product",
-          href: "/docs/products/create",
-        }}
-      />
+      <DocsPager />
     </div>
-  )
-} 
+  );
+}

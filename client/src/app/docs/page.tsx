@@ -1,7 +1,6 @@
 import { DocPageHeader } from "./components/doc-page-header"
 import { DocsPager } from "./components/pager"
 import { DocSection } from "./components/doc-section"
-import { PlatformCode } from "./components/platform-code"
 
 export default function DocsPage() {
   return (
@@ -28,35 +27,6 @@ export default function DocsPage() {
         <p className="text-gray-700 mb-4">
           Get started with ConnectX in minutes. Here's a simple example of how to make your first API request:
         </p>
-        <PlatformCode
-          webCode={`// Web Example
-const response = await fetch('https://api.connectx.com/v1/products', {
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json'
-  }
-});
-
-const data = await response.json();
-console.log(data);`}
-          mobileCode={`// Mobile Example (React Native)
-import axios from 'axios';
-
-const fetchProducts = async () => {
-  try {
-    const response = await axios.get('https://api.connectx.com/v1/products', {
-      headers: {
-        'Authorization': 'Bearer YOUR_API_KEY',
-        'Content-Type': 'application/json'
-      }
-    });
-    console.log(response.data);
-  } catch (error) {
-    console.error('Error:', error);
-  }
-};`}
-          title="First API Request"
-        />
       </DocSection>
 
       <DocSection title="Key Features">
@@ -100,11 +70,6 @@ const fetchProducts = async () => {
           </li>
           <li>
             <h4 className="font-semibold">Install SDK</h4>
-            <PlatformCode
-              webCode={`npm install @connectx/web-sdk`}
-              mobileCode={`npm install @connectx/mobile-sdk`}
-              title="Installation"
-            />
           </li>
           <li>
             <h4 className="font-semibold">Make Your First Request</h4>

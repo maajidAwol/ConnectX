@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { DocPageHeader } from "../components/doc-page-header"
-import { DocsPager } from "../components/pager"
-import { DocSection } from "../components/doc-section"
-import { Button } from "@/components/ui/button"
-import { Copy, Check } from "lucide-react"
+import { DocPageHeader } from "../components/doc-page-header";
+import { DocsPager } from "../components/pager";
+import { DocSection } from "../components/doc-section";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
 
 interface CurlExample {
   title: string;
@@ -14,36 +14,48 @@ interface CurlExample {
   response?: string;
 }
 
-const authExamples: CurlExample[] = [
+const paymentExamples: CurlExample[] = [
   {
-    title: "Login",
-    description: "Authenticate and get access token",
-    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/auth/login/' \\
+    title: "Initialize Chapa Payment",
+    description: "Initialize a payment transaction with Chapa",
+    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/payments/initialize_chapa_payment/' \\
   -H 'Content-Type: application/json' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
   -d '{
-    "email": "user@example.com",
-    "password": "yourpassword"
+    "order_id": "123e4567-e89b-12d3-a456-426614174000",
+    "phone_number": "+251912345678",
+    "return_url": "https://your-frontend.com/payment-complete"
   }'`,
     response: `{
-  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+  "status": "success",
+  "message": "Payment initialized successfully",
+  "data": {
+    "payment_id": "123e4567-e89b-12d3-a456-426614174000",
+    "checkout_url": "https://checkout.chapa.co/checkout/123",
+    "tx_ref": "tx-123456789"
+  }
 }`
   },
   {
-    title: "Refresh Token",
-    description: "Get new access token using refresh token",
-    command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/auth/token/refresh/' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-    "refresh": "your_refresh_token"
-  }'`,
+    title: "Verify Payment",
+    description: "Verify a payment transaction status",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/payments/verify/123e4567-e89b-12d3-a456-426614174000' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'`,
     response: `{
-  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+  "status": "success",
+  "message": "Payment verified successfully",
+  "data": {
+    "payment_id": "123e4567-e89b-12d3-a456-426614174000",
+    "status": "completed",
+    "amount": 199.98,
+    "currency": "ETB",
+    "transaction_ref": "tx-123456789"
+  }
 }`
   }
 ];
 
-export default function AuthenticationPage() {
+export default function PaymentsPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, id: string) => {
@@ -53,7 +65,7 @@ export default function AuthenticationPage() {
   };
 
   const renderExample = (example: CurlExample) => {
-    const id = `auth-${example.title}`;
+    const id = `payment-${example.title}`;
     return (
       <DocSection key={id} title={example.title} defaultOpen={true}>
         <div className="space-y-4">
@@ -108,15 +120,15 @@ export default function AuthenticationPage() {
   return (
     <div className="space-y-8">
       <DocPageHeader
-        heading="Authentication API"
-        text="Example cURL commands for authentication endpoints"
+        heading="Payments API"
+        text="Example cURL commands for payment endpoints"
       />
 
       <div className="space-y-4">
-        {authExamples.map((example) => renderExample(example))}
+        {paymentExamples.map((example) => renderExample(example))}
       </div>
 
       <DocsPager />
     </div>
-  )
+  );
 } 
