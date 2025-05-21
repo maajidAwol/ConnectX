@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,15 @@ import { toast } from "sonner"
 import { Toaster } from "sonner"
 import { Logo } from "@/components/logo"
 import Link from "next/link"
-import { Mail } from "lucide-react"
+import { Mail, Check, X, Loader2 } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+
+interface PasswordValidation {
+  hasMinLength: boolean
+  hasLetter: boolean
+  hasNumber: boolean
+  hasSpecial: boolean
+}
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -23,22 +31,82 @@ export default function SignUpPage() {
     password: "",
     fullname: "",
   })
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
+    hasMinLength: false,
+    hasLetter: false,
+    hasNumber: false,
+    hasSpecial: false,
+  })
+  const [passwordStrength, setPasswordStrength] = useState(0)
+
+  useEffect(() => {
+    // Password validation
+    const password = formData.password
+    const validations = {
+      hasMinLength: password.length >= 8,
+      hasLetter: /[a-zA-Z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    }
+
+    setPasswordValidation(validations)
+
+    // Calculate password strength (0-100)
+    const criteriaCount = Object.values(validations).filter(Boolean).length
+    setPasswordStrength(password.length ? (criteriaCount / 4) * 100 : 0)
+  }, [formData.password])
+
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean)
+  const isFormValid = isPasswordValid && formData.name && formData.email && formData.fullname
+
+  // Get strength color
+  const getStrengthColor = () => {
+    if (passwordStrength <= 25) return "bg-red-500"
+    if (passwordStrength <= 50) return "bg-orange-500"
+    if (passwordStrength <= 75) return "bg-yellow-500"
+    return "bg-green-500"
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     clearError()
 
+    if (!isFormValid) {
+      toast.error("Please fill in all required fields correctly", {
+        className: "bg-red-500 text-white",
+      })
+      return
+    }
+
     try {
       await signup(formData)
       toast.success("Account created successfully! Please check your email for verification.", {
         className: "bg-[#02569B] text-white",
-        duration: 5000, // Show for 5 seconds
+        duration: 5000,
       })
       setShowSuccess(true)
-    } catch (error) {
-      toast.error("Failed to create account. Please try again.", {
-        className: "bg-red-500 text-white",
-      })
+    } catch (error: any) {
+      // Handle specific error cases
+      if (error.response?.data) {
+        const errorData = error.response.data
+        if (errorData.name?.includes("already exists")) {
+          toast.error("This company name is already taken. Please choose another one.", {
+            className: "bg-red-500 text-white",
+          })
+        } else if (errorData.email?.includes("already exists")) {
+          toast.error("This email is already registered. Please use a different email or try logging in.", {
+            className: "bg-red-500 text-white",
+          })
+        } else {
+          toast.error("Failed to create account. Please try again.", {
+            className: "bg-red-500 text-white",
+          })
+        }
+      } else {
+        toast.error("Failed to create account. Please try again.", {
+          className: "bg-red-500 text-white",
+        })
+      }
     }
   }
 
@@ -113,7 +181,11 @@ export default function SignUpPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required
+                className={error?.includes("name") ? "border-red-500" : ""}
               />
+              {error?.includes("name") && (
+                <p className="text-sm text-red-500">This company name is already taken</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="fullname">Full Name</Label>
@@ -136,7 +208,11 @@ export default function SignUpPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
+                className={error?.includes("email") ? "border-red-500" : ""}
               />
+              {error?.includes("email") && (
+                <p className="text-sm text-red-500">This email is already registered</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -149,10 +225,93 @@ export default function SignUpPage() {
                 onChange={handleChange}
                 required
                 minLength={8}
+                className={!isPasswordValid && formData.password ? "border-red-500" : ""}
               />
+              {formData.password && (
+                <div className="space-y-2 mt-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Password strength</span>
+                    <span
+                      className={
+                        passwordStrength <= 25
+                          ? "text-red-500"
+                          : passwordStrength <= 50
+                            ? "text-orange-500"
+                            : passwordStrength <= 75
+                              ? "text-yellow-500"
+                              : "text-green-500"
+                      }
+                    >
+                      {passwordStrength <= 25
+                        ? "Weak"
+                        : passwordStrength <= 50
+                          ? "Fair"
+                          : passwordStrength <= 75
+                            ? "Good"
+                            : "Strong"}
+                    </span>
+                  </div>
+                  <Progress value={passwordStrength} className={`h-1.5 ${getStrengthColor()}`} />
+                  <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                    <div className="flex items-center gap-1">
+                      {passwordValidation.hasMinLength ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <X className="h-3 w-3 text-red-500" />
+                      )}
+                      <span
+                        className={passwordValidation.hasMinLength ? "text-green-500" : "text-muted-foreground"}
+                      >
+                        8+ characters
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {passwordValidation.hasLetter ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <X className="h-3 w-3 text-red-500" />
+                      )}
+                      <span className={passwordValidation.hasLetter ? "text-green-500" : "text-muted-foreground"}>
+                        Letters
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {passwordValidation.hasNumber ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <X className="h-3 w-3 text-red-500" />
+                      )}
+                      <span className={passwordValidation.hasNumber ? "text-green-500" : "text-muted-foreground"}>
+                        Numbers
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {passwordValidation.hasSpecial ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <X className="h-3 w-3 text-red-500" />
+                      )}
+                      <span className={passwordValidation.hasSpecial ? "text-green-500" : "text-muted-foreground"}>
+                        Special chars
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <Button className="w-full bg-[#02569B] hover:bg-[#02569B]/90" type="submit" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
+            <Button 
+              className="w-full bg-[#02569B] hover:bg-[#02569B]/90" 
+              type="submit" 
+              disabled={isLoading || !isFormValid}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create account"
+              )}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
