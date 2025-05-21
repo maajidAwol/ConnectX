@@ -12,7 +12,7 @@ export default function MerchantPage() {
   // const { data: salesData, isLoading } = useSWR('/api/sales', fetcher)
 
   return (
-    <ProtectedRoute requiredRole="owner">
+    <ProtectedRoute requiredRoles={["owner", "member"]}>
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Merchant Dashboard</h2>
