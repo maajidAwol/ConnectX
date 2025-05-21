@@ -33,7 +33,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Allow all authenticated users to read, but only tenant owners can write."""
-        if self.action in ["list", "retrieve", "by_category"]:
+        if self.action in ["list", "retrieve", "by_category", "listed_categories"]:
             if (
                 self.request.user.is_anonymous
                 or self.request.user.role == User.CUSTOMER
@@ -177,6 +177,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         else:
             # Unauthenticated (API key access)
             # Only show products that are listed under the tenant
+            print("tenant", tenant)
             listings = ProductListing.objects.filter(tenant=tenant)
             product_ids = listings.values_list("product_id", flat=True)
             queryset = Product.objects.filter(id__in=product_ids)
