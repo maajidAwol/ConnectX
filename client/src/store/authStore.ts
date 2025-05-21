@@ -94,6 +94,7 @@ const deleteCookie = (name: string) => {
 const loadStateFromCookies = () => {
   const accessToken = getCookie('accessToken');
   const refreshToken = getCookie('refreshToken');
+  const userRole = getCookie('userRole');
   
   let user = null;
   let tenantData = null;
@@ -112,8 +113,11 @@ const loadStateFromCookies = () => {
     console.error('Error parsing data from cookies:', error);
   }
   
+  // Only consider authenticated if we have both tokens and user data
+  const isAuthenticated = !!accessToken && !!refreshToken && !!user && !!userRole;
+  
   return {
-    isAuthenticated: !!accessToken && !!refreshToken,
+    isAuthenticated,
     user,
     tenantData,
     accessToken,
@@ -196,6 +200,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       setCookie('userRole', user.role, 7);
       setCookie('user', encodeURIComponent(JSON.stringify(user)), 7);
       
+      // Update state with new auth data
       set({ 
         user, 
         accessToken: access,
@@ -205,8 +210,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: null
       });
 
-      // Fetch tenant data after successful login
-      await get().fetchTenantData();
+      // Fetch user profile to ensure we have the latest data
+      await get().fetchUserProfile();
+      
+      // Only fetch tenant data if user is not an admin
+      if (user.role !== 'admin') {
+        await get().fetchTenantData();
+      }
     } catch (error) {
       set({ 
         isLoading: false, 
@@ -349,11 +359,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   validateToken: () => {
     const accessToken = getCookie('accessToken');
-    if (!accessToken) {
+    const refreshToken = getCookie('refreshToken');
+    const userRole = getCookie('userRole');
+    const userJson = getCookie('user');
+    
+    if (!accessToken || !refreshToken || !userRole || !userJson) {
       set({ isAuthenticated: false, user: null });
       return false;
     }
-    return true;
+    
+    try {
+      const user = JSON.parse(decodeURIComponent(userJson));
+      if (!user || !user.role) {
+        set({ isAuthenticated: false, user: null });
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error validating token:', error);
+      set({ isAuthenticated: false, user: null });
+      return false;
+    }
   },
 
   changePassword: async (oldPassword: string, newPassword: string) => {
