@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Product, ProductListing
 from .serializers import ProductSerializer
-from users.permissions import IsTenantOwner
+from users.permissions import IsTenantOwner, IsTenantMember
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from categories.models import Category
@@ -29,16 +29,21 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "sku", "description"]
     filterset_fields = ["category__name", "owner", "is_public"]
     authentication_classes = [JWTAuthentication]
-    
+
     def get_permissions(self):
         """Allow all authenticated users to read, but only tenant owners can write."""
-
         if self.action in ["list", "retrieve", "by_category"]:
-            if self.request.user.is_anonymous or self.request.user.role == User.CUSTOMER:
+            if (
+                self.request.user.is_anonymous
+                or self.request.user.role == User.CUSTOMER
+            ):
                 return [HasValidAPIKey()]
             return [permissions.IsAuthenticated()]
-        elif self.action in ["create", "update", "partial_update", "destroy"]:
-            return [permissions.IsAuthenticated(), IsTenantOwner()]
+        elif self.action in ["create", "update", "partial_update"]:
+            return [permissions.IsAuthenticated(), IsTenantMember()]
+        elif self.action == "destroy":
+            # Only admins can delete products
+            return [IsTenantOwner]
         return [permissions.IsAuthenticated()]
 
     @swagger_auto_schema(

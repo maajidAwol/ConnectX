@@ -88,10 +88,11 @@ class UserViewSet(viewsets.ModelViewSet):
             return User.objects.none()
         if self.request.user.is_staff or self.request.user.role == User.ADMIN:
             return User.objects.all()
-        elif self.request.user.role == User.OWNER:
+        elif self.request.user.role in [User.OWNER, User.MEMBER]:
+            # Both owners and members can see all users in their tenant
             return User.objects.filter(tenant=self.request.user.tenant)
         else:
-            # Customers and Members can only see their own profile
+            # Customers can only see their own profile
             return User.objects.filter(id=self.request.user.id)
 
     def create(self, request, *args, **kwargs):
@@ -109,8 +110,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 validated_data["tenant"] = request.user.tenant
             elif creator_role == User.ADMIN:
                 # Admin creating a user, can specify role (including other admins)
-                # Ensure tenant is handled correctly for admin creation (optional or specified in data)
-                # If tenant is not provided for an admin creation, assume it's a global admin (no tenant)
                 if "role" in validated_data and validated_data["role"] not in [
                     User.ADMIN,
                     User.OWNER,
@@ -124,8 +123,6 @@ class UserViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 elif "role" not in validated_data:
-                    # Default role when admin creates if not specified? Or require explicit role?
-                    # Let's require explicit role for admin creation for clarity.
                     return Response(
                         {
                             "error": "Role must be specified when an admin creates a user."
@@ -133,8 +130,7 @@ class UserViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # Tenant assignment for admin created users:
-                # If tenant is provided in data, use it. Otherwise, if creating an admin, set tenant to None.
+                # Tenant assignment for admin created users
                 if (
                     "tenant" not in validated_data
                     and validated_data["role"] == User.ADMIN
@@ -150,9 +146,8 @@ class UserViewSet(viewsets.ModelViewSet):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-
             else:
-                # Other authenticated roles (customer, member) are not allowed to create users
+                # Customers are not allowed to create users
                 return Response(
                     {"error": "You do not have permission to create users."},
                     status=status.HTTP_403_FORBIDDEN,
@@ -167,7 +162,6 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             # Anonymous user is creating a new user
             # Assuming a middleware or similar process validates the API key and sets request.tenant
-            # Placeholder for API key validation logic:
             if hasattr(request, "tenant") and request.tenant is not None:
                 # Valid API key found and tenant is set
                 serializer = self.get_serializer(data=request.data)
@@ -190,10 +184,73 @@ class UserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
+    def destroy(self, request, *args, **kwargs):
+        """Only admins and owners can delete users."""
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "Authentication required."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if request.user.role not in [User.ADMIN, User.OWNER]:
+            return Response(
+                {"error": "Only admins and owners can delete users."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # If user is an owner, they can only delete users from their tenant
+        if request.user.role == User.OWNER:
+            instance = self.get_object()
+            if instance.tenant != request.user.tenant:
+                return Response(
+                    {"error": "You can only delete users from your own tenant."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=["get"], url_path="me")
     def me(self, request):
         """Return the current authenticated user's data."""
         serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary="List all members for the current tenant",
+        operation_description="""
+        List all members associated with the current tenant.
+        Only accessible by admins and tenant owners.
+        """,
+        responses={
+            200: openapi.Response(
+                description="List of members", schema=UserSerializer(many=True)
+            ),
+            403: openapi.Response(description="Permission denied"),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="members")
+    def members(self, request):
+        """List all members for the current tenant."""
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "Authentication required."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if request.user.role not in [User.ADMIN, User.OWNER]:
+            return Response(
+                {"error": "Only admins and owners can view members."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # If admin, they can see all members across all tenants
+        if request.user.role == User.ADMIN:
+            members = User.objects.filter(role=User.MEMBER)
+        else:
+            # If owner, they can only see members in their tenant
+            members = User.objects.filter(role=User.MEMBER, tenant=request.user.tenant)
+
+        serializer = self.get_serializer(members, many=True)
         return Response(serializer.data)
 
 
