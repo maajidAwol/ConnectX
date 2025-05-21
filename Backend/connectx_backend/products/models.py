@@ -4,6 +4,7 @@ from tenants.models import Tenant
 from users.models import User
 from categories.models import Category
 from decimal import Decimal, InvalidOperation
+from .utils import generate_sku
 
 
 class Product(models.Model):
@@ -14,7 +15,7 @@ class Product(models.Model):
     owner = models.ForeignKey(
         Tenant, on_delete=models.CASCADE, related_name="owned_products"
     )
-    sku = models.CharField(max_length=50, unique=True)
+    sku = models.CharField(max_length=50, unique=True, editable=False)
     name = models.CharField(max_length=255)
     base_price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
     profit_percentage = models.DecimalField(
@@ -49,12 +50,13 @@ class Product(models.Model):
         db_table = "products"
 
     def save(self, *args, **kwargs):
-        """Automatically calculate selling price."""
-        # self.selling_price = self.base_price * (1 + self.profit_percentage / 100)
+        """Automatically calculate selling price and generate SKU if not set."""
+        if not self.sku:
+            self.sku = generate_sku(self.owner.name, self.category.name)
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.tenant.name})"
+        return f"{self.name} ({self.sku})"
 
 
 class ProductListing(models.Model):
