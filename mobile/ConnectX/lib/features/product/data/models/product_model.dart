@@ -54,7 +54,10 @@ class ProductModel extends Product {
         subDescription: json['short_description'] as String? ?? '',
         publish: json['is_public'] == true ? 'published' : 'draft',
         price: double.tryParse(json['base_price']?.toString() ?? '0.0') ?? 0.0,
-        priceSale: double.tryParse(json['selling_price']?.toString() ?? '0.0'),
+        priceSale:
+            json['selling_price'] != null
+                ? double.tryParse(json['selling_price']!.toString())
+                : null,
         taxes: 0.0, // Default value as the API doesn't return taxes
         coverUrl: json['cover_url'] as String? ?? '',
         tags:

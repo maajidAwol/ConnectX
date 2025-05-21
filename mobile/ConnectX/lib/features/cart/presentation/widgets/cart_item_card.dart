@@ -14,6 +14,40 @@ class CartItemCard extends StatelessWidget {
     required this.onRemove,
   });
 
+  Color _parseColorString(String colorName, BuildContext context) {
+    switch (colorName.toLowerCase()) {
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'black':
+        return Colors.black;
+      case 'white':
+        return Colors.white;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'purple':
+        return Colors.purple;
+      case 'pink':
+        return Colors.pink;
+      case 'orange':
+        return Colors.orange;
+      case 'brown':
+        return Colors.brown;
+      case 'cyan':
+        return Colors.cyan;
+      case 'teal':
+        return Colors.teal;
+      default:
+        return Theme.of(context).disabledColor; // Fallback color
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -75,24 +109,24 @@ class CartItemCard extends StatelessWidget {
                           children: [
                             Text(
                               item.name,
-                              
+
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             // Commenting out product ID
-                            const SizedBox(height: 4),
-                            Text(
-                              'Product ID: ${item.productId}',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.7),
-                              ),
-                            ),
+                            // const SizedBox(height: 4),
+                            // Text(
+                            //   'Product ID: ${item.productId}',
+                            //   style: Theme.of(
+                            //     context,
+                            //   ).textTheme.bodySmall?.copyWith(
+                            //     color: Theme.of(
+                            //       context,
+                            //     ).colorScheme.primary.withOpacity(0.7),
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -163,7 +197,10 @@ class CartItemCard extends StatelessWidget {
                                   width: 16,
                                   height: 16,
                                   decoration: BoxDecoration(
-                                    color: _parseColor(item.color!),
+                                    color: _parseColorString(
+                                      item.color!,
+                                      context,
+                                    ),
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: Colors.grey.shade300,
@@ -191,26 +228,29 @@ class CartItemCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${item.price.toStringAsFixed(2)} Birr',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${item.price.toStringAsFixed(2)} Birr',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          // Text(
-                          //   'Total: \$${(item.price * item.quantity).toStringAsFixed(2)}',
-                          //   style: TextStyle(
-                          //     color: Theme.of(context).colorScheme.primary,
-                          //     fontWeight: FontWeight.w800,
-                          //     fontSize: 14,
-                          //   ),
-                          // ),
-                        ],
+                            // Text(
+                            //   'Total: \$${(item.price * item.quantity).toStringAsFixed(2)}',
+                            //   style: TextStyle(
+                            //     color: Theme.of(context).colorScheme.primary,
+                            //     fontWeight: FontWeight.w800,
+                            //     fontSize: 14,
+                            //   ),
+                            // ),
+                          ],
+                        ),
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -306,35 +346,5 @@ class _QuantityButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-// Add this helper method to parse color string to Color object
-Color _parseColor(String colorString) {
-  try {
-    // Handle hex color strings
-    if (colorString.startsWith('#')) {
-      return Color(int.parse('FF${colorString.substring(1)}', radix: 16));
-    }
-    // Handle named colors
-    switch (colorString.toLowerCase()) {
-      case 'red':
-        return Colors.red;
-      case 'blue':
-        return Colors.blue;
-      case 'green':
-        return Colors.green;
-      case 'yellow':
-        return Colors.yellow;
-      case 'black':
-        return Colors.black;
-      case 'white':
-        return Colors.white;
-      // Add more color cases as needed
-      default:
-        return Colors.grey; // Default color if parsing fails
-    }
-  } catch (e) {
-    return Colors.grey; // Default color if parsing fails
   }
 }

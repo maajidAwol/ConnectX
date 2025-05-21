@@ -156,51 +156,51 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             child: Row(
               children:
                   paymentMethods.map((method) {
-                final isSelected = method.id == selectedMethod?.id;
-                return Container(
-                  margin: const EdgeInsets.only(right: 12),
-                  child: ChoiceChip(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          method.isCashOnDelivery
-                              ? Icons.payments_outlined
-                              : Icons.payment,
-                          size: 20,
+                    final isSelected = method.id == selectedMethod?.id;
+                    return Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      child: ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              method.isCashOnDelivery
+                                  ? Icons.payments_outlined
+                                  : Icons.payment,
+                              size: 20,
                               color:
                                   isSelected ? Colors.white : Colors.grey[700],
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          method.name,
-                          style: TextStyle(
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              method.name,
+                              style: TextStyle(
                                 color:
                                     isSelected
                                         ? Colors.white
                                         : Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                          ),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    selected: isSelected,
-                    onSelected: (bool selected) {
-                      if (selected) {
-                        setState(() {
-                          selectedMethod = method;
-                        });
-                      }
-                    },
-                    selectedColor: Theme.of(context).primaryColor,
-                    backgroundColor: Colors.grey[100],
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                );
-              }).toList(),
+                        selected: isSelected,
+                        onSelected: (bool selected) {
+                          if (selected) {
+                            setState(() {
+                              selectedMethod = method;
+                            });
+                          }
+                        },
+                        selectedColor: Theme.of(context).primaryColor,
+                        backgroundColor: Colors.grey[100],
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    );
+                  }).toList(),
             ),
           ),
 
@@ -251,11 +251,11 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 32),
                         child: Text(
                           'Pay in cash when your order is delivered',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                height: 1.5,
-                              ),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     ],
@@ -280,7 +280,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       phone: '0900123456',
                       context: context,
                       publicKey:
-                          'CHAPUBK_TEST-Z3Dt5ZOlmG8Fmm9SDjJTSn4ykGfIQ2ms',
+                          'CHAPUBK_TEST-vPyKZqPxPWCT6EPYB1wPZ6QvPuJSpBrU',
                       currency: 'ETB',
                       amount: widget.amount.toString(),
                       email:
@@ -324,82 +324,106 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       },
                     );
                   } else {
-                    final CashOnDeliveryOrder cashOnDeliveryOrder =
-                        CashOnDeliveryOrder(
-                          items:
-                              widget.items
-                                  .map(
-                                    (item) => CodItem(
-                      id: item.id,
-                      quantity: item.quantity,
-                      price: item.price,
-                      name: item.name,
-                      coverUrl: item.coverUrl,
-                      sku: "item.sku",
-                      vendorId: "item.vendorId",
-                                    ),
-                                  )
-                .toList(),
+                    final CashOnDeliveryOrder
+                    cashOnDeliveryOrder = CashOnDeliveryOrder(
+                      items:
+                          widget.items
+                              .map(
+                                (item) => CodItem(
+                                  id: item.id,
+                                  quantity: item.quantity,
+                                  price: item.price,
+                                  name: item.name,
+                                  coverUrl: item.coverUrl,
+                                  sku: "item.sku",
+                                  vendorId: "item.vendorId",
+                                ),
+                              )
+                              .toList(),
                       status: 'pending',
                       total: widget.amount,
                       subtotal: widget.amount,
                       billing: CodBilling(
-                        name: 'Israel Goytom',
-                        email: 'fetan@chapa.co',
-                        phoneNumber: '0964001822',
-                        fullAddress: '1234 Main St, Anytown, USA',
+                        name:
+                            'Customer Name', // Replace with actual customer name
+                        email:
+                            'customer@example.com', // Replace with actual email
+                        phoneNumber: '+1234567890', // Replace with actual phone
+                        fullAddress:
+                            'Shipping address goes here', // This should be an address ID from saved addresses
                       ),
                       shipping: CodShipping(
-                        address: '1234 Main St, Anytown, USA',
+                        address:
+                            '2a9606b7-e3bb-4ac9-ad0b-93c384f69589', // This should be an address ID from the API
                         method: CodShippingMethod(
-                          id: 'cash',
-                          label: 'Cash on Delivery',
-                          description: 'Cash on Delivery',
+                          id: 'standard',
+                          label: 'Standard Delivery',
+                          description: 'Delivery in 3-5 business days',
                           value: 0,
                         ),
                       ),
                       payment: CodPayment(
-                            method:
-                                paymentMethods
-                            .firstWhere(
-                                      (element) =>
-                                          element.isCashOnDelivery == true,
-                                    )
-                            .name,
+                        method: 'Cash on Delivery',
                         currency: 'ETB',
                         amount: widget.amount,
                       ),
-                      notes: 'Cash on Delivery',
+                      notes: 'Cash on Delivery order placed from mobile app',
                       source: 'mobile',
                     );
                     context.read<OrderBloc>().add(
-                          CreateCashOnDeliveryOrder(cashOnDeliveryOrder),
+                      CreateCashOnDeliveryOrder(cashOnDeliveryOrder),
+                    );
+
+                    // Show a loading indicator while order is being created
+                    setState(() {
+                      _isProcessing = true;
+                    });
+
+                    // Listen for order creation result
+                    context.read<OrderBloc>().stream.listen((state) {
+                      if (state is CashOnDeliveryOrderCreated) {
+                        // Order created successfully, navigate to confirmation
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => OrderConfirmationScreen(
+                                  orderNumber:
+                                      'ORD-${DateTime.now().millisecondsSinceEpoch}',
+                                  amount: widget.amount,
+                                  email: cashOnDeliveryOrder.billing.email,
+                                  order: Order_Model(
+                                    id: 'pending-order-id',
+                                    orderNumber:
+                                        'ORD-${DateTime.now().millisecondsSinceEpoch}',
+                                    amount: widget.amount,
+                                    subtotal: widget.amount,
+                                    date: DateTime.now(),
+                                    status: 'pending',
+                                    items: widget.items,
+                                    deliveryMethod: 'Standard Delivery',
+                                    address:
+                                        cashOnDeliveryOrder.shipping.address,
+                                    paymentMethod: 'Cash on Delivery',
+                                  ),
+                                ),
+                          ),
                         );
-                    final order = Order_Model(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                      orderNumber:
-                          DateTime.now().millisecondsSinceEpoch.toString(),
-                      amount: widget.amount,
-                      subtotal: widget.amount,
-                      date: DateTime.now(),
-                      status: 'pending',
-                      items: widget.items,
-                      deliveryMethod: cashOnDeliveryOrder.shipping.method.label,
-                      address: cashOnDeliveryOrder.shipping.address,
-                      paymentMethod: 'Cash on Delivery',
-                    );
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => OrderConfirmationScreen(
-                              orderNumber: order.orderNumber,
-                          amount: widget.amount,
-                              email: cashOnDeliveryOrder.billing.email,
-                              order: order,
-                        ),
-                      ),
-                    );
+                      } else if (state is OrderFailure) {
+                        // Show error message
+                        setState(() {
+                          _isProcessing = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Failed to create order: ${state.message}',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    });
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -412,11 +436,11 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   selectedMethod?.isChapa == true
                       ? 'Pay ${widget.amount.toStringAsFixed(2)} Birr'
                       : 'Confirm Order',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           ),

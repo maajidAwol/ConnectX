@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:korecha/components/network_image_with_loader.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/cart/data/models/my_orders_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -49,24 +50,13 @@ class OrderCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: NetworkImageWithLoader(
                       order.items.first.coverUrl,
-                      width: 60,
-                      height: 60,
                       fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) => Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey[200],
-                            child: Icon(
-                              Icons.image_not_supported,
-                              color: Colors.grey[400],
-                              size: 20,
-                            ),
-                          ),
+                      radius: 8,
                     ),
                   ),
                   const SizedBox(width: 12),

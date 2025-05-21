@@ -162,7 +162,11 @@ Future<void> init() async {
   );
 
   sl.registerLazySingleton<OrderRemoteDataSource>(
-    () => OrderRemoteDataSourceImpl(client: sl(), storageService: sl()),
+    () => OrderRemoteDataSourceImpl(
+      client: sl(),
+      storageService: sl(),
+      baseUrl: baseUrl,
+    ),
   );
 
   // Repository

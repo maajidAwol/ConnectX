@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:korecha/components/network_image_with_loader.dart';
 import 'package:korecha/features/product/domain/entities/category.dart';
 import 'package:korecha/features/product/presentation/state/home/bloc/home_bloc.dart';
 import 'package:korecha/features/product/presentation/state/product/bloc/product_bloc.dart';
@@ -100,10 +101,11 @@ class Categories extends StatelessWidget {
                               categories[index].id.toString(),
                             ),
                           );
-                          Navigator.pushNamed(context, categoryScreenRoute,
-                              arguments: {
-                                'title': categories[index].name,
-                              });
+                          Navigator.pushNamed(
+                            context,
+                            categoryScreenRoute,
+                            arguments: {'title': categories[index].name},
+                          );
                         }
                       },
                     ),
@@ -152,13 +154,14 @@ class CategoryBtn extends StatelessWidget {
         child: Row(
           children: [
             if (svgSrc != null)
-              Image.network(
-                svgSrc!,
+              SizedBox(
                 height: 20,
-                color:
-                    isActive
-                        ? Colors.white
-                        : Theme.of(context).iconTheme.color!,
+                width: 20, // Ensure width is also defined for consistency
+                child: NetworkImageWithLoader(
+                  svgSrc!,
+                  fit: BoxFit.contain,
+                  radius: 0, // Icons might not need radius or a small one
+                ),
               ),
             if (svgSrc != null) const SizedBox(width: defaultPadding / 2),
             Text(

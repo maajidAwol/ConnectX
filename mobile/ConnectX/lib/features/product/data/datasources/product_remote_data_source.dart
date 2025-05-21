@@ -84,12 +84,15 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<ProductModel> getProductById(String productId) async {
+    print("getProductById");
+    print(productId);
     try {
       final response = await client.get(
         Uri.parse('$baseUrl/products/$productId/'),
         headers: _headers,
       );
-
+      print(response.body);
+      print(response.statusCode);
       if (response.statusCode == 200) {
         final productJson = json.decode(response.body);
         return ProductModel.fromJson(productJson);

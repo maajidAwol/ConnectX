@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:korecha/components/network_image_with_loader.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/cart/data/models/my_orders_model.dart';
 import 'package:timeline_tile/timeline_tile.dart';
@@ -235,13 +236,13 @@ class OrderDetailsSheet extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Row(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
+                    SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: NetworkImageWithLoader(
                         item.coverUrl,
-                        width: 60,
-                        height: 60,
                         fit: BoxFit.cover,
+                        radius: 8,
                       ),
                     ),
                     const SizedBox(width: 12),

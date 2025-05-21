@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:korecha/components/network_image_with_loader.dart';
 import 'package:korecha/features/product/presentation/state/product/bloc/product_bloc.dart';
 import 'package:korecha/route/screen_export.dart';
 import 'package:korecha/features/product/domain/entities/category.dart';
@@ -22,19 +23,12 @@ class ExpansionCategory extends StatelessWidget {
     return ExpansionTile(
       iconColor: Theme.of(context).textTheme.bodyLarge!.color,
       collapsedIconColor: Theme.of(context).textTheme.bodyMedium!.color,
-      leading: Image.network(
-        svgSrc,
+      leading: SizedBox(
         height: 24,
         width: 24,
-        // colorFilter: ColorFilter.mode(
-        //   Theme.of(context).iconTheme.color!,
-        //   BlendMode.srcIn,
-        // ),
+        child: NetworkImageWithLoader(svgSrc, fit: BoxFit.contain, radius: 0),
       ),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 14),
-      ),
+      title: Text(title, style: const TextStyle(fontSize: 14)),
       textColor: Theme.of(context).textTheme.bodyLarge!.color,
       childrenPadding: const EdgeInsets.only(left: defaultPadding * 3.5),
       children: List.generate(
@@ -42,19 +36,30 @@ class ExpansionCategory extends StatelessWidget {
         (index) => Column(
           children: [
             ListTile(
-              leading:  subCategory[index].coverImg != null? Image.network(
-                subCategory[index].coverImg!,
-                height: 24,
-                width: 24,
-              ) : const SizedBox.shrink(),
+              leading:
+                  subCategory[index].coverImg != null
+                      ? SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: NetworkImageWithLoader(
+                          subCategory[index].coverImg!,
+                          fit: BoxFit.contain,
+                          radius: 0,
+                        ),
+                      )
+                      : const SizedBox(
+                        width: 24,
+                        height: 24,
+                      ), // Maintain space if no image
               onTap: () {
-                // Navigator.pushNamed(context, onSaleScreenRoute);
-                   context.read<ProductBloc>().add(LoadProductsByCategoryId(subCategory[index].id.toString()));
-                        Navigator.pushNamed(
-                            context, categoryScreenRoute, arguments: {
-                                'title': subCategory[index].name,
-                              }
-                            );
+                context.read<ProductBloc>().add(
+                  LoadProductsByCategoryId(subCategory[index].id.toString()),
+                );
+                Navigator.pushNamed(
+                  context,
+                  categoryScreenRoute,
+                  arguments: {'title': subCategory[index].name},
+                );
               },
               title: Text(
                 subCategory[index].name,
