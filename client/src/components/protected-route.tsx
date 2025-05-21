@@ -8,6 +8,7 @@ import { hasRole } from "@/utils/auth"
 interface ProtectedRouteProps {
   children: React.ReactNode
   requiredRole?: string
+  requiredRoles?: string[]
 }
 
 /**
@@ -16,16 +17,18 @@ interface ProtectedRouteProps {
  * 
  * @example
  * ```tsx
- * export default function MerchantDashboardPage() {
- *   return (
- *     <ProtectedRoute requiredRole="owner">
- *       <MerchantDashboard />
- *     </ProtectedRoute>
- *   )
- * }
+ * // Single role requirement
+ * <ProtectedRoute requiredRole="owner">
+ *   <MerchantDashboard />
+ * </ProtectedRoute>
+ * 
+ * // Multiple roles requirement
+ * <ProtectedRoute requiredRoles={["owner", "member"]}>
+ *   <MerchantDashboard />
+ * </ProtectedRoute>
  * ```
  */
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, requiredRole, requiredRoles }: ProtectedRouteProps) {
   const router = useRouter()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
@@ -38,16 +41,17 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     }
     
     // Check role requirement if specified
-    if (requiredRole && user?.role !== requiredRole) {
+    const roles = requiredRoles || (requiredRole ? [requiredRole] : [])
+    if (roles.length > 0 && !roles.includes(user?.role || '')) {
       if (user?.role === 'admin') {
         router.push('/admin')
-      } else if (user?.role === 'owner') {
+      } else if (user?.role === 'owner' || user?.role === 'member') {
         router.push('/merchant')
       } else {
         router.push('/')
       }
     }
-  }, [isAuthenticated, requiredRole, router, user])
+  }, [isAuthenticated, requiredRole, requiredRoles, router, user])
   
   // Don't render anything while checking authentication
   if (!isAuthenticated) {
@@ -55,7 +59,8 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   }
   
   // Don't render if role requirement is not met
-  if (requiredRole && user?.role !== requiredRole) {
+  const roles = requiredRoles || (requiredRole ? [requiredRole] : [])
+  if (roles.length > 0 && !roles.includes(user?.role || '')) {
     return null
   }
   

@@ -37,14 +37,29 @@ export function middleware(request: NextRequest) {
   
   // Role-based access control
   if (isAuthenticated) {
-    // Prevent merchants from accessing admin routes
+    // Handle root path redirection based on role
+    if (path === '/') {
+      if (userRole === 'admin') {
+        return NextResponse.redirect(new URL('/admin', request.url))
+      } else if (userRole === 'owner' || userRole === 'member') {
+        return NextResponse.redirect(new URL('/merchant', request.url))
+      }
+    }
+
+    // Prevent non-admin users from accessing admin routes
     if (isAdminPath && userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/merchant', request.url))
+      if (userRole === 'owner' || userRole === 'member') {
+        return NextResponse.redirect(new URL('/merchant', request.url))
+      }
+      return NextResponse.redirect(new URL('/', request.url))
     }
     
-    // Prevent admins from accessing merchant routes
-    if (isMerchantPath && userRole !== 'owner') {
-      return NextResponse.redirect(new URL('/admin', request.url))
+    // Prevent non-merchant users from accessing merchant routes
+    if (isMerchantPath && userRole !== 'owner' && userRole !== 'member') {
+      if (userRole === 'admin') {
+        return NextResponse.redirect(new URL('/admin', request.url))
+      }
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
   
