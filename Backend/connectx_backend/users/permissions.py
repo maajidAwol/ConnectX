@@ -7,3 +7,10 @@ class IsTenantOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_authenticated and (request.user.role == "owner" or request.user.role == "admin")
+class IsTenantMember(permissions.BasePermission):
+    """
+    custom permission to allow members to modify the resource
+    """
+    def has_permission(self, request, view):
+            return request.user.is_authenticated and (request.user.role == "owner" or request.user.role == "admin" or request.user.role == "member")
+
