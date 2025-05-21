@@ -21,7 +21,7 @@ export default function MerchantLayout({
         </div>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-right" richColors />
     </div>
   )
 }
