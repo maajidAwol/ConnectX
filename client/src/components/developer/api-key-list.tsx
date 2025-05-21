@@ -1,12 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-
 import { useState } from "react"
-import { ApiKeyItem } from "@/components/developer/api-key-item"
-import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+import { formatDistanceToNow } from "date-fns"
+import { Key, Trash2, AlertTriangle } from "lucide-react"
+import useApiKeyStore from "@/store/useApiKeyStore"
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Mock data for API keys
 const initialApiKeys = [
@@ -50,157 +53,165 @@ const initialApiKeys = [
   },
 ]
 
+function ApiKeySkeleton() {
+  return (
+    <Card className="w-full bg-card rounded-lg shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div>
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+        <Skeleton className="h-6 w-16" />
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-40" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+          <Skeleton className="h-8 w-24" />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function ApiKeyList() {
-  const [apiKeys, setApiKeys] = useState(initialApiKeys)
-  const [newKeyData, setNewKeyData] = useState<{
-    key: string
-    name: string
-  } | null>(null)
+  const { apiKeys, revokeApiKey, deleteApiKey, isLoading } = useApiKeyStore()
+  const [revokingId, setRevokingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const handleCreateKey = (data: {
-    name: string
-    permissions: string[]
-    expiresIn: number | null
-  }) => {
-    // Generate a random key (in a real app, this would come from the backend)
-    const newKey = `pk_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`
-
-    // Calculate expiration date
-    const expiresAt = data.expiresIn
-      ? new Date(Date.now() + data.expiresIn * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      : null
-
-    const newApiKey = {
-      id: `key_${apiKeys.length + 1}`,
-      name: data.name,
-      key: newKey,
-      createdAt: new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-      lastUsed: null,
-      permissions: data.permissions,
-      status: "active" as const,
-      expiresAt,
+  const handleRevoke = async (id: string) => {
+    try {
+      setRevokingId(id)
+      await revokeApiKey(id)
+      toast.success("API key revoked successfully!", { className: "bg-green-600 text-white" })
+    } catch (error) {
+      toast.error("Failed to revoke API key", { className: "bg-red-600 text-white" })
+    } finally {
+      setRevokingId(null)
     }
-
-    setApiKeys([newApiKey, ...apiKeys])
-    setNewKeyData({
-      key: newKey,
-      name: data.name,
-    })
   }
 
-  const handleRevokeKey = (id: string) => {
-    setApiKeys(apiKeys.map((key) => (key.id === id ? { ...key, status: "revoked" as const } : key)))
+  const handleDelete = async (id: string) => {
+    try {
+      setDeletingId(id)
+      await deleteApiKey(id)
+      toast.success("API key deleted successfully!", { className: "bg-green-600 text-white" })
+    } catch (error) {
+      toast.error("Failed to delete API key", { className: "bg-red-600 text-white" })
+    } finally {
+      setDeletingId(null)
+    }
   }
 
-  const handleRenewKey = (id: string) => {
-    // In a real app, this would generate a new key from the backend
-    const newKey = `pk_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`
-
-    setApiKeys(
-      apiKeys.map((key) =>
-        key.id === id
-          ? {
-              ...key,
-              key: newKey,
-              status: "active" as const,
-              createdAt: new Date().toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }),
-              expiresAt: key.expiresAt
-                ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : null,
-            }
-          : key,
-      ),
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(2)].map((_, i) => (
+          <ApiKeySkeleton key={i} />
+        ))}
+      </div>
     )
-
-    setNewKeyData({
-      key: newKey,
-      name: apiKeys.find((key) => key.id === id)?.name || "",
-    })
   }
 
-  const dismissNewKeyAlert = () => {
-    setNewKeyData(null)
+  if (apiKeys.length === 0) {
+    return (
+      <Card className="w-full bg-card rounded-lg shadow-sm">
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <Key className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No API keys found. Generate your first API key to get started.</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold">API Keys</h3>
-          <p className="text-sm text-muted-foreground">Manage your API keys for accessing the ConnectX API</p>
-        </div>
-        <CreateApiKeyDialog onCreateKey={handleCreateKey} />
-      </div>
-
-      {newKeyData && (
-        <Alert className="bg-green-50 border-green-200">
-          <AlertCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">New API Key Created</AlertTitle>
-          <AlertDescription className="text-green-700">
-            <p>
-              Your new API key <strong>{newKeyData.name}</strong> has been created. Please copy this key now as you
-              won't be able to see it again.
-            </p>
-            <div className="mt-2 flex items-center gap-2">
-              <code className="rounded bg-white px-2 py-1 text-sm font-mono border border-green-200">
-                {newKeyData.key}
-              </code>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 border-green-200 text-green-700 hover:text-green-800 hover:bg-green-100"
-                onClick={() => {
-                  navigator.clipboard.writeText(newKeyData.key)
-                }}
-              >
-                Copy
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-green-700 hover:text-green-800 hover:bg-green-100"
-                onClick={dismissNewKeyAlert}
-              >
-                Dismiss
-              </Button>
+    <div className="space-y-4">
+      {apiKeys.map((apiKey) => (
+        <Card key={apiKey.id} className="w-full bg-card rounded-lg shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-lg font-medium">{apiKey.name}</CardTitle>
+              <CardDescription>
+                Created {formatDistanceToNow(new Date(apiKey.created_at), { addSuffix: true })}
+              </CardDescription>
             </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-4">
-        {apiKeys.map((apiKey) => (
-          <ApiKeyItem
-            key={apiKey.id}
-            id={apiKey.id}
-            name={apiKey.name}
-            apiKey={apiKey.key}
-            createdAt={apiKey.createdAt}
-            lastUsed={apiKey.lastUsed}
-            permissions={apiKey.permissions}
-            status={apiKey.status}
-            expiresAt={apiKey.expiresAt}
-            onRevoke={handleRevokeKey}
-            onRenew={handleRenewKey}
-          />
-        ))}
-      </div>
+            <Badge variant={apiKey.is_active ? "default" : "destructive"}>
+              {apiKey.is_active ? "Active" : "Revoked"}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  ID: {apiKey.id}
+                </p>
+                {apiKey.revoked_at && (
+                  <p className="text-sm text-muted-foreground">
+                    Revoked {formatDistanceToNow(new Date(apiKey.revoked_at), { addSuffix: true })}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                {apiKey.is_active ? (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" aria-label="Revoke API key">
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Revoke
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to revoke this API key? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleRevoke(apiKey.id)}
+                          disabled={revokingId === apiKey.id}
+                        >
+                          {revokingId === apiKey.id ? "Revoking..." : "Revoke"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" aria-label="Delete API key">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this API key? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(apiKey.id)}
+                          disabled={deletingId === apiKey.id}
+                        >
+                          {deletingId === apiKey.id ? "Deleting..." : "Delete"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
