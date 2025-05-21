@@ -1,5 +1,7 @@
 from rest_framework import viewsets, permissions
 from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
+
+from tenants.permissions import IsTenantOwner
 from .models import User
 from .serializers import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -82,7 +84,7 @@ class UserViewSet(viewsets.ModelViewSet):
             # The actual permission/role check happens within the create method.
             return [permissions.AllowAny()]
         if self.action == "destroy":
-            return [permissions.IsAdminUser()]
+            return [permissions.IsAdminUser()| IsTenantOwner]
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
@@ -260,9 +262,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        if request.user.role not in [User.ADMIN, User.OWNER]:
+        if request.user.role not in [User.ADMIN, User.OWNER, User.MEMBER]:
             return Response(
-                {"error": "Only admins and owners can view members."},
+                {"error": "Only admins , members and owners can view members."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
