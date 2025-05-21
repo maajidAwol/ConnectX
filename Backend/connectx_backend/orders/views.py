@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 # Import for custom filter set
 from django_filters import FilterSet, CharFilter, ModelChoiceFilter
 
-from .models import Order, OrderHistory
+from .models import Order, OrderHistory,OrderProductItem
 from .serializers import OrderSerializer, OrderHistorySerializer, OrderListSerializer, WriteOrderSerializer
 from users.permissions import IsTenantOwner
 from core.pagination import CustomPagination

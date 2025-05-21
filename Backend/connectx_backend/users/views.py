@@ -31,6 +31,8 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from core.pagination import CustomPagination
+
 
 User = get_user_model()
 
@@ -71,6 +73,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     ordering = ["-created_at", "name"]
+    pagination_class = CustomPagination
 
     def get_permissions(self):
         """Allow unauthenticated users to create a new user."""
@@ -220,7 +223,27 @@ class UserViewSet(viewsets.ModelViewSet):
         operation_description="""
         List all members associated with the current tenant.
         Only accessible by admins and tenant owners.
+        
+        Query Parameters:
+        - page: Page number (default: 1)
+        - size: Number of items per page (default: 10)
         """,
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+        ],
         responses={
             200: openapi.Response(
                 description="List of members", schema=UserSerializer(many=True)
@@ -249,6 +272,12 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             # If owner, they can only see members in their tenant
             members = User.objects.filter(role=User.MEMBER, tenant=request.user.tenant)
+
+        # Apply pagination
+        page = self.paginate_queryset(members)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(members, many=True)
         return Response(serializer.data)
