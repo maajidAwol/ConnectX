@@ -30,7 +30,7 @@ class Tenant(models.Model):
         choices=[
             ("unverified", "Unverified"),
             ("pending", "Pending"),
-            ("under_reviw", "Under  Reviw"),
+            ("under_review", "Under Review"),
             ("approved", "Approved"),
             ("rejected", "Rejected"),
         ],

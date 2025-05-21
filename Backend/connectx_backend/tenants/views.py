@@ -157,7 +157,7 @@ class TenantViewSet(viewsets.ModelViewSet):
                 description="Filter by verification status",
                 type=openapi.TYPE_STRING,
                 required=False,
-                enum=["unverified", "pending", "under_reviw", "approved", "rejected"],
+                enum=["unverified", "pending", "under_review", "approved", "rejected"],
             ),
             openapi.Parameter(
                 "created_at",
