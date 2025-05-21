@@ -187,6 +187,11 @@ export default function LoginPage() {
                 onChange={handleChange}
                 required
               />
+              <div className="text-right">
+                <Link href="/forgot-password" className="text-sm text-[#02569B] hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
             <Button className="w-full bg-[#02569B] hover:bg-[#02569B]/90" type="submit" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
