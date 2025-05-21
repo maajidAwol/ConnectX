@@ -41,6 +41,7 @@ interface TenantState {
   isLoading: boolean
   error: string | null
   fetchTenantData: () => Promise<void>
+  updateTenantData: (formData: FormData) => Promise<void>
   clearError: () => void
 }
 
@@ -52,7 +53,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
   fetchTenantData: async () => {
     set({ isLoading: true, error: null });
     try {
-     const { accessToken } = useAuthStore.getState()
+      const { accessToken } = useAuthStore.getState()
       if (!accessToken) {
         throw new Error('No access token available');
       }
@@ -84,6 +85,48 @@ export const useTenantStore = create<TenantState>((set, get) => ({
       set({ 
         isLoading: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch tenant data'
+      });
+      throw error;
+    }
+  },
+
+  updateTenantData: async (formData: FormData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { accessToken } = useAuthStore.getState()
+      const { tenantData } = get()
+      
+      if (!accessToken || !tenantData) {
+        throw new Error('No access token or tenant data available');
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/tenants/${tenantData.id}/`,
+        {
+          method: 'PATCH',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update tenant data');
+      }
+
+      const updatedData = await response.json();
+      
+      set({ 
+        tenantData: updatedData,
+        isLoading: false,
+        error: null
+      });
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to update tenant data'
       });
       throw error;
     }
