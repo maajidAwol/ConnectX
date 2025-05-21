@@ -11,47 +11,6 @@ import { Key, Trash2, AlertTriangle } from "lucide-react"
 import useApiKeyStore from "@/store/useApiKeyStore"
 import { Skeleton } from "@/components/ui/skeleton"
 
-// Mock data for API keys
-const initialApiKeys = [
-  {
-    id: "key_1",
-    name: "Production API Key",
-    key: "pk_live_51NzQweSH7SWVfKdUeOA6rJYEt4lkuM9qIRLzwOYWZOK",
-    createdAt: "April 15, 2023",
-    lastUsed: "2 hours ago",
-    permissions: ["read:products", "read:orders", "read:customers", "read:analytics"],
-    status: "active" as const,
-    expiresAt: "May 15, 2024",
-  },
-  {
-    id: "key_2",
-    name: "Development API Key",
-    key: "pk_test_51NzQweSH7SWVfKdUeOA6rJYEt4lkuM9qIRLzwOYWZOK",
-    createdAt: "January 10, 2023",
-    lastUsed: "5 days ago",
-    permissions: [
-      "read:products",
-      "write:products",
-      "read:orders",
-      "write:orders",
-      "read:customers",
-      "write:customers",
-      "read:analytics",
-    ],
-    status: "active" as const,
-    expiresAt: null,
-  },
-  {
-    id: "key_3",
-    name: "Testing API Key",
-    key: "pk_test_51MzQweSH7SWVfKdUeOA6rJYEt4lkuM9qIRLzwOYWZOK",
-    createdAt: "December 5, 2022",
-    lastUsed: null,
-    permissions: ["read:products", "read:orders"],
-    status: "revoked" as const,
-    expiresAt: "March 5, 2023",
-  },
-]
 
 function ApiKeySkeleton() {
   return (

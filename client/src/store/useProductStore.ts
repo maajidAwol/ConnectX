@@ -32,7 +32,8 @@ export type ProductCreateData = Omit<Product, 'id' | 'tenant' | 'owner' | 'profi
   images_upload?: File | File[]
 }
 
-export type FilterType = 'all' | 'public' | 'owned' | 'listed'
+// Type for filter options
+export type FilterType = 'all' | 'public' | 'owned' | 'listed' | 'merchant'
 
 interface ProductState {
   products: Product[]
@@ -59,6 +60,8 @@ interface ProductState {
   unlistProduct: (productId: string) => Promise<{ detail: string }>
   deleteProduct: (productId: string) => Promise<{ detail: string }>
   createProduct: (productData: ProductCreateData) => Promise<Product>
+  getProductById: (productId: string) => Promise<Product>
+  updateProduct: (productId: string, productData: Partial<ProductCreateData>) => Promise<Product>
 }
 
 // In a production environment, this would be loaded from environment variables
@@ -263,6 +266,103 @@ const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
+  getProductById: async (productId: string) => {
+    try {
+      const { accessToken } = useAuthStore.getState();
+      
+      if (!accessToken) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`${API_URL}/products/${productId}/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'accept': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch product details');
+      }
+
+      const productData = await response.json();
+      return productData;
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      throw error;
+    }
+  },
+  
+  updateProduct: async (productId: string, productData) => {
+    try {
+      const { accessToken } = useAuthStore.getState();
+      
+      if (!accessToken) {
+        throw new Error('Authentication required');
+      }
+
+      // Create FormData object
+      const formData = new FormData();
+
+      // Add all text fields
+      Object.entries(productData).forEach(([key, value]) => {
+        if (key === 'tag' || key === 'colors' || key === 'sizes') {
+          // Handle arrays by converting to JSON string
+          formData.append(key, JSON.stringify(value));
+        } else if (key === 'additional_info') {
+          // Handle additional_info object by converting to JSON string
+          formData.append(key, JSON.stringify(value));
+        } else if (key !== 'cover_image_upload' && key !== 'images_upload') {
+          // Add all other fields except file uploads
+          formData.append(key, value as string);
+        }
+      });
+
+      // Add cover image if exists
+      if (productData.cover_image_upload) {
+        formData.append('cover_image_upload', productData.cover_image_upload);
+      }
+
+      // Add additional images if exist
+      if (productData.images_upload) {
+        if (Array.isArray(productData.images_upload)) {
+          productData.images_upload.forEach((file: File) => {
+            formData.append('images_upload', file);
+          });
+        } else {
+          formData.append('images_upload', productData.images_upload);
+        }
+      }
+
+      const response = await fetch(`${API_URL}/products/${productId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'accept': 'application/json',
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update product');
+      }
+
+      const updatedProduct = await response.json();
+      
+      // Refresh products list
+      const { filterType } = get();
+      await get().fetchProducts({ filterType });
+      
+      return updatedProduct;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  },
+  
   createProduct: async (productData) => {
     try {
       const { accessToken } = useAuthStore.getState();
