@@ -21,3 +21,5 @@ jobs:
 
       - name: Push Docker image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/connectx-backend:latest
+      - name: Trigger Render Deploy Hook
+        run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
