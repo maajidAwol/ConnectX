@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from drf_yasg import openapi
 from .models import Tenant
 from .serializers import TenantSerializer, TenantCreateSerializer
-from .permissions import TenantPermission, IsTenantOwner, IsAdmin
+from .permissions import TenantPermission, IsTenantOwner, IsAdmin,IsTenantMember
 from users.utils.email_utils import send_verification_email
 
 

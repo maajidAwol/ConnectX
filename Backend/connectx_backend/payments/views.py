@@ -18,7 +18,7 @@ from .serializers import (
     CashOnDeliveryConfirmationSerializer
 )
 from orders.models import Order
-from users.permissions import IsTenantOwner
+from users.permissions import IsTenantOwner,IsTenantMember
 from core.pagination import CustomPagination
 
 from drf_yasg.utils import swagger_auto_schema
@@ -46,7 +46,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         user = self.request.user
         
         # Tenant owners can see all payments for their tenant
-        if IsTenantOwner().has_permission(self.request, self):
+        if IsTenantMember().has_permission(self.request, self):
             return Payment.objects.filter(order__tenant=user.tenant)
         
         # Regular users can only see their own payments
@@ -535,7 +535,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             )
         
         # Check authorization
-        if not IsTenantOwner().has_permission(request, self):
+        if not IsTenantMember().has_permission(request, self):
             return Response(
                 {"error": "Only tenant owners can confirm Cash on Delivery payments"},
                 status=status.HTTP_403_FORBIDDEN
