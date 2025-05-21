@@ -27,6 +27,16 @@ import { toast } from "sonner"
 import { ListProductModal } from "@/components/modals/ListProductModal"
 import type { Product } from "@/store/useProductStore"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function ProductManagement() {
   const {
@@ -516,7 +526,10 @@ function ProductListCard({
   showActions = false,
 }: ProductListCardProps) {
   const [loadingProducts, setLoadingProducts] = useState<Record<string, boolean>>({})
+  const [deletingProducts, setDeletingProducts] = useState<Record<string, boolean>>({})
+  const [unlistingProducts, setUnlistingProducts] = useState<Record<string, boolean>>({})
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const { user } = useAuthStore()
   const currentTenantId = user?.tenant
   const { listProduct, unlistProduct, deleteProduct } = useProductStore()
@@ -543,27 +556,28 @@ function ProductListCard({
 
   const handleUnlistProduct = async (product: any) => {
     try {
-      setLoadingProducts((prev) => ({ ...prev, [product.id]: true }))
+      setUnlistingProducts((prev) => ({ ...prev, [product.id]: true }))
       const data = await unlistProduct(product.id)
       toast.success(data.detail || "Product unlisted successfully", { className: "bg-[#02569B] text-white" })
     } catch (error) {
       console.error("Error unlisting product:", error)
       toast.error("Failed to unlist product. Please try again.", { className: "bg-red-500 text-white" })
     } finally {
-      setLoadingProducts((prev) => ({ ...prev, [product.id]: false }))
+      setUnlistingProducts((prev) => ({ ...prev, [product.id]: false }))
     }
   }
 
   const handleDeleteProduct = async (product: any) => {
     try {
-      setLoadingProducts((prev) => ({ ...prev, [product.id]: true }))
+      setDeletingProducts((prev) => ({ ...prev, [product.id]: true }))
       const data = await deleteProduct(product.id)
       toast.success(data.detail || "Product deleted successfully", { className: "bg-[#02569B] text-white" })
+      setProductToDelete(null)
     } catch (error) {
       console.error("Error deleting product:", error)
       toast.error("Failed to delete product. Please try again.", { className: "bg-red-500 text-white" })
     } finally {
-      setLoadingProducts((prev) => ({ ...prev, [product.id]: false }))
+      setDeletingProducts((prev) => ({ ...prev, [product.id]: false }))
     }
   }
 
@@ -594,8 +608,8 @@ function ProductListCard({
                 <div className="col-span-2">Actions</div>
               </div>
               <div className="divide-y">
-                {[1, 2, 3, 4].map((item) => (
-                  <div key={item} className="grid grid-cols-12 items-center p-3">
+                {Array.from({ length: 10 }, (_, index) => (
+                  <div key={index + 1} className="grid grid-cols-12 items-center p-3">
                     <div className="col-span-4 flex items-center gap-3">
                       <Skeleton className="h-10 w-10 rounded-md" />
                       <div className="space-y-2">
@@ -701,16 +715,20 @@ function ProductListCard({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => deleteProduct(product.id)}
+                                  onClick={() => setProductToDelete(product)}
                                   className="text-red-600 hover:text-red-800"
                                 >
-                                  <Trash className="h-4 w-4" />
+                                  {isLoading ? (
+                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ):
+                                  (<Trash className="h-4 w-4" />)
+                                  }
                                   <span className="sr-only">Delete</span>
                                 </Button>
                               </div>
                             </>
                           )}
                           {!isOwned && (
+                            
                             <Link href={`/merchant/products/${product.id}`}>
                               <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-800">
                                 <Info className="h-4 w-4" />
@@ -724,11 +742,11 @@ function ProductListCard({
                               size="sm"
                               onClick={() => handleUnlistProduct(product)}
                               className="text-red-600 hover:text-red-800 ml-2"
-                              disabled={isLoading}
+                              disabled={unlistingProducts[product.id]}
                             >
-                              {isLoading ? (
+                              {unlistingProducts[product.id] ? (
                                 <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  {/* <Loader2 className="mr-2 h-4 w-4 animate-spin" /> */}
                                   Unlisting...
                                 </>
                               ) : (
@@ -741,7 +759,7 @@ function ProductListCard({
                               size="sm"
                               onClick={() => setSelectedProduct(product)}
                               className="text-blue-600 hover:text-blue-800 ml-2"
-                              disabled={isLoading}
+                              disabled={loadingProducts[product.id]}
                             >
                               List
                             </Button>
@@ -765,6 +783,35 @@ function ProductListCard({
         product={selectedProduct}
         onList={handleListProduct}
       />
+
+      <AlertDialog open={!!productToDelete} onOpenChange={() => setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product
+              {productToDelete?.name ? ` "${productToDelete.name}"` : ""} and remove it from your store.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingProducts[productToDelete?.id || '']}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => productToDelete && handleDeleteProduct(productToDelete)}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deletingProducts[productToDelete?.id || '']}
+            >
+              {deletingProducts[productToDelete?.id || ''] ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Deleting...</span>
+                </div>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
