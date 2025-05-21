@@ -2,6 +2,7 @@ import type React from "react"
 import { MerchantSidebar } from "@/components/merchant-sidebar"
 import { ClientHeader } from "@/components/client-header"
 import { UserProfileDropdown } from "@/components/user-profile-dropdown"
+import { Toaster } from "@/components/ui/sonner"
 
 export default function MerchantLayout({
   children,
@@ -20,6 +21,7 @@ export default function MerchantLayout({
         </div>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
+      <Toaster position="top-center" richColors />
     </div>
   )
 }
