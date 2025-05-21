@@ -63,8 +63,7 @@ class Tenant(models.Model):
     # Identification Documents
     id_card = models.URLField(max_length=500, null=True, blank=True)
 
-    # API Key
-    api_key = models.CharField(max_length=100, unique=True, null=True, blank=True)
+ 
 
     def save(self, *args, **kwargs):
         """Ensure password is always hashed before saving."""

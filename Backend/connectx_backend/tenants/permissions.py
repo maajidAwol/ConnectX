@@ -33,8 +33,7 @@ class IsTenantOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
         # Check if user is authenticated and is an owner
-        return request.user.is_authenticated and request.user.role == "owner"
-
+        return request.user.is_authenticated and (request.user.role == "owner" or request.user.role == "admin")
     def has_object_permission(self, request, view, obj):
         # Read permissions are allowed to any request,
         # so we'll always allow GET, HEAD or OPTIONS requests.
@@ -43,7 +42,7 @@ class IsTenantOwner(permissions.BasePermission):
 
         # Write permissions are only allowed to the owner of the tenant
         return request.user.is_authenticated and (
-            request.user.tenant == obj and request.user.role == "owner"
+            request.user.tenant == obj and (request.user.role == "owner" or request.user.role == "admin")
         )
 
 

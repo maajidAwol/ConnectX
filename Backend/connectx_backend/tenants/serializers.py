@@ -118,9 +118,8 @@ class TenantSerializer(serializers.ModelSerializer):
             "mobileapp_name",
             "id_card",
             "id_card_url",
-            "api_key",
         ]
-        read_only_fields = ["id", "api_key", "created_at", "updated_at", "is_verified"]
+        read_only_fields = ["id", "created_at", "updated_at", "is_verified"]
         extra_kwargs = {
             "password": {"write_only": True, "required": False},
             "name": {"required": False},
