@@ -26,10 +26,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function OrderManagement() {
   const { orders, isLoading, error, currentPage, totalPages, fetchOrders, setCurrentPage, pageSize } = useOrderStore()
 
-  // Fetch orders on component mount
   useEffect(() => {
-    fetchOrders()
-  }, [fetchOrders])
+    fetchOrders(currentPage, pageSize)
+  }, [fetchOrders, currentPage, pageSize])
 
   // Generate pagination range with ellipsis for larger page sets
   const getPaginationRange = () => {
@@ -169,10 +168,18 @@ export default function OrderManagement() {
             <div className="mt-4">
               <TabsContent value="all">
                 {isLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(pageSize || 10)].map((_, i) => (
-                      
-                      <Skeleton key={i} className="h-12 w-full rounded" />
+                  <div className="space-y-4">
+                    {[...Array(pageSize)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-3 w-[150px]" />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Skeleton className="h-4 w-[100px]" />
+                          <Skeleton className="h-4 w-[40px]" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -182,9 +189,18 @@ export default function OrderManagement() {
 
               <TabsContent value="processing">
                 {isLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(pageSize || 10)].map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full rounded" />
+                  <div className="space-y-4">
+                    {[...Array(pageSize)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-3 w-[150px]" />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Skeleton className="h-4 w-[100px]" />
+                          <Skeleton className="h-4 w-[40px]" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
