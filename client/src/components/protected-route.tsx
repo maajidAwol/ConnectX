@@ -3,7 +3,6 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
-import { hasRole } from "@/utils/auth"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -32,8 +31,16 @@ export default function ProtectedRoute({ children, requiredRole, requiredRoles }
   const router = useRouter()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
+  const validateToken = useAuthStore((state) => state.validateToken)
   
   useEffect(() => {
+    // Validate token first
+    const isValid = validateToken()
+    if (!isValid) {
+      router.push('/login')
+      return
+    }
+    
     // Check authentication status
     if (!isAuthenticated) {
       router.push('/login')
@@ -43,6 +50,7 @@ export default function ProtectedRoute({ children, requiredRole, requiredRoles }
     // Check role requirement if specified
     const roles = requiredRoles || (requiredRole ? [requiredRole] : [])
     if (roles.length > 0 && !roles.includes(user?.role || '')) {
+      // Redirect based on user role
       if (user?.role === 'admin') {
         router.push('/admin')
       } else if (user?.role === 'owner' || user?.role === 'member') {
@@ -51,16 +59,16 @@ export default function ProtectedRoute({ children, requiredRole, requiredRoles }
         router.push('/')
       }
     }
-  }, [isAuthenticated, requiredRole, requiredRoles, router, user])
+  }, [isAuthenticated, requiredRole, requiredRoles, router, user, validateToken])
   
   // Don't render anything while checking authentication
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return null
   }
   
   // Don't render if role requirement is not met
   const roles = requiredRoles || (requiredRole ? [requiredRole] : [])
-  if (roles.length > 0 && !roles.includes(user?.role || '')) {
+  if (roles.length > 0 && !roles.includes(user.role)) {
     return null
   }
   
