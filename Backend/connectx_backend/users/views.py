@@ -142,6 +142,9 @@ class UserViewSet(viewsets.ModelViewSet):
                     and validated_data["role"] == User.ADMIN
                 ):
                     validated_data["tenant"] = None  # Global admin
+                    validated_data["is_staff"] = True
+                    validated_data["is_superuser"] = True
+                    validated_data["is_active"] = True
                 elif (
                     "tenant" not in validated_data
                     and validated_data["role"] != User.ADMIN

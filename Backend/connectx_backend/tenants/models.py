@@ -28,6 +28,7 @@ class Tenant(models.Model):
     tenant_verification_status = models.CharField(
         max_length=50,
         choices=[
+            ("unverified", "Unverified"),
             ("pending", "Pending"),
             ("under_reviw", "Under  Reviw"),
             ("approved", "Approved"),

@@ -15,6 +15,8 @@ from django.urls import path
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from django_filters import rest_framework as filters
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 from users.utils.email_utils import send_verification_email
 
@@ -82,8 +84,28 @@ class VerificationStatusView(APIView):
         return Response(serializer.data)
 
 
+class TenantFilter(filters.FilterSet):
+    is_verified = filters.BooleanFilter()
+    is_active = filters.BooleanFilter()
+    tenant_verification_status = filters.CharFilter()
+    created_at = filters.DateFilter()
+    updated_at = filters.DateFilter()
+    business_type = filters.CharFilter()
+
+    class Meta:
+        model = Tenant
+        fields = [
+            "is_verified",
+            "is_active",
+            "tenant_verification_status",
+            "created_at",
+            "updated_at",
+            "business_type",
+        ]
+
+
 class CustomPagination(PageNumberPagination):
-    page_size = 10  # Number of items per page
+    page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
 
@@ -97,6 +119,102 @@ class TenantViewSet(viewsets.ModelViewSet):
     serializer_class = TenantSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    pagination_class = CustomPagination
+    filter_backends = [filters.DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = TenantFilter
+    search_fields = [
+        "name",
+        "email",
+        "legal_name",
+        "business_registration_number",
+        "business_type",
+        "business_bio",
+    ]
+    ordering_fields = ["created_at", "updated_at", "name"]
+    ordering = ["-created_at"]  # Default ordering
+
+    @swagger_auto_schema(
+        operation_summary="List all tenants",
+        operation_description="Get a list of all tenants with filtering, searching, and pagination options",
+        manual_parameters=[
+            openapi.Parameter(
+                "is_verified",
+                openapi.IN_QUERY,
+                description="Filter by verification status",
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+            ),
+            openapi.Parameter(
+                "is_active",
+                openapi.IN_QUERY,
+                description="Filter by active status",
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+            ),
+            openapi.Parameter(
+                "tenant_verification_status",
+                openapi.IN_QUERY,
+                description="Filter by verification status",
+                type=openapi.TYPE_STRING,
+                required=False,
+                enum=["unverified", "pending", "under_reviw", "approved", "rejected"],
+            ),
+            openapi.Parameter(
+                "created_at",
+                openapi.IN_QUERY,
+                description="Filter by creation date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "updated_at",
+                openapi.IN_QUERY,
+                description="Filter by last update date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "business_type",
+                openapi.IN_QUERY,
+                description="Filter by business type",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "search",
+                openapi.IN_QUERY,
+                description="Search in name, email, legal_name, business_registration_number, business_type, business_bio",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "ordering",
+                openapi.IN_QUERY,
+                description="Order by field (prefix with '-' for descending order). Available fields: created_at, updated_at, name",
+                type=openapi.TYPE_STRING,
+                required=False,
+                enum=["created_at", "updated_at", "name", "-created_at", "-updated_at", "-name"],
+            ),
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page (max: 100)",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def get_serializer_class(self):
         """
@@ -108,7 +226,7 @@ class TenantViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Filter tenants based on user role:
+        Filter tenants based on user role and apply search/filtering:
         - Admin can see all tenants
         - Owner can only see their own tenant
         - Customer can see their tenant and public tenants
@@ -236,8 +354,8 @@ class TenantViewSet(viewsets.ModelViewSet):
             403: openapi.Response(description="Permission denied."),
         },
     )
-    @action(detail=False, methods=["get"], url_path="under-reviw-verifications")
-    def under_reviw_verifications(self, request):
+    @action(detail=False, methods=["get"], url_path="pending-verifications")
+    def pending_verifications(self, request):
         """
         List all tenants with a verification status of 'under_reviw'.
         Only admin users can access this endpoint.
@@ -248,7 +366,7 @@ class TenantViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
         pending_tenants = Tenant.objects.filter(
-            tenant_verification_status="under_reviw"
+            tenant_verification_status="pending"
         )
         paginator = CustomPagination()
         paginated_tenants = paginator.paginate_queryset(pending_tenants, request)
