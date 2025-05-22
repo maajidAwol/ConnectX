@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser
 from django.db.models import Sum, Count, Q, F
 from django.utils import timezone
 from datetime import timedelta
@@ -41,7 +41,7 @@ class CustomPagination(PageNumberPagination):
 
 
 class AdminAnalyticsViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     pagination_class = CustomPagination
 
     @swagger_auto_schema(
@@ -448,7 +448,7 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
 class AnalyticsViewSet(viewsets.ModelViewSet):
     queryset = Analytics.objects.all()
     serializer_class = AnalyticsSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     pagination_class = CustomPagination
 
     @swagger_auto_schema(
