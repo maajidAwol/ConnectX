@@ -34,7 +34,7 @@ class Tenant(models.Model):
             ("approved", "Approved"),
             ("rejected", "Rejected"),
         ],
-        default="pending",
+        default="unverified",
     )
     tenant_verification_date = models.DateField(null=True, blank=True)
     business_registration_certificate = models.URLField(
