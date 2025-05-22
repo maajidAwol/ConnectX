@@ -3,11 +3,24 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, ChevronDown, Database, Home, LogOut, Menu, Settings, Shield, Users, X } from "lucide-react"
+import { BarChart2, ChevronDown, Database, Home, LogOut, Menu, Shield, UserCog, Users, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/authStore"
+
+interface SubmenuItem {
+  title: string
+  href: string
+}
+
+interface Route {
+  title: string
+  href: string
+  icon: any
+  isActive: boolean
+  submenu?: SubmenuItem[]
+}
 
 interface SidebarProps {
   className?: string
@@ -17,8 +30,8 @@ export function AdminSidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const logout = useAuthStore((state) => state.logout)
-  
-  const routes = [
+
+  const routes: Route[] = [
     {
       title: "Dashboard",
       href: "/admin",
@@ -30,11 +43,11 @@ export function AdminSidebar({ className }: SidebarProps) {
       href: "/admin/merchants",
       icon: Users,
       isActive: pathname.startsWith("/admin/merchants"),
-      submenu: [
-        { title: "Merchant Directory", href: "/admin/merchants" },
-        { title: "Approval Workflow", href: "/admin/merchants/approval" },
-        // { title: "Account Management", href: "/admin/merchants/accounts" },
-      ],
+      // submenu: [
+      //   { title: "Merchant Directory", href: "/admin/merchants" },
+      //   { title: "Approval Workflow", href: "/admin/merchants/approval" },
+      //   // { title: "Account Management", href: "/admin/merchants/accounts" },
+      // ],
     },
     {
       title: "Add Admin",
@@ -43,16 +56,22 @@ export function AdminSidebar({ className }: SidebarProps) {
       isActive: pathname.startsWith("/admin/add-admin"),
     },
     {
-      title: "Platform Settings",
-      href: "/admin/settings",
-      icon: Settings,
-      isActive: pathname.startsWith("/admin/settings"),
-      submenu: [
-        { title: "Global Config", href: "/admin/settings" },
-        { title: "Feature Toggles", href: "/admin/settings/features" },
-        { title: "Notifications", href: "/admin/settings/notifications" },
-      ],
+      title: "All Admins",
+      href: "/admin/all-admins",
+      icon: UserCog,
+      isActive: pathname.startsWith("/admin/all-admins"),
     },
+    // {
+    //   title: "Platform Settings",
+    //   href: "/admin/settings",
+    //   icon: Settings,
+    //   isActive: pathname.startsWith("/admin/settings"),
+    //   submenu: [
+    //     { title: "Global Config", href: "/admin/settings" },
+    //     { title: "Feature Toggles", href: "/admin/settings/features" },
+    //     { title: "Notifications", href: "/admin/settings/notifications" },
+    //   ],
+    // },
     {
       title: "Analytics",
       href: "/admin/analytics",
@@ -101,9 +120,7 @@ export function AdminSidebar({ className }: SidebarProps) {
                           onClick={() => toggleSubmenu(route.title)}
                           className={cn(
                             "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium",
-                            route.isActive 
-                              ? "bg-primary/10 text-primary" 
-                              : "text-foreground hover:bg-muted",
+                            route.isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -140,9 +157,7 @@ export function AdminSidebar({ className }: SidebarProps) {
                         onClick={() => setIsOpen(false)}
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                          route.isActive 
-                            ? "bg-primary/10 text-primary" 
-                            : "text-foreground hover:bg-muted",
+                          route.isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
                         )}
                       >
                         <route.icon className="h-5 w-5" />
@@ -154,8 +169,8 @@ export function AdminSidebar({ className }: SidebarProps) {
               </nav>
             </div>
             <div className="border-t border-border p-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full justify-start text-muted-foreground hover:text-foreground"
                 onClick={logout}
               >
@@ -168,7 +183,12 @@ export function AdminSidebar({ className }: SidebarProps) {
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <div className={cn("hidden fixed top-0 left-0 h-screen w-64 flex-col border-r border-border bg-background md:flex z-10", className)}>
+      <div
+        className={cn(
+          "hidden fixed top-0 left-0 h-screen w-64 flex-col border-r border-border bg-background md:flex z-10",
+          className,
+        )}
+      >
         <div className="flex h-14 items-center border-b border-border px-4">
           <div className="flex items-center gap-2 font-semibold text-foreground">
             <Database className="h-5 w-5 text-primary" />
@@ -185,9 +205,7 @@ export function AdminSidebar({ className }: SidebarProps) {
                       onClick={() => toggleSubmenu(route.title)}
                       className={cn(
                         "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium",
-                        route.isActive 
-                          ? "bg-primary/10 text-primary" 
-                          : "text-foreground hover:bg-muted",
+                        route.isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
                       )}
                     >
                       <div className="flex items-center gap-3">
@@ -206,8 +224,8 @@ export function AdminSidebar({ className }: SidebarProps) {
                             href={item.href}
                             className={cn(
                               "rounded-md px-3 py-2 text-sm",
-                              pathname === item.href 
-                                ? "bg-primary/10 text-primary" 
+                              pathname === item.href
+                                ? "bg-primary/10 text-primary"
                                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
                             )}
                           >
@@ -222,9 +240,7 @@ export function AdminSidebar({ className }: SidebarProps) {
                     href={route.href}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                      route.isActive 
-                        ? "bg-primary/10 text-primary" 
-                        : "text-foreground hover:bg-muted",
+                      route.isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
                     )}
                   >
                     <route.icon className="h-5 w-5" />
@@ -236,8 +252,8 @@ export function AdminSidebar({ className }: SidebarProps) {
           </nav>
         </div>
         <div className="border-t border-border p-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-start text-muted-foreground hover:text-foreground"
             onClick={logout}
           >
