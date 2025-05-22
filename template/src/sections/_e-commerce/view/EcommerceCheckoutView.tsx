@@ -14,6 +14,9 @@ import {
   Container,
   Typography,
   Unstable_Grid2 as Grid,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 // routes
 import { paths } from 'src/routes/paths';
@@ -51,7 +54,39 @@ interface UserDetails {
   email: string;
   first_name: string;
   last_name: string;
-  phone: string;
+  phone_number: string;
+}
+
+interface OrderResponse {
+  id: string;
+  order_number: string;
+  status: string;
+}
+
+interface PaymentResponse {
+  id: string;
+  order: string;
+  order_number: string;
+  amount: string;
+  payment_method: string;
+  status: string;
+  transaction_id: string;
+}
+
+interface ChapaPaymentResponse {
+  status: string;
+  message: string;
+  data: {
+    payment_id: string;
+    checkout_url: string;
+    tx_ref: string;
+  };
+}
+
+interface User {
+  id: string;
+  email: string;
+  phone_number: string;
 }
 
 const SHIPPING_OPTIONS = [
@@ -104,6 +139,7 @@ export default function EcommerceCheckoutView() {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'chapa' | 'cod'>('chapa');
 
   useEffect(() => {
     if (user?.id && accessToken) {
@@ -202,6 +238,129 @@ export default function EcommerceCheckoutView() {
     formState: { isSubmitting },
   } = methods;
 
+  const handlePaymentMethodChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPaymentMethod(event.target.value as 'chapa' | 'cod');
+  };
+
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove any non-digit characters except +
+    let cleaned = phone.replace(/[^\d+]/g, '');
+    
+    // If it doesn't start with +, add it
+    if (!cleaned.startsWith('+')) {
+      cleaned = '+' + cleaned;
+    }
+    
+    // Remove any extra + symbols
+    cleaned = cleaned.replace(/\+/g, '');
+    cleaned = '+' + cleaned;
+    
+    // Ensure the number after + is between 9 and 14 digits
+    const digitsAfterPlus = cleaned.substring(1);
+    if (digitsAfterPlus.length < 9) {
+      // Pad with zeros if too short
+      cleaned = '+' + digitsAfterPlus.padEnd(9, '0');
+    } else if (digitsAfterPlus.length > 14) {
+      // Truncate if too long
+      cleaned = '+' + digitsAfterPlus.substring(0, 14);
+    }
+    
+    console.log('Formatted phone number:', cleaned);
+    return cleaned;
+  };
+
+  const createOrder = async (addressId: string) => {
+    const orderData = {
+      status: 'pending',
+      subtotal: getTotalPrice().toString(),
+      taxes: '0.00',
+      shipping: '50.00',
+      discount: '0.00',
+      notes: 'Order placed through web application',
+      email: user?.email || '',
+      phone: user?.phone_number || '',
+      shipping_address: addressId,
+      items: items.map(item => ({
+        product: item.id,
+        quantity: item.quantity,
+        price: item.price.toString(),
+        custom_profit_percentage: 0,
+        custom_selling_price: item.price.toString()
+      })),
+    };
+
+    console.log('Creating order with data:', orderData);
+
+    const orderResponse = await apiRequest<OrderResponse>('/orders/', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    return orderResponse;
+  };
+
+  const createPayment = async (orderId: string, amount: string) => {
+    const paymentData = {
+      order: orderId,
+      amount: amount,
+      payment_method: 'chapa',
+      status: 'pending',
+      transaction_id: ''
+    };
+
+    console.log('Creating payment with data:', paymentData);
+
+    try {
+      const paymentResponse = await apiRequest<PaymentResponse>('/payments/', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      return paymentResponse;
+    } catch (error) {
+      console.error('Payment creation error:', error);
+      if (error instanceof Error) {
+        try {
+          const errorData = JSON.parse(error.message);
+          console.error('Payment creation error details:', errorData);
+          if (errorData.details) {
+            console.error('Validation errors:', errorData.details);
+          }
+        } catch (e) {
+          console.error('Raw error message:', error.message);
+        }
+      }
+      throw error;
+    }
+  };
+
+  const confirmCodPayment = async (paymentId: string) => {
+    try {
+      await apiRequest(`/payments/${paymentId}/confirm_cod_payment/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          confirmation_note: 'Order confirmed for Cash on Delivery',
+        }),
+      });
+    } catch (error) {
+      console.error('Error confirming COD payment:', error);
+      throw error;
+    }
+  };
+
   const onSubmit = async (data: typeof defaultValues) => {
     try {
       setSubmitting(true);
@@ -209,55 +368,232 @@ export default function EcommerceCheckoutView() {
       
       // If no address is selected, create a new one
       if (!addressId) {
+        console.log('No address selected, creating new address');
         const newAddress = await createShippingAddress(data);
         if (newAddress) {
           addressId = newAddress.id;
         } else {
           throw new Error('Failed to create shipping address');
         }
+      } else {
+        console.log('Using existing address:', selectedAddress);
       }
 
-      // Create order with the address ID (either existing or newly created)
-      if (addressId) {
+      if (!addressId) {
+        throw new Error('No shipping address available');
+      }
+
+      const totalAmount = (getTotalPrice() + 50).toString();
+
+      // Create order first
+      console.log('Creating order with address ID:', addressId);
         const orderData = {
           status: 'pending',
           subtotal: getTotalPrice().toString(),
           taxes: '0.00',
-          shipping: '50.00', // Fixed shipping fee
+        shipping: '50.00',
           discount: '0.00',
           notes: 'Order placed through web application',
           email: user?.email || '',
-          phone: user?.phone_number || '', // Use phone_number from user
+        phone: selectedAddress?.phone_number || (user as User)?.phone_number || '',
           shipping_address: addressId,
+        items: items.map(item => ({
+          product: item.id,
+          quantity: item.quantity,
+          price: item.price.toString(),
+          custom_profit_percentage: 0,
+          custom_selling_price: item.price.toString()
+        })),
+      };
+
+      console.log('Creating order with data:', orderData);
+
+      const orderResponse = await apiRequest<OrderResponse>('/orders/', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!orderResponse) {
+        throw new Error('Failed to create order');
+      }
+
+      if (paymentMethod === 'chapa') {
+        // Initialize Chapa payment
+        const phoneNumber = selectedAddress?.phone_number || (user as User)?.phone_number || '';
+        const formattedPhone = formatPhoneNumber(phoneNumber);
+
+        console.log('Initializing Chapa payment with:', {
+          orderId: orderResponse.id,
+          phoneNumber: formattedPhone,
+          returnUrl: `${window.location.origin}/payment/success`
+        });
+
+        const chapaResponse = await apiRequest<ChapaPaymentResponse>('/payments/initialize_chapa_payment/', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+          body: JSON.stringify({
+            order_id: orderResponse.id,
+            phone_number: formattedPhone,
+            return_url: `${window.location.origin}/payment/success`
+          }),
+        });
+
+        console.log('Chapa payment response:', chapaResponse);
+
+        if (!chapaResponse || chapaResponse.status !== 'success' || !chapaResponse.data?.checkout_url) {
+          throw new Error('Failed to initialize Chapa payment');
+        }
+
+        // Store order data and transaction reference in session storage
+        const pendingOrder = {
+          orderId: orderResponse.id,
+          addressId: addressId,
           items: items.map(item => ({
             product: item.id,
             quantity: item.quantity,
             price: item.price.toString(),
-            custom_profit_percentage: 0, // Default to 0 if not specified
-            custom_selling_price: item.price.toString() // Use the same price as default
+            custom_profit_percentage: 0,
+            custom_selling_price: item.price.toString()
           })),
+          totalAmount: totalAmount,
+          paymentMethod: 'chapa',
+          tx_ref: chapaResponse.data.tx_ref // Store the transaction reference
         };
+        sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
 
-        console.log('Creating order with data:', orderData); // Debug log
-
-        const response = await apiRequest('/orders/', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify(orderData),
-        });
-
-        if (response) {
-          clearCart(); // Clear cart after successful order
+        // Redirect to Chapa checkout
+        window.location.href = chapaResponse.data.checkout_url;
+      } else if (paymentMethod === 'cod') {
+        // For COD, create payment record and confirm
+        const paymentResponse = await createPayment(orderResponse.id, totalAmount);
+        if (paymentResponse) {
+          await confirmCodPayment(paymentResponse.id);
+          clearCart();
           reset();
           replace(paths.eCommerce.orderCompleted);
         }
-      } else {
-        throw new Error('No shipping address available');
       }
     } catch (error) {
       console.error('Error in checkout:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAddressSelect = (address: ShippingAddress) => {
+    console.log('Selected address:', address);
+    setSelectedAddress(address);
+  };
+
+  const handlePlaceOrder = async () => {
+    try {
+      if (!selectedAddress) {
+        return;
+      }
+
+      setSubmitting(true);
+
+      const totalAmount = (getTotalPrice() + 50).toString();
+
+      // Create order with selected address
+      const orderData = {
+        status: 'pending',
+        subtotal: getTotalPrice().toString(),
+        taxes: '0.00',
+        shipping: '50.00',
+        discount: '0.00',
+        notes: 'Order placed through web application',
+        email: user?.email || '',
+        phone: selectedAddress.phone_number,
+        shipping_address: selectedAddress.id,
+        items: items.map(item => ({
+          product: item.id,
+          quantity: item.quantity,
+          price: item.price.toString(),
+          custom_profit_percentage: 0,
+          custom_selling_price: item.price.toString()
+        })),
+      };
+
+      const orderResponse = await apiRequest<OrderResponse>('/orders/', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!orderResponse) {
+        throw new Error('Failed to create order');
+      }
+
+      if (paymentMethod === 'chapa') {
+        // Initialize Chapa payment
+        const formattedPhone = formatPhoneNumber(selectedAddress.phone_number);
+
+        const chapaResponse = await apiRequest<ChapaPaymentResponse>('/payments/initialize_chapa_payment/', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+          body: JSON.stringify({
+            order_id: orderResponse.id,
+            phone_number: formattedPhone,
+            return_url: `${window.location.origin}/payment/success`
+          }),
+        });
+
+        if (!chapaResponse || chapaResponse.status !== 'success' || !chapaResponse.data?.checkout_url) {
+          throw new Error('Failed to initialize Chapa payment');
+        }
+
+        // Store order data and transaction reference in session storage
+        const pendingOrder = {
+          orderId: orderResponse.id,
+          addressId: selectedAddress.id,
+          items: items.map(item => ({
+            product: item.id,
+            quantity: item.quantity,
+            price: item.price.toString(),
+            custom_profit_percentage: 0,
+            custom_selling_price: item.price.toString()
+          })),
+          totalAmount: totalAmount,
+          paymentMethod: 'chapa',
+          tx_ref: chapaResponse.data.tx_ref
+        };
+        sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
+
+        // Redirect to Chapa checkout
+        window.location.href = chapaResponse.data.checkout_url;
+      } else if (paymentMethod === 'cod') {
+        // For COD, create payment record and confirm
+        const paymentResponse = await createPayment(orderResponse.id, totalAmount);
+        if (paymentResponse) {
+          await confirmCodPayment(paymentResponse.id);
+          clearCart();
+          reset();
+          replace(paths.eCommerce.orderCompleted);
+        }
+      }
+    } catch (error) {
+      // Silent error handling
     } finally {
       setSubmitting(false);
     }
@@ -291,8 +627,28 @@ export default function EcommerceCheckoutView() {
                   <EcommerceCheckoutShippingDetails 
                     addresses={shippingAddresses}
                     selectedAddress={selectedAddress}
-                    onSelectAddress={setSelectedAddress}
+                    onSelectAddress={handleAddressSelect}
                   />
+                </div>
+
+                <div>
+                  <StepLabel title="Payment Method" step="2" />
+                  <RadioGroup
+                    value={paymentMethod}
+                    onChange={handlePaymentMethodChange}
+                    sx={{ mt: 2 }}
+                  >
+                    <FormControlLabel
+                      value="chapa"
+                      control={<Radio />}
+                      label="Pay with Chapa"
+                    />
+                    <FormControlLabel
+                      value="cod"
+                      control={<Radio />}
+                      label="Cash on Delivery"
+                    />
+                  </RadioGroup>
                 </div>
               </Stack>
             </Grid>
@@ -300,12 +656,13 @@ export default function EcommerceCheckoutView() {
             <Grid xs={12} md={4}>
               <EcommerceCheckoutOrderSummary
                 tax={0}
-                total={getTotalPrice() + 50} // Add shipping fee
+                total={getTotalPrice() + 50}
                 subtotal={getTotalPrice()}
-                shipping={50} // Fixed shipping fee
+                shipping={50}
                 discount={0}
                 products={items}
                 loading={submitting}
+                onPlaceOrder={handlePlaceOrder}
               />
             </Grid>
           </Grid>

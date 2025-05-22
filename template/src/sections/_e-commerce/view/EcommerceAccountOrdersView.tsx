@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 // @mui
 import { DatePicker } from '@mui/x-date-pickers';
 import {
@@ -17,31 +17,73 @@ import {
   InputAdornment,
   TablePagination,
   FormControlLabel,
+  CircularProgress,
 } from '@mui/material';
-// _mock
-import { _productsTable } from 'src/_mock';
 // components
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
+import Label from 'src/components/label';
+// utils
+import { fDate } from 'src/utils/formatTime';
+import { fCurrency } from 'src/utils/formatNumber';
+// store
+import { useAuthStore } from 'src/store/auth';
+// api
+import { apiRequest } from 'src/lib/api-config';
 //
 import { EcommerceAccountLayout } from '../layout';
 import {
   stableSort,
   getComparator,
-  EcommerceAccountOrdersTableRow,
   EcommerceAccountOrdersTableHead,
-  EcommerceAccountOrdersTableToolbar,
 } from '../account/orders';
 
 // ----------------------------------------------------------------------
 
-const TABS = ['All Orders', 'Completed', 'To Process', 'Cancelled', 'Return & Refund'];
+interface Order {
+  id: string;
+  order_number: string;
+  seller_tenant_name: string;
+  status: string;
+  total_amount: string;
+  created_at: string;
+  items_count: number;
+  total_quantity: number;
+  first_item: {
+    product_name: string;
+    product_id: string;
+    cover_url: string;
+  };
+  payment_status: {
+    display_status: string;
+    method: string;
+  };
+}
+
+interface OrdersResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Order[];
+}
+
+const TABS = [
+  'All Orders',
+  'Pending',
+  'Processing',
+  'Confirmed',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+  'Refunded',
+  'Failed',
+];
 
 export const TABLE_HEAD = [
-  { id: 'orderId', label: 'Order ID' },
-  { id: 'item', label: 'Item' },
-  { id: 'deliveryDate', label: 'Delivery date', width: 160 },
-  { id: 'price', label: 'Price', width: 100 },
+  { id: 'order_number', label: 'Order ID' },
+  { id: 'first_item', label: 'Item' },
+  { id: 'created_at', label: 'Order Date', width: 160 },
+  { id: 'total_amount', label: 'Price', width: 100 },
   { id: 'status', label: 'Status', width: 100 },
   { id: '' },
 ];
@@ -49,22 +91,46 @@ export const TABLE_HEAD = [
 // ----------------------------------------------------------------------
 
 export default function EcommerceAccountOrdersPage() {
+  const { accessToken } = useAuthStore();
   const [tab, setTab] = useState('All Orders');
-
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-
-  const [orderBy, setOrderBy] = useState('orderId');
-
-  const [selected, setSelected] = useState<string[]>([]);
-
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [orderBy, setOrderBy] = useState('created_at');
   const [page, setPage] = useState(0);
-
   const [dense, setDense] = useState(false);
-
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    fetchOrders();
+  }, [page, rowsPerPage, tab, searchQuery]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const status = tab === 'All Orders' ? '' : tab.toLowerCase();
+      const response = await apiRequest<OrdersResponse>(`/orders/my-orders/?page=${page + 1}&page_size=${rowsPerPage}&status=${status}&search=${searchQuery}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response) {
+        setOrders(response.results);
+        setTotalCount(response.count);
+      }
+    } catch (error) {
+      // Silent error handling
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChangeTab = (event: React.SyntheticEvent, newValue: string) => {
     setTab(newValue);
+    setPage(0);
   };
 
   const handleSort = (id: string) => {
@@ -72,36 +138,10 @@ export default function EcommerceAccountOrdersPage() {
     if (id !== '') {
       setOrder(isAsc ? 'desc' : 'asc');
       setOrderBy(id);
+    } else {
+      setOrder('desc');
+      setOrderBy('created_at');
     }
-  };
-
-  const handleSelectAllRows = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      const newSelected = _productsTable.map((n) => n.id);
-      setSelected(newSelected);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleSelectRow = (id: string) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected: string[] = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-
-    setSelected(newSelected);
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -117,7 +157,33 @@ export default function EcommerceAccountOrdersPage() {
     setDense(event.target.checked);
   };
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - _productsTable.length) : 0;
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+    setPage(0);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'processing':
+        return 'info';
+      case 'cancelled':
+        return 'error';
+      case 'shipped':
+        return 'primary';
+      case 'delivered':
+        return 'success';
+      case 'refunded':
+        return 'secondary';
+      case 'failed':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
 
   return (
     <EcommerceAccountLayout>
@@ -141,7 +207,9 @@ export default function EcommerceAccountOrdersPage() {
         <TextField
           fullWidth
           hiddenLabel
-          placeholder="Search..."
+          placeholder="Search orders..."
+          value={searchQuery}
+          onChange={handleSearch}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -150,10 +218,6 @@ export default function EcommerceAccountOrdersPage() {
             ),
           }}
         />
-        <Stack spacing={2} direction={{ xs: 'column', md: 'row' }} alignItems="center">
-          <DatePicker label="Start Date" sx={{ width: 1, minWidth: 180 }} />
-          <DatePicker label="End Date" sx={{ width: 1, minWidth: 180 }} />
-        </Stack>
       </Stack>
 
       <TableContainer
@@ -168,12 +232,6 @@ export default function EcommerceAccountOrdersPage() {
           },
         }}
       >
-        <EcommerceAccountOrdersTableToolbar
-          rowCount={_productsTable.length}
-          numSelected={selected.length}
-          onSelectAllRows={handleSelectAllRows}
-        />
-
         <Scrollbar>
           <Table
             sx={{
@@ -186,31 +244,71 @@ export default function EcommerceAccountOrdersPage() {
               orderBy={orderBy}
               onSort={handleSort}
               headCells={TABLE_HEAD}
-              rowCount={_productsTable.length}
-              numSelected={selected.length}
-              onSelectAllRows={handleSelectAllRows}
             />
 
             <TableBody>
-              {stableSort(_productsTable, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => (
-                  <EcommerceAccountOrdersTableRow
-                    key={row.id}
-                    row={row}
-                    selected={selected.includes(row.id)}
-                    onSelectRow={() => handleSelectRow(row.id)}
-                  />
-                ))}
-
-              {emptyRows > 0 && (
-                <TableRow
-                  sx={{
-                    height: (dense ? 36 : 57) * emptyRows,
-                  }}
-                >
-                  <TableCell colSpan={9} />
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                    <CircularProgress />
+                  </TableCell>
                 </TableRow>
+              ) : orders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      No orders found
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                stableSort(orders, getComparator(order, orderBy)).map((row) => (
+                  <TableRow
+                    key={row.id}
+                    hover
+                  >
+                    <TableCell>{row.order_number}</TableCell>
+
+                    <TableCell>
+                      <Stack direction="row" alignItems="center" spacing={2}>
+                        <Box
+                          component="img"
+                          src={row.first_item?.cover_url || '/assets/images/placeholder.svg'}
+                          alt={row.first_item?.product_name || 'Product'}
+                          sx={{ 
+                            width: 48, 
+                            height: 48, 
+                            borderRadius: 1,
+                            objectFit: 'cover',
+                            bgcolor: 'background.neutral'
+                          }}
+                        />
+                        <Box>
+                          <Typography variant="body2">
+                            {row.first_item?.product_name || 'Product'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {row.items_count} {row.items_count === 1 ? 'item' : 'items'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
+
+                    <TableCell>{fDate(row.created_at)}</TableCell>
+
+                    <TableCell>{fCurrency(parseFloat(row.total_amount))}</TableCell>
+
+                    <TableCell>
+                      <Label color={getStatusColor(row.status)}>
+                        {row.status}
+                      </Label>
+                    </TableCell>
+
+                    <TableCell align="right">
+                      <Iconify icon="carbon:overflow-menu-vertical" />
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -221,7 +319,7 @@ export default function EcommerceAccountOrdersPage() {
         <TablePagination
           page={page}
           component="div"
-          count={_productsTable.length}
+          count={totalCount}
           rowsPerPage={rowsPerPage}
           onPageChange={handleChangePage}
           rowsPerPageOptions={[5, 10, 25]}

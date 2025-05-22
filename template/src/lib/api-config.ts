@@ -59,18 +59,33 @@ export const getApiHeaders = (includeAuth = false, accessToken?: string) => {
 export const handleApiError = async (response: Response) => {
   if (!response.ok) {
     let errorMessage = 'An error occurred';
+    let errorDetails = null;
+    
     try {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const errorData = await response.json();
         errorMessage = errorData.error || errorData.message || errorData.detail || errorMessage;
+        errorDetails = errorData;
       } else {
         errorMessage = response.statusText || errorMessage;
       }
     } catch (e) {
       errorMessage = response.statusText || errorMessage;
     }
-    throw new Error(errorMessage);
+
+    console.error('API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      message: errorMessage,
+      details: errorDetails
+    });
+
+    throw new Error(JSON.stringify({
+      status: response.status,
+      message: errorMessage,
+      details: errorDetails
+    }));
   }
   return response;
 };

@@ -1,5 +1,5 @@
 // @mui
-import { Box, TableRow, Checkbox, TableCell, TableHead, TableSortLabel } from '@mui/material';
+import { Box, TableRow, TableCell, TableHead, TableSortLabel } from '@mui/material';
 //
 import { visuallyHidden } from './utils';
 
@@ -8,32 +8,20 @@ import { visuallyHidden } from './utils';
 interface Prop {
   order: 'asc' | 'desc';
   orderBy: string;
-  rowCount: number;
   headCells: any[];
-  numSelected: number;
   onSort: (id: string) => void;
-  onSelectAllRows: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function EcommerceAccountOrdersTableHead({
   order,
   onSort,
   orderBy,
-  rowCount,
   headCells,
-  numSelected,
-  onSelectAllRows,
 }: Prop) {
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllRows}
-          />
-        </TableCell>
+        {/* Removed checkbox cell */}
 
         {headCells.map((headCell) => (
           <TableCell

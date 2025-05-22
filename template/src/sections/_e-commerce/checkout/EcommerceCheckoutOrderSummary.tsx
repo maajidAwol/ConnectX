@@ -7,6 +7,8 @@ import {
   Typography,
   StackProps,
   IconButton,
+  Card,
+  Button,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // utils
@@ -21,15 +23,16 @@ import { useAuthStore } from 'src/store/auth';
 
 // ----------------------------------------------------------------------
 
-type Props = {
+interface EcommerceCheckoutOrderSummaryProps {
   tax: number;
   total: number;
   subtotal: number;
   shipping: number;
   discount: number;
-  products?: any[];
+  products: CartItem[];
   loading?: boolean;
-};
+  onPlaceOrder?: () => void;
+}
 
 export default function EcommerceCheckoutOrderSummary({
   tax,
@@ -39,86 +42,66 @@ export default function EcommerceCheckoutOrderSummary({
   discount,
   products,
   loading,
-}: Props) {
+  onPlaceOrder,
+}: EcommerceCheckoutOrderSummaryProps) {
   const { removeItem } = useCartStore();
   const { user } = useAuthStore();
 
   return (
-    <Stack
-      spacing={3}
-      sx={{
-        p: 5,
-        borderRadius: 2,
-        border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.24)}`,
-      }}
-    >
-      <Typography variant="h6"> Order Summary </Typography>
-
-      {user && (
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">Customer Details</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {user.name}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {user.email}
-          </Typography>
-          {user.phone_number && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {user.phone_number}
-            </Typography>
-          )}
-        </Stack>
-      )}
-
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      {!!products?.length && (
-        <>
-          {products.map((product) => (
-            <ProductItem 
-              key={product.id} 
-              product={product} 
-              onRemove={() => removeItem(product.id)}
-            />
-          ))}
-
-          <Divider sx={{ borderStyle: 'dashed' }} />
-        </>
-      )}
+    <Card sx={{ p: 3 }}>
+      <Typography variant="h6" sx={{ mb: 3 }}>
+        Order Summary
+      </Typography>
 
       <Stack spacing={2}>
-        <Row label="Subtotal" value={fCurrency(subtotal)} />
-        <Row label="Shipping" value={fCurrency(shipping)} />
-        {discount > 0 && (
-          <Row label="Discount" value={`-${fCurrency(discount)}`} />
-        )}
-        {tax > 0 && (
-          <Row label="Tax" value={fCurrency(tax)} />
-        )}
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Subtotal
+          </Typography>
+          <Typography variant="subtitle2">${subtotal}</Typography>
+        </Stack>
+
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Shipping
+          </Typography>
+          <Typography variant="subtitle2">${shipping}</Typography>
+        </Stack>
+
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Tax
+          </Typography>
+          <Typography variant="subtitle2">${tax}</Typography>
+        </Stack>
+
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Discount
+          </Typography>
+          <Typography variant="subtitle2">-${discount}</Typography>
+        </Stack>
+
+        <Divider sx={{ borderStyle: 'dashed' }} />
+
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="subtitle1">Total</Typography>
+          <Typography variant="subtitle1" sx={{ color: 'error.main' }}>
+            ${total}
+          </Typography>
+        </Stack>
+
+        <Button
+          size="large"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          onClick={onPlaceOrder}
+        >
+          Place Order
+        </Button>
       </Stack>
-
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      <Row
-        label="Total"
-        value={fCurrency(total)}
-        sx={{
-          typography: 'h6',
-          '& span': { typography: 'h6' },
-        }}
-      />
-
-      <LoadingButton
-        size="large"
-        variant="contained"
-        color="inherit"
-        type="submit"
-        loading={loading}
-      >
-        Place Order
-      </LoadingButton>
-    </Stack>
+    </Card>
   );
 }
 
