@@ -1,5 +1,7 @@
 from rest_framework import viewsets, permissions
 from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
+
+from tenants.permissions import IsTenantOwner
 from .models import User
 from .serializers import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -32,6 +34,8 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from core.pagination import CustomPagination
+from .permissions import CanDeleteMember
+from django.db import models
 
 
 User = get_user_model()
@@ -82,7 +86,7 @@ class UserViewSet(viewsets.ModelViewSet):
             # The actual permission/role check happens within the create method.
             return [permissions.AllowAny()]
         if self.action == "destroy":
-            return [permissions.IsAdminUser()]
+            return [CanDeleteMember()]
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
@@ -139,6 +143,9 @@ class UserViewSet(viewsets.ModelViewSet):
                     and validated_data["role"] == User.ADMIN
                 ):
                     validated_data["tenant"] = None  # Global admin
+                    validated_data["is_staff"] = True
+                    validated_data["is_superuser"] = True
+                    validated_data["is_active"] = True
                 elif (
                     "tenant" not in validated_data
                     and validated_data["role"] != User.ADMIN
@@ -189,27 +196,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """Only admins and owners can delete users."""
-        if not request.user.is_authenticated:
-            return Response(
-                {"error": "Authentication required."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        if request.user.role not in [User.ADMIN, User.OWNER]:
-            return Response(
-                {"error": "Only admins and owners can delete users."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        # If user is an owner, they can only delete users from their tenant
-        if request.user.role == User.OWNER:
-            instance = self.get_object()
-            if instance.tenant != request.user.tenant:
-                return Response(
-                    {"error": "You can only delete users from your own tenant."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
         return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=["get"], url_path="me")
@@ -260,9 +246,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        if request.user.role not in [User.ADMIN, User.OWNER]:
+        if request.user.role not in [User.ADMIN, User.OWNER, User.MEMBER]:
             return Response(
-                {"error": "Only admins and owners can view members."},
+                {"error": "Only admins , members and owners can view members."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -281,6 +267,125 @@ class UserViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(members, many=True)
         return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary="List all admin users",
+        operation_description="""
+        List all admin users in the system.
+        Only accessible by superusers and existing admins.
+        
+        Query Parameters:
+        - page: Page number (default: 1)
+        - page_size: Number of items per page (default: 10, max: 100)
+        - search: Search in name and email
+        - ordering: Order by field (prefix with '-' for descending order)
+        - is_active: Filter by active status
+        - is_verified: Filter by verification status
+        """,
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page (max: 100)",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "search",
+                openapi.IN_QUERY,
+                description="Search in name and email",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "ordering",
+                openapi.IN_QUERY,
+                description="Order by field (prefix with '-' for descending order). Available fields: created_at, updated_at, name",
+                type=openapi.TYPE_STRING,
+                required=False,
+                enum=[
+                    "created_at",
+                    "updated_at",
+                    "name",
+                    "-created_at",
+                    "-updated_at",
+                    "-name",
+                ],
+            ),
+            openapi.Parameter(
+                "is_active",
+                openapi.IN_QUERY,
+                description="Filter by active status",
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+            ),
+            openapi.Parameter(
+                "is_verified",
+                openapi.IN_QUERY,
+                description="Filter by verification status",
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="List of admin users", schema=UserSerializer(many=True)
+            ),
+            403: openapi.Response(description="Permission denied"),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="admins")
+    def admins(self, request):
+        """
+        List all admin users.
+        Only accessible by superusers and existing admins.
+        """
+        # Check if the user has permission to view admins
+        if not (request.user.is_superuser or request.user.role == User.ADMIN):
+            return Response(
+                {"error": "You do not have permission to view admin users."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Get all admin users
+        admin_users = User.objects.filter(role=User.ADMIN)
+
+        # Apply filters
+        is_active = request.query_params.get("is_active")
+        if is_active is not None:
+            is_active = is_active.lower() == "true"
+            admin_users = admin_users.filter(is_active=is_active)
+
+        is_verified = request.query_params.get("is_verified")
+        if is_verified is not None:
+            is_verified = is_verified.lower() == "true"
+            admin_users = admin_users.filter(is_verified=is_verified)
+
+        # Apply search
+        search_query = request.query_params.get("search")
+        if search_query:
+            admin_users = admin_users.filter(
+                models.Q(name__icontains=search_query)
+                | models.Q(email__icontains=search_query)
+            )
+
+        # Apply ordering
+        ordering = request.query_params.get("ordering", "-created_at")
+        if ordering:
+            admin_users = admin_users.order_by(ordering)
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_admins = paginator.paginate_queryset(admin_users, request)
+        serializer = self.get_serializer(paginated_admins, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class UpdateProfileView(APIView):

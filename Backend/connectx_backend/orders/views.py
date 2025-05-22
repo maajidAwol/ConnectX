@@ -13,7 +13,7 @@ from django_filters import FilterSet, CharFilter, ModelChoiceFilter
 
 from .models import Order, OrderHistory,OrderProductItem
 from .serializers import OrderSerializer, OrderHistorySerializer, OrderListSerializer, WriteOrderSerializer
-from users.permissions import IsTenantOwner
+from users.permissions import IsTenantOwner,IsTenantMember
 from core.pagination import CustomPagination
 from users.models import User
 
@@ -79,7 +79,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 pass
         
         # Filter based on user role and tenant
-        tenant_owner_permission = IsTenantOwner()
+        tenant_owner_permission = IsTenantMember()
         if tenant_owner_permission.has_permission(self.request, self):
             # Allow tenant owners to see all orders related to their tenant
             # (as selling tenant or with products owned by this tenant)
@@ -299,7 +299,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
             
         # Only tenant owners can access other users' orders
-        if not IsTenantOwner().has_permission(request, self):
+        if not IsTenantMember().has_permission(request, self):
             return Response(
                 {"error": "Permission denied"},
                 status=status.HTTP_403_FORBIDDEN
@@ -598,7 +598,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def tenant_statistics(self, request):
         """Get statistics about orders related to the current tenant."""
         # Only tenant owners can access statistics
-        tenant_owner_permission = IsTenantOwner()
+        tenant_owner_permission = IsTenantMember()
         if not tenant_owner_permission.has_permission(self.request, self):
             return Response(
                 {"error": "Only tenant owners can access order statistics"},
@@ -767,7 +767,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         # 3. User is a tenant owner/admin
         if (product.owner != tenant and 
             tenant not in product.tenant.all() and 
-            not IsTenantOwner().has_permission(request, self)):
+            not IsTenantMember().has_permission(request, self)):
             return Response(
                 {"error": "You don't have permission to view statistics for this product"},
                 status=status.HTTP_403_FORBIDDEN

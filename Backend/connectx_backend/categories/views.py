@@ -3,7 +3,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from .models import Category
 from .serializers import CategorySerializer
-from users.permissions import IsTenantOwner  # Ensure only admins can modify categories
+from users.permissions import IsTenantOwner,IsTenantMember  # Ensure only admins can modify categories
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -13,7 +13,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """Allow all authenticated users to read, but only tenant owners can write."""
         if self.action in ["list", "retrieve"]:
             return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsTenantOwner()]
+        return [permissions.IsAuthenticated(), IsTenantMember()]
 
     def get_queryset(self):
         """Ensure tenants can only access their own categories."""

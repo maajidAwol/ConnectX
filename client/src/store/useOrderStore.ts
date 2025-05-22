@@ -32,20 +32,25 @@ interface OrderResponse {
 
 interface OrderStore {
   orders: Order[]
+  recentOrders: Order[]
   isLoading: boolean
+  isLoadingRecent: boolean
   error: string | null
   currentPage: number
   totalPages: number
   pageSize: number
   totalCount: number
   fetchOrders: (page?: number, size?: number) => Promise<void>
+  fetchRecentOrders: () => Promise<void>
   setCurrentPage: (page: number) => void
   setPageSize: (size: number) => void
 }
 
 const useOrderStore = create<OrderStore>((set, get) => ({
   orders: [],
+  recentOrders: [],
   isLoading: false,
+  isLoadingRecent: false,
   error: null,
   currentPage: 1,
   totalPages: 1,
@@ -55,9 +60,7 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   fetchOrders: async (page = 1, size = 10) => {
     try {
       set({ isLoading: true, error: null })
-      const { accessToken, isAuthenticated } = useAuthStore.getState()
-
-      console.log(accessToken)
+      const { accessToken } = useAuthStore.getState()
       
       const response = await axios.get<OrderResponse>(
         `https://connectx-9agd.onrender.com/api/orders/?page=${page}&size=${size}`,
@@ -68,7 +71,7 @@ const useOrderStore = create<OrderStore>((set, get) => ({
         }
       )
 
-      const { results, count, next, previous } = response.data
+      const { results, count } = response.data
       const totalPages = Math.ceil(count / size)
 
       set({
@@ -83,6 +86,32 @@ const useOrderStore = create<OrderStore>((set, get) => ({
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch orders',
         isLoading: false,
+      })
+    }
+  },
+
+  fetchRecentOrders: async () => {
+    try {
+      set({ isLoadingRecent: true, error: null })
+      const { accessToken } = useAuthStore.getState()
+      
+      const response = await axios.get<OrderResponse>(
+        'https://connectx-9agd.onrender.com/api/orders/?page=1&size=5',
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+
+      set({
+        recentOrders: response.data.results,
+        isLoadingRecent: false,
+      })
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to fetch recent orders',
+        isLoadingRecent: false,
       })
     }
   },

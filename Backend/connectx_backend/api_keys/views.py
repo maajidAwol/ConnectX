@@ -5,12 +5,12 @@ from .serializers import ApiKeySerializer
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from users.permissions import IsTenantOwner
+from users.permissions import IsTenantMember
 
 class ApiKeyViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'delete']  
     serializer_class = ApiKeySerializer
-    permission_classes = [IsAuthenticated, IsTenantOwner]
+    permission_classes = [IsAuthenticated, IsTenantMember]
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):

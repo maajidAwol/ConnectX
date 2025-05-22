@@ -29,7 +29,7 @@ class ProductSerializer(serializers.ModelSerializer):
         max_digits=10, decimal_places=2, required=True
     )
     name = serializers.CharField(required=True)
-    sku = serializers.CharField(required=True)
+    sku = serializers.CharField(read_only=True)
 
     # Add fields for file uploads
     cover_image_upload = serializers.ImageField(
@@ -236,6 +236,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "selling_price",
             "cover_url",  # Make these read-only as they are set internally
             "images",  # Make these read-only as they are set internally
+            "sku",
         ]
         extra_kwargs = {
             "description": {"required": False},
@@ -252,7 +253,6 @@ class ProductSerializer(serializers.ModelSerializer):
         swagger_schema_fields = {
             "type": "object",
             "properties": {
-                "sku": {"type": "string", "example": "SKU-001"},
                 "name": {"type": "string", "example": "Smartphone X"},
                 "base_price": {
                     "type": "number",

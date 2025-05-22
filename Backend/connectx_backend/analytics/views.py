@@ -1,12 +1,12 @@
 from rest_framework import viewsets, permissions
 from .models import Analytics
 from .serializers import AnalyticsSerializer
-from users.permissions import IsTenantOwner
+from users.permissions import IsTenantMember
 
 
 class AnalyticsViewSet(viewsets.ReadOnlyModelViewSet):  # Read-only analytics
     serializer_class = AnalyticsSerializer
-    permission_classes = [permissions.IsAuthenticated, IsTenantOwner]
+    permission_classes = [permissions.IsAuthenticated, IsTenantMember]
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):

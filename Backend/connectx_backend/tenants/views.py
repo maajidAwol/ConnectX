@@ -10,8 +10,15 @@ from drf_yasg import openapi
 from .models import Tenant
 from .serializers import TenantSerializer, TenantCreateSerializer
 from .permissions import TenantPermission, IsTenantOwner, IsAdmin
-from users.utils.email_utils import send_verification_email
+from django.utils import timezone
+from django.urls import path
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
+from django_filters import rest_framework as filters
+from rest_framework.filters import SearchFilter, OrderingFilter
 
+from users.utils.email_utils import send_verification_email
 
 
 # Define a custom serializer for the request body if needed
@@ -23,6 +30,86 @@ class TenantCreateRequestSerializer(serializers.Serializer):
     # Add any other fields you expect in the request
 
 
+class VerificationStatusView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    @swagger_auto_schema(
+        operation_summary="Update tenant verification status",
+        operation_description="Update the verification status of a tenant. Only admin users can perform this action.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "is_verified": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN,
+                    description="Whether the tenant is verified.",
+                ),
+                "reason": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Reason for the verification status update.",
+                ),
+            },
+            required=["is_verified"],  # Define required fields here
+        ),
+        responses={
+            200: openapi.Response(
+                description="Verification status updated successfully."
+            ),
+            400: openapi.Response(description="Invalid input."),
+            403: openapi.Response(description="Permission denied."),
+        },
+    )
+    def patch(self, request, pk=None):
+        """
+        Update tenant verification status.
+        Only admin users can update verification status.
+        """
+        tenant = get_object_or_404(Tenant, pk=pk)
+        is_verified = request.data.get("is_verified")
+
+        # Convert string to boolean if needed
+        if isinstance(is_verified, str):
+            is_verified = is_verified.lower() == "true"
+
+        if not isinstance(is_verified, bool):
+            return Response(
+                {"error": "is_verified must be a boolean value"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tenant.is_verified = is_verified
+        tenant.tenant_verification_status = "approved" if is_verified else "rejected"
+        tenant.tenant_verification_date = timezone.now().date()
+        tenant.save()
+        serializer = TenantSerializer(tenant)
+        return Response(serializer.data)
+
+
+class TenantFilter(filters.FilterSet):
+    is_verified = filters.BooleanFilter()
+    is_active = filters.BooleanFilter()
+    tenant_verification_status = filters.CharFilter()
+    created_at = filters.DateFilter()
+    updated_at = filters.DateFilter()
+    business_type = filters.CharFilter()
+
+    class Meta:
+        model = Tenant
+        fields = [
+            "is_verified",
+            "is_active",
+            "tenant_verification_status",
+            "created_at",
+            "updated_at",
+            "business_type",
+        ]
+
+
+class CustomPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class TenantViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing tenants.
@@ -32,6 +119,102 @@ class TenantViewSet(viewsets.ModelViewSet):
     serializer_class = TenantSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    pagination_class = CustomPagination
+    filter_backends = [filters.DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = TenantFilter
+    search_fields = [
+        "name",
+        "email",
+        "legal_name",
+        "business_registration_number",
+        "business_type",
+        "business_bio",
+    ]
+    ordering_fields = ["created_at", "updated_at", "name"]
+    ordering = ["-created_at"]  # Default ordering
+
+    @swagger_auto_schema(
+        operation_summary="List all tenants",
+        operation_description="Get a list of all tenants with filtering, searching, and pagination options",
+        manual_parameters=[
+            openapi.Parameter(
+                "is_verified",
+                openapi.IN_QUERY,
+                description="Filter by verification status",
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+            ),
+            openapi.Parameter(
+                "is_active",
+                openapi.IN_QUERY,
+                description="Filter by active status",
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+            ),
+            openapi.Parameter(
+                "tenant_verification_status",
+                openapi.IN_QUERY,
+                description="Filter by verification status",
+                type=openapi.TYPE_STRING,
+                required=False,
+                enum=["unverified", "pending", "under_review", "approved", "rejected"],
+            ),
+            openapi.Parameter(
+                "created_at",
+                openapi.IN_QUERY,
+                description="Filter by creation date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "updated_at",
+                openapi.IN_QUERY,
+                description="Filter by last update date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+                required=False,
+            ),
+            openapi.Parameter(
+                "business_type",
+                openapi.IN_QUERY,
+                description="Filter by business type",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "search",
+                openapi.IN_QUERY,
+                description="Search in name, email, legal_name, business_registration_number, business_type, business_bio",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "ordering",
+                openapi.IN_QUERY,
+                description="Order by field (prefix with '-' for descending order). Available fields: created_at, updated_at, name",
+                type=openapi.TYPE_STRING,
+                required=False,
+                enum=["created_at", "updated_at", "name", "-created_at", "-updated_at", "-name"],
+            ),
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page (max: 100)",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def get_serializer_class(self):
         """
@@ -43,7 +226,7 @@ class TenantViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Filter tenants based on user role:
+        Filter tenants based on user role and apply search/filtering:
         - Admin can see all tenants
         - Owner can only see their own tenant
         - Customer can see their tenant and public tenants
@@ -65,7 +248,7 @@ class TenantViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             permission_classes = []
         elif self.action in ["update", "partial_update"]:
-            permission_classes = [IsAuthenticated, IsTenantOwner]
+            permission_classes = [IsAuthenticated, IsTenantOwner | IsAdmin]
         elif self.action == "destroy":
             permission_classes = [IsAuthenticated, IsTenantOwner | IsAdmin]
         elif self.action == "verification_status":
@@ -88,14 +271,14 @@ class TenantViewSet(viewsets.ModelViewSet):
         from users.models import User
 
         # Create a user for the tenant with required fields
-        tenant_owner=User.objects.create(
+        tenant_owner = User.objects.create(
             name=data.get("fullname", "Tenant Owner"),  # Provide a default name
             email=tenant.email,
             password=data.get("password", ""),  # Password will be hashed in the model
             tenant=tenant,
             role="owner",
         )
-        #send verification email
+        # send verification email
         send_verification_email(tenant_owner)
 
         headers = self.get_success_headers(serializer.data)
@@ -163,26 +346,29 @@ class TenantViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(tenant)
         return Response(serializer.data)
 
-    @action(detail=True, methods=["patch"], url_path="verification-status")
-    def verification_status(self, request, pk=None):
+    @swagger_auto_schema(
+        operation_summary="List tenants under review",
+        operation_description="List all tenants with a verification status of 'under_reviw'. Only admin users can access this endpoint.",
+        responses={
+            200: openapi.Response(description="List of tenants under review."),
+            403: openapi.Response(description="Permission denied."),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="pending-verifications")
+    def pending_verifications(self, request):
         """
-        Update tenant verification status.
-        Only admin users can update verification status.
+        List all tenants with a verification status of 'under_reviw'.
+        Only admin users can access this endpoint.
         """
-        tenant = self.get_object()
-        is_verified = request.data.get("is_verified")
-
-        # Convert string to boolean if needed
-        if isinstance(is_verified, str):
-            is_verified = is_verified.lower() == "true"
-
-        if not isinstance(is_verified, bool):
+        if not request.user.is_staff and request.user.role != "admin":
             return Response(
-                {"error": "is_verified must be a boolean value"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "You do not have permission to perform this action."},
+                status=status.HTTP_403_FORBIDDEN,
             )
-
-        tenant.is_verified = is_verified
-        tenant.save()
-        serializer = self.get_serializer(tenant)
-        return Response(serializer.data)
+        pending_tenants = Tenant.objects.filter(
+            tenant_verification_status="pending"
+        )
+        paginator = CustomPagination()
+        paginated_tenants = paginator.paginate_queryset(pending_tenants, request)
+        serializer = self.get_serializer(paginated_tenants, many=True)
+        return paginator.get_paginated_response(serializer.data)

@@ -17,6 +17,7 @@ from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from api_keys.permissions import HasValidAPIKey
 from users.models import User
+from categories.serializers import CategorySerializer
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -32,7 +33,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Allow all authenticated users to read, but only tenant owners can write."""
-        if self.action in ["list", "retrieve", "by_category"]:
+        if self.action in ["list", "retrieve", "by_category", "listed_categories"]:
             if (
                 self.request.user.is_anonymous
                 or self.request.user.role == User.CUSTOMER
@@ -43,7 +44,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated(), IsTenantMember()]
         elif self.action == "destroy":
             # Only admins can delete products
-            return [IsTenantOwner]
+            return [IsTenantMember]
         return [permissions.IsAuthenticated()]
 
     @swagger_auto_schema(
@@ -176,6 +177,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         else:
             # Unauthenticated (API key access)
             # Only show products that are listed under the tenant
+            print("tenant", tenant)
             listings = ProductListing.objects.filter(tenant=tenant)
             product_ids = listings.values_list("product_id", flat=True)
             queryset = Product.objects.filter(id__in=product_ids)
@@ -300,6 +302,29 @@ class ProductViewSet(viewsets.ModelViewSet):
         category = get_object_or_404(Category, id=category_id)
         products = self.get_queryset().filter(category=category)
         serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+    @swagger_auto_schema(
+        operation_description="Get categories of listed products",
+        operation_summary="List categories of listed products",
+        responses={
+            200: openapi.Response(
+                description="Success", schema=CategorySerializer(many=True)
+            ),
+            404: "No categories found",
+            500: "Server error",
+        },
+    )
+    @action(
+        detail=False, methods=["GET"], url_path="listed-categories"
+    )
+    def listed_categories(self, request):
+        """Get categories of listed products without duplicates."""
+        categories = Category.objects.filter(products__in=self.get_queryset()).distinct()
+        page = self.paginate_queryset(categories)
+        if page is not None:
+            serializer = CategorySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
 
     def perform_create(self, serializer):
