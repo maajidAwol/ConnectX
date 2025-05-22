@@ -47,7 +47,7 @@ interface TenantStore {
   pageSize: number
   searchQuery: string
   statusFilter: string
-  sortOrder: 'created_at' | '-created_at'
+  sortOrder: 'created_at' | '-created_at' | 'name' | '-name'
 
   // Business Profile State
   tenantData: Tenant | null
@@ -58,7 +58,7 @@ interface TenantStore {
   setPage: (page: number) => void
   setSearchQuery: (query: string) => void
   setStatusFilter: (status: string) => void
-  setSortOrder: (order: 'created_at' | '-created_at') => void
+  setSortOrder: (order: 'created_at' | '-created_at' | 'name' | '-name') => void
   refreshTenants: () => Promise<void>
 
   // Business Profile Actions
@@ -138,7 +138,7 @@ export const useTenantStore = create<TenantStore>((set, get) => ({
     get().fetchTenants()
   },
 
-  setSortOrder: (order: 'created_at' | '-created_at') => {
+  setSortOrder: (order: 'created_at' | '-created_at' | 'name' | '-name') => {
     set({ sortOrder: order })
     get().fetchTenants()
   },
