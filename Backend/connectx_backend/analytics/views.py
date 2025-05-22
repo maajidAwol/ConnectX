@@ -46,30 +46,63 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
 
     @swagger_auto_schema(
         operation_description="Get analytics overview",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
         responses={200: AdminAnalyticsOverviewSerializer()},
     )
     @action(detail=False, methods=["get"])
     def overview(self, request):
-        # Get total merchants (users with owner or member role)
-        total_merchants = User.objects.filter(
-            Q(role="owner") | Q(role="member")
-        ).count()
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Base queryset
+        orders_qs = Order.objects.all()
+        users_qs = User.objects.filter(Q(role="owner") | Q(role="member"))
+        tenants_qs = Tenant.objects.all()
+
+        # Apply date filters if provided
+        if start_date:
+            orders_qs = orders_qs.filter(created_at__gte=start_date)
+            users_qs = users_qs.filter(created_at__gte=start_date)
+            tenants_qs = tenants_qs.filter(created_at__gte=start_date)
+        if end_date:
+            orders_qs = orders_qs.filter(created_at__lte=end_date)
+            users_qs = users_qs.filter(created_at__lte=end_date)
+            tenants_qs = tenants_qs.filter(created_at__lte=end_date)
+
+        # Get total merchants
+        total_merchants = users_qs.count()
 
         # Get total revenue from confirmed orders
         total_revenue = (
-            Order.objects.filter(
+            orders_qs.filter(
                 status__in=["confirmed", "shipped", "delivered"]
             ).aggregate(total=Sum("total_amount"))["total"]
             or 0
         )
 
         # Get total orders
-        total_orders = Order.objects.count()
+        total_orders = orders_qs.count()
 
-        # Get active tenants (had orders in last 30 days)
+        # Get active tenants
         thirty_days_ago = timezone.now() - timedelta(days=30)
         active_tenants = (
-            Tenant.objects.filter(orders__created_at__gte=thirty_days_ago)
+            tenants_qs.filter(orders__created_at__gte=thirty_days_ago)
             .distinct()
             .count()
         )
@@ -101,25 +134,78 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
             ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (total_revenue, total_orders)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
         ],
         responses={200: TopTenantSerializer(many=True)},
     )
     @action(detail=False, methods=["get"])
     def top_tenants(self, request):
-        thirty_days_ago = timezone.now() - timedelta(days=30)
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "total_revenue")
+        order_direction = request.query_params.get("order", "desc")
+
+        # Validate order_by field
+        valid_order_fields = ["total_revenue", "total_orders", "tenant_name"]
+        if order_by not in valid_order_fields:
+            order_by = "total_revenue"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "desc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Base queryset
+        orders_qs = Order.objects.filter(
+            status__in=["confirmed", "shipped", "delivered"]
+        )
+
+        # Apply date filters if provided
+        if start_date:
+            orders_qs = orders_qs.filter(created_at__gte=start_date)
+        if end_date:
+            orders_qs = orders_qs.filter(created_at__lte=end_date)
 
         top_tenants = (
-            Order.objects.filter(
-                status__in=["confirmed", "shipped", "delivered"],
-                created_at__gte=thirty_days_ago,
-            )
-            .values("tenant__name")
+            orders_qs.values("tenant__name")
             .annotate(
                 tenant_name=F("tenant__name"),
                 total_revenue=Sum("total_amount"),
                 total_orders=Count("id", distinct=True),
             )
-            .order_by("-total_revenue")
+            .order_by(order_by_str)
         )
 
         # Apply pagination
@@ -145,16 +231,95 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
             ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "method",
+                openapi.IN_QUERY,
+                description="HTTP method (GET, POST, PUT, DELETE)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "status_code",
+                openapi.IN_QUERY,
+                description="HTTP status code",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (total_calls, avg_response_time, success_rate)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
         ],
         responses={200: APIUsageStatsSerializer(many=True)},
     )
     @action(detail=False, methods=["get"])
     def api_usage(self, request):
-        thirty_days_ago = timezone.now() - timedelta(days=30)
+        # Get filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        method = request.query_params.get("method")
+        status_code = request.query_params.get("status_code")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "total_calls")
+        order_direction = request.query_params.get("order", "desc")
+
+        # Validate order_by field
+        valid_order_fields = [
+            "total_calls",
+            "avg_response_time",
+            "success_rate",
+            "endpoint",
+        ]
+        if order_by not in valid_order_fields:
+            order_by = "total_calls"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "desc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Base queryset
+        api_stats_qs = APIUsageLog.objects.all()
+
+        # Apply filters
+        if start_date:
+            api_stats_qs = api_stats_qs.filter(timestamp__gte=start_date)
+        if end_date:
+            api_stats_qs = api_stats_qs.filter(timestamp__lte=end_date)
+        if method:
+            api_stats_qs = api_stats_qs.filter(method=method.upper())
+        if status_code:
+            api_stats_qs = api_stats_qs.filter(status_code=status_code)
 
         api_stats = (
-            APIUsageLog.objects.filter(timestamp__gte=thirty_days_ago)
-            .values("endpoint", "method")
+            api_stats_qs.values("endpoint", "method")
             .annotate(
                 total_calls=Count("id"),
                 avg_response_time=Sum("response_time") / Count("id"),
@@ -162,7 +327,7 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
                 * 100.0
                 / Count("id"),
             )
-            .order_by("-total_calls")
+            .order_by(order_by_str)
         )
 
         # Apply pagination
@@ -188,14 +353,90 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
             ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "action",
+                openapi.IN_QUERY,
+                description="Activity action type",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "role",
+                openapi.IN_QUERY,
+                description="User role",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (timestamp, action, role)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
         ],
         responses={200: RecentActivitySerializer(many=True)},
     )
     @action(detail=False, methods=["get"])
     def recent_activities(self, request):
-        activities = ActivityLog.objects.select_related("user", "tenant").order_by(
-            "-timestamp"
-        )
+        # Get filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        action = request.query_params.get("action")
+        role = request.query_params.get("role")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "timestamp")
+        order_direction = request.query_params.get("order", "desc")
+
+        # Validate order_by field
+        valid_order_fields = ["timestamp", "action", "role"]
+        if order_by not in valid_order_fields:
+            order_by = "timestamp"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "desc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Base queryset
+        activities = ActivityLog.objects.select_related("user", "tenant")
+
+        # Apply filters
+        if start_date:
+            activities = activities.filter(timestamp__gte=start_date)
+        if end_date:
+            activities = activities.filter(timestamp__lte=end_date)
+        if action:
+            activities = activities.filter(action=action)
+        if role:
+            activities = activities.filter(role=role)
+
+        # Apply ordering
+        activities = activities.order_by(order_by_str)
 
         # Apply pagination
         paginator = self.pagination_class()
