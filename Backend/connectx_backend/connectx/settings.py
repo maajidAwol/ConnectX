@@ -262,3 +262,12 @@ LOGGING = {
 CHAPA_API_KEY = os.environ.get("CHAPA_API_KEY", "YOUR_TEST_API_KEY_HERE")
 CHAPA_API_URL = "https://api.chapa.co/v1/transaction/initialize"
 CHAPA_VERIFY_URL = "https://api.chapa.co/v1/transaction/verify/"
+
+
+
+# Trust the X-Forwarded-Proto header from GCP Load Balancer or reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Let Django trust forwarded host (e.g., for correct redirect and URL generation)
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = True
