@@ -1,9 +1,16 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
-from django.db.models import Sum, Count, Q, F, Avg
-from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncHour
+from rest_framework.permissions import IsAdminUser, AllowAny
+from django.db.models import Sum, Count, Q, F, Avg, Case, When, Value
+from django.db.models.functions import (
+    TruncDate,
+    TruncWeek,
+    TruncMonth,
+    TruncHour,
+    Length,
+    Substr,
+)
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.pagination import PageNumberPagination
@@ -313,8 +320,10 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
         # Build order_by string
         order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
 
-        # Base queryset
-        api_stats_qs = APIUsageLog.objects.all()
+        # Base queryset with endpoint validation
+        api_stats_qs = APIUsageLog.objects.filter(endpoint__isnull=False).exclude(
+            endpoint=""
+        )
 
         # Apply filters
         if start_date:
@@ -326,8 +335,23 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
         if status_code:
             api_stats_qs = api_stats_qs.filter(status_code=status_code)
 
+        # Aggregate statistics with normalized endpoint paths
         api_stats = (
-            api_stats_qs.values("endpoint", "method")
+            api_stats_qs.values("method")
+            .annotate(
+                endpoint=Case(
+                    When(
+                        endpoint="/",
+                        then=Value("/"),
+                    ),
+                    When(
+                        endpoint__endswith="/",
+                        then=Substr(F("endpoint"), 1, Length(F("endpoint")) - 1),
+                    ),
+                    default=F("endpoint"),
+                ),
+            )
+            .values("endpoint", "method")
             .annotate(
                 total_calls=Count("id"),
                 avg_response_time=Sum("response_time") / Count("id"),
@@ -1276,8 +1300,11 @@ class APIUsageLogViewSet(viewsets.ViewSet):
             else:  # monthly
                 start_date = end_date - timedelta(days=365)
 
-        # Base queryset
-        logs = APIUsageLog.objects.filter(timestamp__range=[start_date, end_date])
+        # Base queryset with endpoint validation
+        logs = APIUsageLog.objects.filter(
+            timestamp__range=[start_date, end_date],
+            endpoint__isnull=False,
+        ).exclude(endpoint="")
 
         # Group by interval
         if interval == "hourly":
@@ -1289,9 +1316,24 @@ class APIUsageLogViewSet(viewsets.ViewSet):
         else:  # monthly
             logs = logs.annotate(period=TruncMonth("timestamp"))
 
-        # Aggregate statistics
+        # Aggregate statistics with normalized endpoint paths
         stats = (
-            logs.values("endpoint", "period")
+            logs.values("method")
+            .annotate(
+                endpoint=Case(
+                    When(
+                        endpoint="/",
+                        then=Value("/"),
+                    ),
+                    When(
+                        endpoint__endswith="/",
+                        then=Substr(F("endpoint"), 1, Length(F("endpoint")) - 1),
+                    ),
+                    default=F("endpoint"),
+                ),
+                period=F("period"),
+            )
+            .values("endpoint", "method", "period")
             .annotate(
                 total_calls=Count("id"),
                 avg_response_time=Avg("response_time"),
