@@ -83,6 +83,8 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
               .toList(),
     };
     print("createChapaOrder");
+    print(baseUrl);
+    print(orderData);
     final response = await client.post(
       Uri.parse('$baseUrl/orders/'),
       headers: _headers,

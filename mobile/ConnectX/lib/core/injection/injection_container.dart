@@ -44,6 +44,7 @@ import '../../features/cart/domain/usecases/create_chapa_order.dart';
 import '../../features/cart/domain/usecases/get_orders.dart';
 
 final sl = GetIt.instance;
+// const baseUrl = 'https://connectx-backend-295168525338.europe-west1.run.app/api';
 const baseUrl = 'https://connectx-9agd.onrender.com/api';
 
 Future<void> init() async {
