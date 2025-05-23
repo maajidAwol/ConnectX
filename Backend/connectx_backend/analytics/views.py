@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser
 from django.db.models import Sum, Count, Q, F, Avg
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncHour
 from django.utils import timezone
@@ -49,7 +49,7 @@ class CustomPagination(PageNumberPagination):
 
 
 class AdminAnalyticsViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     pagination_class = CustomPagination
 
     @swagger_auto_schema(
@@ -1067,7 +1067,7 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
 
 
 class APIUsageLogViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     pagination_class = CustomPagination
 
     @swagger_auto_schema(
