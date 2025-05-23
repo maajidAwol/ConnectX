@@ -6,6 +6,8 @@ class User {
   final String role;
   final bool is_verified;
   final String? avatar_url;
+  final String? bio;
+  final String? phoneNumber;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17,6 +19,8 @@ class User {
     required this.role,
     required this.is_verified,
     this.avatar_url,
+    this.bio,
+    this.phoneNumber,
     required this.createdAt,
     required this.updatedAt,
   });

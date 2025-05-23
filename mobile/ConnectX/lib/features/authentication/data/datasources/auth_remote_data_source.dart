@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/services/storage_service.dart';
@@ -19,6 +20,12 @@ abstract class AuthRemoteDataSource {
   Future<void> verifyEmail(String email, String otp);
   Future<void> resendVerification(String email);
   Future<UserModel> getUserProfile();
+  Future<UserModel> updateProfile({
+    String? name,
+    String? bio,
+    String? phoneNumber,
+    String? avatarPath,
+  });
   // Future<void> updateUserProfile(UserModel user);
   Future<void> addAddress(AddressModel address);
   Future<List<AddressModel>> getAddresses();
@@ -309,5 +316,83 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     await storageService.saveUser(updatedUser);
 
     return updatedUser;
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    String? name,
+    String? bio,
+    String? phoneNumber,
+    String? avatarPath,
+  }) async {
+    final token = storageService.getAccessToken();
+
+    if (token == null) {
+      throw ServerException("User not logged in or token missing.");
+    }
+
+    // Create multipart request for file upload
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/users/update-profile/'),
+    );
+
+    // Add headers
+    request.headers.addAll({
+      'Accept': 'application/json',
+      'X-API-KEY': API_KEY,
+      'Authorization': 'Bearer $token',
+    });
+
+    // Add form fields (only if not null)
+    if (name != null && name.isNotEmpty) {
+      request.fields['name'] = name;
+    }
+    if (bio != null && bio.isNotEmpty) {
+      request.fields['bio'] = bio;
+    }
+    if (phoneNumber != null && phoneNumber.isNotEmpty) {
+      request.fields['phone_number'] = phoneNumber;
+    }
+
+    // Add avatar file if provided
+    if (avatarPath != null && avatarPath.isNotEmpty) {
+      final avatarFile = await http.MultipartFile.fromPath(
+        'avatar',
+        avatarPath,
+      );
+      request.files.add(avatarFile);
+    }
+
+    final streamedResponse = await client.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
+
+    print("Update profile response:");
+    print(response.body);
+    print(response.statusCode);
+
+    if (response.statusCode == 200) {
+      final updatedUser = UserModel.fromJson(json.decode(response.body));
+      await storageService.saveUser(updatedUser);
+      return updatedUser;
+    } else {
+      String errorMessage = 'Failed to update profile';
+      try {
+        final error = json.decode(response.body);
+        if (error is Map<String, dynamic>) {
+          errorMessage = error.entries
+              .map(
+                (e) =>
+                    '${e.key}: ${e.value is List ? e.value.join(', ') : e.value}',
+              )
+              .join('\n');
+        } else {
+          errorMessage = error.toString();
+        }
+      } catch (e) {
+        errorMessage = 'Server error: ${response.statusCode}';
+      }
+      throw ServerException(errorMessage);
+    }
   }
 }
