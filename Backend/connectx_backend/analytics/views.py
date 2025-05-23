@@ -1,8 +1,9 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
-from django.db.models import Sum, Count, Q, F
+from rest_framework.permissions import IsAdminUser, AllowAny
+from django.db.models import Sum, Count, Q, F, Avg
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncHour
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.pagination import PageNumberPagination
@@ -28,10 +29,17 @@ from .serializers import (
     TopTenantSerializer,
     APIUsageStatsSerializer,
     RecentActivitySerializer,
+    TenantAnalyticsOverviewSerializer,
+    RecentOrderSerializer,
+    SalesOverviewSerializer,
+    TopProductSerializer,
 )
 from tenants.models import Tenant
 from orders.models import Order
 from users.models import User
+from products.models import Product
+
+from users.permissions import IsTenantMember
 
 
 class CustomPagination(PageNumberPagination):
@@ -41,7 +49,7 @@ class CustomPagination(PageNumberPagination):
 
 
 class AdminAnalyticsViewSet(viewsets.ViewSet):
-    permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     pagination_class = CustomPagination
 
     @swagger_auto_schema(
@@ -445,7 +453,7 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
         return paginator.get_paginated_response(serializer.data)
 
 
-class AnalyticsViewSet(viewsets.ModelViewSet):
+class AnalyticsViewSet(viewsets.ViewSet):
     queryset = Analytics.objects.all()
     serializer_class = AnalyticsSerializer
     permission_classes = [IsAdminUser]
@@ -637,3 +645,887 @@ class AnalyticsViewSet(viewsets.ModelViewSet):
         paginator = self.pagination_class()
         paginated_tenants = paginator.paginate_queryset(top_tenants, request)
         return paginator.get_paginated_response(paginated_tenants)
+
+
+class TenantAnalyticsViewSet(viewsets.ViewSet):
+    permission_classes = [IsTenantMember]
+    pagination_class = CustomPagination
+
+    def get_tenant(self, request):
+        return request.user.tenant
+
+    @swagger_auto_schema(
+        operation_description="Get tenant dashboard overview",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: TenantAnalyticsOverviewSerializer()},
+    )
+    @action(detail=False, methods=["get"])
+    def overview(self, request):
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Base querysets
+        orders_qs = Order.objects.filter(tenant=tenant)
+        products_qs = Product.objects.filter(tenant=tenant)
+        customers_qs = User.objects.filter(tenant=tenant, role="customer")
+
+        # Apply date filters if provided
+        if start_date:
+            orders_qs = orders_qs.filter(created_at__gte=start_date)
+            products_qs = products_qs.filter(created_at__gte=start_date)
+            customers_qs = customers_qs.filter(created_at__gte=start_date)
+        if end_date:
+            orders_qs = orders_qs.filter(created_at__lte=end_date)
+            products_qs = products_qs.filter(created_at__lte=end_date)
+            customers_qs = customers_qs.filter(created_at__lte=end_date)
+
+        # Calculate metrics
+        total_revenue = (
+            orders_qs.filter(
+                status__in=["confirmed", "shipped", "delivered"]
+            ).aggregate(total=Sum("total_amount"))["total"]
+            or 0
+        )
+        total_orders = orders_qs.count()
+        total_products = products_qs.count()
+        total_customers = customers_qs.count()
+
+        data = {
+            "total_revenue": total_revenue,
+            "total_orders": total_orders,
+            "total_products": total_products,
+            "total_customers": total_customers,
+        }
+
+        serializer = TenantAnalyticsOverviewSerializer(data)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get recent orders",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "status",
+                openapi.IN_QUERY,
+                description="Order status",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: RecentOrderSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"])
+    def recent_orders(self, request):
+        tenant = self.get_tenant(request)
+
+        # Get filters
+        status = request.query_params.get("status")
+
+        # Base queryset
+        orders = Order.objects.filter(tenant=tenant).select_related("user")
+
+        # Apply filters
+        if status:
+            orders = orders.filter(status=status)
+
+        # Order by most recent
+        orders = orders.order_by("-created_at")
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_orders = paginator.paginate_queryset(orders, request)
+
+        # Serialize orders
+        orders_data = [
+            {
+                "id": order.id,
+                "order_number": order.order_number,
+                "customer_name": order.user.name,
+                "total_amount": order.total_amount,
+                "status": order.status,
+                "created_at": order.created_at,
+            }
+            for order in paginated_orders
+        ]
+
+        serializer = RecentOrderSerializer(orders_data, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get sales overview",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "interval",
+                openapi.IN_QUERY,
+                description="Time interval (daily, weekly, monthly)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (date, total_sales, order_count)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: SalesOverviewSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"])
+    def sales_overview(self, request):
+        tenant = self.get_tenant(request)
+
+        # Get filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        interval = request.query_params.get("interval", "daily")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "date")
+        order_direction = request.query_params.get("order", "asc")
+
+        # Validate order_by field
+        valid_order_fields = ["date", "total_sales", "order_count"]
+        if order_by not in valid_order_fields:
+            order_by = "date"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "asc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Set default date range if not provided
+        if not end_date:
+            end_date = timezone.now().date()
+        if not start_date:
+            if interval == "daily":
+                start_date = end_date - timedelta(days=30)
+            elif interval == "weekly":
+                start_date = end_date - timedelta(weeks=12)
+            else:  # monthly
+                start_date = end_date - timedelta(days=365)
+
+        # Base queryset
+        orders = Order.objects.filter(
+            tenant=tenant,
+            status__in=["confirmed", "shipped", "delivered"],
+            created_at__range=[start_date, end_date],
+        )
+
+        # Group by interval
+        if interval == "daily":
+            orders = (
+                orders.annotate(date=TruncDate("created_at"))
+                .values("date")
+                .annotate(total_sales=Sum("total_amount"), order_count=Count("id"))
+                .order_by(order_by_str)
+            )
+        elif interval == "weekly":
+            orders = (
+                orders.annotate(week=TruncWeek("created_at"))
+                .values("week")
+                .annotate(total_sales=Sum("total_amount"), order_count=Count("id"))
+                .order_by(order_by_str)
+            )
+        else:  # monthly
+            orders = (
+                orders.annotate(month=TruncMonth("created_at"))
+                .values("month")
+                .annotate(total_sales=Sum("total_amount"), order_count=Count("id"))
+                .order_by(order_by_str)
+            )
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_orders = paginator.paginate_queryset(orders, request)
+        serializer = SalesOverviewSerializer(paginated_orders, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get top products",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (total_sales, total_revenue, quantity)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: TopProductSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"])
+    def top_products(self, request):
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "total_sales")
+        order_direction = request.query_params.get("order", "desc")
+
+        # Validate order_by field
+        valid_order_fields = ["total_sales", "total_revenue", "quantity"]
+        if order_by not in valid_order_fields:
+            order_by = "total_sales"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "desc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Base queryset
+        products = Product.objects.filter(tenant=tenant)
+
+        # Apply date filters if provided
+        if start_date:
+            products = products.filter(created_at__gte=start_date)
+        if end_date:
+            products = products.filter(created_at__lte=end_date)
+
+        # Annotate with sales data
+        products = products.annotate(
+            total_sales=Sum("order_items__quantity"),
+            total_revenue=Sum(F("order_items__quantity") * F("order_items__price")),
+        ).order_by(order_by_str)
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products, request)
+
+        # Serialize products
+        products_data = [
+            {
+                "id": product.id,
+                "name": product.name,
+                "total_sales": product.total_sales or 0,
+                "total_revenue": product.total_revenue or 0,
+                "quantity": product.quantity,
+            }
+            for product in paginated_products
+        ]
+
+        serializer = TopProductSerializer(products_data, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get recent activities",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "action",
+                openapi.IN_QUERY,
+                description="Activity action type",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: RecentActivitySerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"])
+    def recent_activities(self, request):
+        tenant = self.get_tenant(request)
+
+        # Get filters
+        action = request.query_params.get("action")
+
+        # Base queryset
+        activities = ActivityLog.objects.filter(tenant=tenant).select_related("user")
+
+        # Apply filters
+        if action:
+            activities = activities.filter(action=action)
+
+        # Order by most recent
+        activities = activities.order_by("-timestamp")
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_activities = paginator.paginate_queryset(activities, request)
+        serializer = RecentActivitySerializer(paginated_activities, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class APIUsageLogViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+    pagination_class = CustomPagination
+
+    @swagger_auto_schema(
+        operation_description="Get detailed API usage logs",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "method",
+                openapi.IN_QUERY,
+                description="HTTP method (GET, POST, PUT, DELETE)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "status_code",
+                openapi.IN_QUERY,
+                description="HTTP status code",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "endpoint",
+                openapi.IN_QUERY,
+                description="API endpoint path",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "user",
+                openapi.IN_QUERY,
+                description="User ID",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "tenant",
+                openapi.IN_QUERY,
+                description="Tenant ID",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: APIUsageLogSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"])
+    def logs(self, request):
+        """Get detailed API usage logs with filtering options."""
+        # Get filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        method = request.query_params.get("method")
+        status_code = request.query_params.get("status_code")
+        endpoint = request.query_params.get("endpoint")
+        user_id = request.query_params.get("user")
+        tenant_id = request.query_params.get("tenant")
+
+        # Base queryset
+        logs = APIUsageLog.objects.select_related("user", "tenant")
+
+        # Apply filters
+        if start_date:
+            logs = logs.filter(timestamp__gte=start_date)
+        if end_date:
+            logs = logs.filter(timestamp__lte=end_date)
+        if method:
+            logs = logs.filter(method=method.upper())
+        if status_code:
+            logs = logs.filter(status_code=status_code)
+        if endpoint:
+            logs = logs.filter(endpoint__icontains=endpoint)
+        if user_id:
+            logs = logs.filter(user_id=user_id)
+        if tenant_id:
+            logs = logs.filter(tenant_id=tenant_id)
+
+        # Order by most recent
+        logs = logs.order_by("-timestamp")
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_logs = paginator.paginate_queryset(logs, request)
+        serializer = APIUsageLogSerializer(paginated_logs, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get API usage statistics by endpoint",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "interval",
+                openapi.IN_QUERY,
+                description="Time interval (hourly, daily, weekly, monthly)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (total_calls, avg_response_time, success_rate, error_rate)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: "API usage statistics by endpoint"},
+    )
+    @action(detail=False, methods=["get"])
+    def endpoint_stats(self, request):
+        """Get API usage statistics grouped by endpoint."""
+        # Get filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        interval = request.query_params.get("interval", "daily")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "total_calls")
+        order_direction = request.query_params.get("order", "desc")
+
+        # Validate order_by field
+        valid_order_fields = [
+            "total_calls",
+            "avg_response_time",
+            "success_rate",
+            "error_rate",
+        ]
+        if order_by not in valid_order_fields:
+            order_by = "total_calls"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "desc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Set default date range if not provided
+        if not end_date:
+            end_date = timezone.now()
+        if not start_date:
+            if interval == "hourly":
+                start_date = end_date - timedelta(hours=24)
+            elif interval == "daily":
+                start_date = end_date - timedelta(days=30)
+            elif interval == "weekly":
+                start_date = end_date - timedelta(weeks=12)
+            else:  # monthly
+                start_date = end_date - timedelta(days=365)
+
+        # Base queryset
+        logs = APIUsageLog.objects.filter(timestamp__range=[start_date, end_date])
+
+        # Group by interval
+        if interval == "hourly":
+            logs = logs.annotate(period=TruncHour("timestamp"))
+        elif interval == "daily":
+            logs = logs.annotate(period=TruncDate("timestamp"))
+        elif interval == "weekly":
+            logs = logs.annotate(period=TruncWeek("timestamp"))
+        else:  # monthly
+            logs = logs.annotate(period=TruncMonth("timestamp"))
+
+        # Aggregate statistics
+        stats = (
+            logs.values("endpoint", "period")
+            .annotate(
+                total_calls=Count("id"),
+                avg_response_time=Avg("response_time"),
+                success_rate=Count("status_code", filter=Q(status_code__lt=400))
+                * 100.0
+                / Count("id"),
+                error_rate=Count("status_code", filter=Q(status_code__gte=400))
+                * 100.0
+                / Count("id"),
+            )
+            .order_by(order_by_str)
+        )
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_stats = paginator.paginate_queryset(list(stats), request)
+        return paginator.get_paginated_response(paginated_stats)
+
+    @swagger_auto_schema(
+        operation_description="Get API usage statistics by tenant",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (total_calls, avg_response_time, success_rate, error_rate, unique_endpoints)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: "API usage statistics by tenant"},
+    )
+    @action(detail=False, methods=["get"])
+    def tenant_stats(self, request):
+        """Get API usage statistics grouped by tenant."""
+        # Get filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "total_calls")
+        order_direction = request.query_params.get("order", "desc")
+
+        # Validate order_by field
+        valid_order_fields = [
+            "total_calls",
+            "avg_response_time",
+            "success_rate",
+            "error_rate",
+            "unique_endpoints",
+        ]
+        if order_by not in valid_order_fields:
+            order_by = "total_calls"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "desc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Set default date range if not provided
+        if not end_date:
+            end_date = timezone.now()
+        if not start_date:
+            start_date = end_date - timedelta(days=30)
+
+        # Base queryset
+        logs = APIUsageLog.objects.filter(
+            timestamp__range=[start_date, end_date]
+        ).select_related("tenant")
+
+        # Aggregate statistics
+        stats = (
+            logs.values("tenant__name")
+            .annotate(
+                total_calls=Count("id"),
+                avg_response_time=Avg("response_time"),
+                success_rate=Count("status_code", filter=Q(status_code__lt=400))
+                * 100.0
+                / Count("id"),
+                error_rate=Count("status_code", filter=Q(status_code__gte=400))
+                * 100.0
+                / Count("id"),
+                unique_endpoints=Count("endpoint", distinct=True),
+            )
+            .order_by(order_by_str)
+        )
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_stats = paginator.paginate_queryset(list(stats), request)
+        return paginator.get_paginated_response(paginated_stats)
+
+    @swagger_auto_schema(
+        operation_description="Get API usage statistics by user",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+                required=False,
+            ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order_by",
+                openapi.IN_QUERY,
+                description="Order by field (total_calls, avg_response_time, success_rate, error_rate, unique_endpoints)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "order",
+                openapi.IN_QUERY,
+                description="Order direction (asc, desc)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: "API usage statistics by user"},
+    )
+    @action(detail=False, methods=["get"])
+    def user_stats(self, request):
+        """Get API usage statistics grouped by user."""
+        # Get filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Get ordering parameters
+        order_by = request.query_params.get("order_by", "total_calls")
+        order_direction = request.query_params.get("order", "desc")
+
+        # Validate order_by field
+        valid_order_fields = [
+            "total_calls",
+            "avg_response_time",
+            "success_rate",
+            "error_rate",
+            "unique_endpoints",
+        ]
+        if order_by not in valid_order_fields:
+            order_by = "total_calls"
+
+        # Validate order direction
+        if order_direction not in ["asc", "desc"]:
+            order_direction = "desc"
+
+        # Build order_by string
+        order_by_str = f"{'-' if order_direction == 'desc' else ''}{order_by}"
+
+        # Set default date range if not provided
+        if not end_date:
+            end_date = timezone.now()
+        if not start_date:
+            start_date = end_date - timedelta(days=30)
+
+        # Base queryset
+        logs = APIUsageLog.objects.filter(
+            timestamp__range=[start_date, end_date]
+        ).select_related("user")
+
+        # Aggregate statistics
+        stats = (
+            logs.values("user__email", "user__name")
+            .annotate(
+                total_calls=Count("id"),
+                avg_response_time=Avg("response_time"),
+                success_rate=Count("status_code", filter=Q(status_code__lt=400))
+                * 100.0
+                / Count("id"),
+                error_rate=Count("status_code", filter=Q(status_code__gte=400))
+                * 100.0
+                / Count("id"),
+                unique_endpoints=Count("endpoint", distinct=True),
+            )
+            .order_by(order_by_str)
+        )
+
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_stats = paginator.paginate_queryset(list(stats), request)
+        return paginator.get_paginated_response(paginated_stats)
