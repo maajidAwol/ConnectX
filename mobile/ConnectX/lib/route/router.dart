@@ -65,6 +65,8 @@ import 'screen_export.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
   switch (settings.name) {
+    case splashScreenRoute:
+      return MaterialPageRoute(builder: (context) => const SplashScreen());
     case onbordingScreenRoute:
       return MaterialPageRoute(builder: (context) => const OnBordingScreen());
     // case preferredLanuageScreenRoute:

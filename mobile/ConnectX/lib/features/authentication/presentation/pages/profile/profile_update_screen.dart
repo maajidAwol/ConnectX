@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/authentication/presentation/state/profile/bloc/profile_bloc.dart';
 
@@ -42,8 +43,81 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
     super.dispose();
   }
 
+  Future<bool> _requestCameraPermission() async {
+    final permission = await Permission.camera.request();
+    return permission.isGranted;
+  }
+
+  Future<bool> _requestStoragePermission() async {
+    Permission permission;
+    if (Platform.isAndroid) {
+      // For Android 13+ (API 33+), use photos permission
+      if (await Permission.photos.isGranted) {
+        return true;
+      }
+      permission = Permission.photos;
+      final status = await permission.request();
+      if (status.isGranted) return true;
+
+      // Fallback to storage permission for older Android versions
+      permission = Permission.storage;
+    } else {
+      // For iOS, use photos permission
+      permission = Permission.photos;
+    }
+
+    final status = await permission.request();
+    return status.isGranted;
+  }
+
+  void _showPermissionDialog({
+    required String title,
+    required String message,
+    required VoidCallback onSettingsPressed,
+  }) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  onSettingsPressed();
+                },
+                child: const Text('Settings'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Future<void> _openAppSettings() async {
+    await openAppSettings();
+  }
+
   Future<void> _pickImage() async {
     try {
+      // Check storage permission
+      final hasPermission = await _requestStoragePermission();
+
+      if (!hasPermission) {
+        _showPermissionDialog(
+          title: 'Storage Permission Required',
+          message:
+              'Please allow access to your photos to select an image. '
+              'You can enable this in your device settings.',
+          onSettingsPressed: _openAppSettings,
+        );
+        return;
+      }
+
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
@@ -57,14 +131,26 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      _handleImageError('Error accessing gallery', e);
     }
   }
 
   Future<void> _takePhoto() async {
     try {
+      // Check camera permission
+      final hasPermission = await _requestCameraPermission();
+
+      if (!hasPermission) {
+        _showPermissionDialog(
+          title: 'Camera Permission Required',
+          message:
+              'Please allow camera access to take photos. '
+              'You can enable this in your device settings.',
+          onSettingsPressed: _openAppSettings,
+        );
+        return;
+      }
+
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.camera,
         maxWidth: 1024,
@@ -78,60 +164,121 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error taking photo: $e')));
+      _handleImageError('Error accessing camera', e);
     }
+  }
+
+  void _handleImageError(String operation, dynamic error) {
+    String errorMessage = '$operation: ';
+
+    if (error.toString().contains('permission')) {
+      errorMessage += 'Permission denied. Please check your app permissions.';
+    } else if (error.toString().contains('camera')) {
+      errorMessage += 'Camera not available on this device.';
+    } else {
+      errorMessage += 'An unexpected error occurred. Please try again.';
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(errorMessage),
+        action: SnackBarAction(label: 'Settings', onPressed: _openAppSettings),
+      ),
+    );
   }
 
   void _showImageSourceActionSheet() {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder:
           (context) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(defaultPadding),
-                  child: Text(
-                    'Select Profile Photo',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Choose from Gallery'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text('Take Photo'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _takePhoto();
-                  },
-                ),
-                if (_avatarFile != null || _currentAvatarUrl != null)
-                  ListTile(
-                    leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text(
-                      'Remove Photo',
-                      style: TextStyle(color: Colors.red),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: defaultPadding),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(defaultPadding),
+                    child: Text(
+                      'Select Profile Photo',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.photo_library,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    title: const Text('Choose from Gallery'),
+                    subtitle: const Text('Select an existing photo'),
                     onTap: () {
                       Navigator.pop(context);
-                      setState(() {
-                        _avatarFile = null;
-                        _currentAvatarUrl = null;
-                      });
+                      _pickImage();
                     },
                   ),
-                const SizedBox(height: defaultPadding),
-              ],
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt, color: Colors.green),
+                    ),
+                    title: const Text('Take Photo'),
+                    subtitle: const Text('Use your camera'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _takePhoto();
+                    },
+                  ),
+                  if (_avatarFile != null || _currentAvatarUrl != null)
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.delete, color: Colors.red),
+                      ),
+                      title: const Text(
+                        'Remove Photo',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      subtitle: const Text('Delete current photo'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        setState(() {
+                          _avatarFile = null;
+                          _currentAvatarUrl = null;
+                        });
+                      },
+                    ),
+                  const SizedBox(height: defaultPadding),
+                ],
+              ),
             ),
           ),
     );
@@ -170,9 +317,12 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
             ),
           );
         } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('No changes to update')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No changes to update'),
+              backgroundColor: Colors.orange,
+            ),
+          );
         }
       }
     }
@@ -205,6 +355,20 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           width: 120,
           height: 120,
           fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          },
           errorBuilder:
               (context, error, stackTrace) => Container(
                 width: 120,
@@ -252,7 +416,19 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       children: [
         Stack(
           children: [
-            avatarWidget,
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: avatarWidget,
+            ),
             Positioned(
               bottom: 0,
               right: 0,
@@ -260,7 +436,14 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: IconButton(
                   icon: const Icon(
@@ -290,6 +473,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
+        elevation: 0,
         actions: [
           BlocConsumer<ProfileBloc, ProfileState>(
             listener: (context, state) {
@@ -297,6 +481,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Profile updated successfully!'),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
                 Navigator.pop(context);
@@ -304,21 +490,42 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 context.read<ProfileBloc>().add(LoadProfile());
               } else if (state is ProfileUpdateError) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: ${state.message}')),
+                  SnackBar(
+                    content: Text('Error: ${state.message}'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    action: SnackBarAction(
+                      label: 'Retry',
+                      textColor: Colors.white,
+                      onPressed: _updateProfile,
+                    ),
+                  ),
                 );
               }
             },
             builder: (context, state) {
-              return TextButton(
-                onPressed: state is ProfileUpdating ? null : _updateProfile,
-                child:
-                    state is ProfileUpdating
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Text('Save'),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: TextButton(
+                  onPressed: state is ProfileUpdating ? null : _updateProfile,
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        state is ProfileUpdating
+                            ? Colors.grey
+                            : Theme.of(context).primaryColor,
+                  ),
+                  child:
+                      state is ProfileUpdating
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text(
+                            'Save',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                ),
               );
             },
           ),
@@ -381,12 +588,36 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                   ),
                   const SizedBox(height: defaultPadding * 2),
                   if (state is ProfileUpdating)
-                    const Column(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: defaultPadding),
-                        Text('Updating profile...'),
-                      ],
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(defaultPadding),
+                        child: Row(
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(width: defaultPadding),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Updating profile...',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Please wait while we save your changes',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                 ],
               ),
