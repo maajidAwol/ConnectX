@@ -109,8 +109,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<List<CategoryModel>> getProductCategories() async {
     print("getProductCategories");
+    print(baseUrl);
 
     try {
+
       final response = await client.get(
         Uri.parse('$baseUrl/products/listed-categories/'),
         headers: _headers,

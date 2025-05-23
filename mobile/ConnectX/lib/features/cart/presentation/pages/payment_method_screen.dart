@@ -689,7 +689,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
                                   // Create order on backend
                                   context.read<OrderBloc>().add(
-                                    CreateChapaOrder(chapaOrder),
+                                    CreateChapaOrderEvent(chapaOrder),
                                   );
                                 },
                               );
@@ -743,7 +743,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                               );
 
                               context.read<OrderBloc>().add(
-                                CreateCashOnDeliveryOrder(cashOnDeliveryOrder),
+                                  CreateCashOnDeliveryOrderEvent(cashOnDeliveryOrder),
                               );
                               setState(() {
                                 _isProcessing = true;

@@ -42,10 +42,12 @@ import '../../features/cart/domain/repositories/cart_repository.dart';
 import '../../features/cart/presentation/state/cart/bloc/cart_bloc.dart';
 import '../../features/cart/domain/usecases/create_chapa_order.dart';
 import '../../features/cart/domain/usecases/get_orders.dart';
+import '../../features/cart/domain/usecases/get_order_details.dart';
 
 final sl = GetIt.instance;
-// const baseUrl = 'https://connectx-backend-295168525338.europe-west1.run.app/api';
-const baseUrl = 'https://connectx-9agd.onrender.com/api';
+const baseUrl =
+    'https://connectx-backend-295168525338.europe-west1.run.app/api';
+// const baseUrl = 'https://connectx-9agd.onrender.com/api';
 
 Future<void> init() async {
   // External Dependencies
@@ -112,6 +114,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CreateChapaOrderUseCase(repository: sl()));
   sl.registerLazySingleton(() => CreateCodOrderUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetOrdersUseCase(sl()));
+  sl.registerLazySingleton(() => GetOrderDetailsUseCase(sl()));
   sl.registerLazySingleton(() => GetProductsByCategory(sl()));
   sl.registerLazySingleton(() => GetFilteredProducts(sl()));
   sl.registerLazySingleton(() => GetProductById(sl()));
@@ -146,6 +149,7 @@ Future<void> init() async {
       createChapaOrderUseCase: sl(),
       createCashOnDeliveryOrderUseCase: sl(),
       getOrdersUseCase: sl(),
+      getOrderDetailsUseCase: sl(),
     ),
   );
   sl.registerFactory(

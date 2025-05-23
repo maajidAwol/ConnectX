@@ -54,7 +54,7 @@ class OrderCard extends StatelessWidget {
                     width: 60,
                     height: 60,
                     child: NetworkImageWithLoader(
-                      order.items.first.coverUrl,
+                      order.firstItem.coverUrl,
                       fit: BoxFit.cover,
                       radius: 8,
                     ),
@@ -65,7 +65,7 @@ class OrderCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          order.items.first.name,
+                          order.firstItem.productName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
@@ -75,16 +75,16 @@ class OrderCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${order.items.first.quantity}x ${order.items.first.price.toStringAsFixed(2)} Birr',
+                          '${order.totalQuantity} items • ${order.itemsCount} products',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
                           ),
                         ),
-                        if (order.items.length > 1) ...[
+                        if (order.itemsCount > 1) ...[
                           const SizedBox(height: 4),
                           Text(
-                            '+${order.items.length - 1} more ${order.items.length - 1 == 1 ? 'item' : 'items'}',
+                            '+${order.itemsCount - 1} more ${order.itemsCount - 1 == 1 ? 'product' : 'products'}',
                             style: TextStyle(
                               color: Theme.of(context).primaryColor,
                               fontSize: 12,

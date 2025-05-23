@@ -10,6 +10,7 @@ import 'package:korecha/features/cart/data/models/cod_order_response.dart';
 import 'package:korecha/features/cart/data/models/my_orders_model.dart';
 import '../models/chapa_order_request_model.dart';
 import '../models/chapa_order_response_model.dart';
+import '../models/order_details_model.dart';
 
 abstract class OrderRemoteDataSource {
   /// Creates an order with Chapa payment
@@ -25,6 +26,10 @@ abstract class OrderRemoteDataSource {
   /// Gets all orders for the current user
   /// Throws a [ServerException] for all error codes.
   Future<MyOrdersModel> getOrders();
+
+  /// Gets detailed order information by ID
+  /// Throws a [ServerException] for all error codes.
+  Future<OrderDetailsModel> getOrderDetails(String orderId);
 
   /// Gets the current user's profile
   /// Throws a [ServerException] for all error codes.
@@ -179,6 +184,30 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       return MyOrdersModel.fromJson(jsonResponse);
     } else {
       throw ServerException('Failed to get user orders: ${response.body}');
+    }
+  }
+
+  @override
+  Future<OrderDetailsModel> getOrderDetails(String orderId) async {
+    final token = storageService.getAccessToken();
+
+    if (token == null) {
+      throw ServerException('Authentication token not found');
+    }
+
+    final response = await client.get(
+      Uri.parse('$baseUrl/orders/$orderId/'),
+      headers: _headers,
+    );
+
+    print("Get order details response:");
+    print(response.body);
+    print(response.statusCode);
+
+    if (response.statusCode == 200) {
+      return OrderDetailsModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw ServerException('Failed to get order details: ${response.body}');
     }
   }
 

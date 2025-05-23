@@ -177,7 +177,11 @@ class _EntryPointState extends State<EntryPoint> {
                     //   break;
                     case 'logout':
                       context.read<AuthBloc>().add(LogoutRequested());
-                      Navigator.pushNamed(context, logInScreenRoute);
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        logInScreenRoute,
+                        (route) => false, // Remove all previous routes
+                      );
                       break;
                   }
                 },

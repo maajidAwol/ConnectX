@@ -107,13 +107,19 @@ class OrderDetailsSheet extends StatelessWidget {
             _buildInfoRow(
               icon: Icons.location_on_outlined,
               title: 'Delivery Address',
-              value: order.shippingAddress.fullAddress,
+              value:
+                  order.shippingAddress.fullAddress.isNotEmpty
+                      ? order.shippingAddress.fullAddress
+                      : 'Address information not available',
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
               icon: Icons.phone_outlined,
               title: 'Phone Number',
-              value: order.shippingAddress.phoneNumber,
+              value:
+                  order.shippingAddress.phoneNumber.isNotEmpty
+                      ? order.shippingAddress.phoneNumber
+                      : 'Phone information not available',
             ),
             if (order.delivery.trackingNumber.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -121,6 +127,28 @@ class OrderDetailsSheet extends StatelessWidget {
                 icon: Icons.local_shipping_outlined,
                 title: 'Tracking Number',
                 value: order.delivery.trackingNumber,
+              ),
+            ] else ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tracking number will be provided once your order is shipped.',
+                        style: TextStyle(color: Colors.blue[700], fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -157,6 +185,12 @@ class OrderDetailsSheet extends StatelessWidget {
   }
 
   Widget _buildOrderTimeline(BuildContext context) {
+    // Create a basic timeline with order creation if no timeline data is available
+    List<TimelineModel> timelineItems =
+        order.history.timeline.isNotEmpty
+            ? order.history.timeline
+            : [TimelineModel(time: order.createdAt, title: "Order Placed")];
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -174,10 +208,10 @@ class OrderDetailsSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ...List.generate(
-              order.history.timeline.length,
+              timelineItems.length,
               (index) => TimelineTile(
                 isFirst: index == 0,
-                isLast: index == order.history.timeline.length - 1,
+                isLast: index == timelineItems.length - 1,
                 indicatorStyle: IndicatorStyle(
                   width: 20,
                   color: Theme.of(context).primaryColor,
@@ -192,7 +226,7 @@ class OrderDetailsSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        order.history.timeline[index].title,
+                        timelineItems[index].title,
                         style: const TextStyle(
                           fontWeight: FontWeight.w500,
                           fontSize: 15,
@@ -200,7 +234,7 @@ class OrderDetailsSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _formatDateTime(order.history.timeline[index].time),
+                        _formatDateTime(timelineItems[index].time),
                         style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                     ],
@@ -208,6 +242,33 @@ class OrderDetailsSheet extends StatelessWidget {
                 ),
               ),
             ),
+            // Show info if timeline is limited
+            if (order.history.timeline.isEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.schedule, color: Colors.green[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Order timeline updates will appear here as your order progresses.',
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -226,53 +287,86 @@ class OrderDetailsSheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Order Items',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Order Items',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  '${order.itemsCount} products (${order.totalQuantity} items)',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            ...order.items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+            // Show the first item (available from API)
+            Row(
+              children: [
+                SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: NetworkImageWithLoader(
+                    order.firstItem.coverUrl,
+                    fit: BoxFit.cover,
+                    radius: 8,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.firstItem.productName,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Product ID: ${order.firstItem.productId}',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.inventory_2_outlined,
+                  color: Colors.grey[400],
+                  size: 20,
+                ),
+              ],
+            ),
+            if (order.itemsCount > 1) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange[200]!),
+                ),
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: NetworkImageWithLoader(
-                        item.coverUrl,
-                        fit: BoxFit.cover,
-                        radius: 8,
-                      ),
+                    Icon(
+                      Icons.inventory_outlined,
+                      color: Colors.orange[700],
+                      size: 20,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.name,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${item.quantity}x ${item.price.toStringAsFixed(2)} Birr',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '+ ${order.itemsCount - 1} more products are included in this order. Full order details are being processed.',
+                        style: TextStyle(
+                          color: Colors.orange[700],
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${(item.price * item.quantity).toStringAsFixed(2)} Birr',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -296,20 +390,53 @@ class OrderDetailsSheet extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
-            _buildPriceRow('Subtotal', order.subtotal),
-            const SizedBox(height: 8),
-            _buildPriceRow('Shipping', order.shipping),
-            const SizedBox(height: 8),
-            _buildPriceRow('Tax', order.taxes),
+            // Only show available data
+            if (order.subtotal > 0) _buildPriceRow('Subtotal', order.subtotal),
+            if (order.shipping > 0) ...[
+              const SizedBox(height: 8),
+              _buildPriceRow('Shipping', order.shipping),
+            ],
+            if (order.taxes > 0) ...[
+              const SizedBox(height: 8),
+              _buildPriceRow('Tax', order.taxes),
+            ],
             if (order.discount > 0) ...[
               const SizedBox(height: 8),
               _buildPriceRow('Discount', -order.discount),
             ],
+            // Always show total (this is available from API)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Divider(),
             ),
             _buildPriceRow('Total', order.totalAmount, isTotal: true),
+
+            // Info message if detailed breakdown is not available
+            if (order.subtotal == 0 &&
+                order.shipping == 0 &&
+                order.taxes == 0) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Detailed price breakdown will be available once order processing is complete.',
+                        style: TextStyle(color: Colors.blue[700], fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:korecha/features/cart/data/models/cod_order_response.dart';
 import 'package:korecha/features/cart/data/models/my_orders_model.dart';
 import '../../data/models/chapa_order_request_model.dart';
 import '../../data/models/chapa_order_response_model.dart';
+import '../../data/models/order_details_model.dart';
 
 abstract class OrderRepository {
   /// Creates an order with Chapa payment method
@@ -19,4 +20,9 @@ abstract class OrderRepository {
 
   /// Gets all orders for the current user
   Future<Either<Failure, MyOrdersModel>> getOrders();
+
+  /// Gets detailed order information by ID
+  Future<Either<Failure, OrderDetailsModel>> getOrderDetails({
+    required String orderId,
+  });
 }

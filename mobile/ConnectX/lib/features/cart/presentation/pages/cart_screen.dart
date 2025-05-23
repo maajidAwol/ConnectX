@@ -165,7 +165,6 @@ class _CartScreenState extends State<CartScreen> {
                   amount: selectedTotal,
                   items: itemsToCheckout,
                   selectedAddress: address,
-                  selectedItemIds: selectedItems.toList(),
                 ),
           ),
         ).then((paymentResult) {
@@ -283,8 +282,8 @@ class _CartScreenState extends State<CartScreen> {
                           },
                           child: Text(
                             selectedItems.length == state.items.length
-                                ? 'Deselect All'
-                                : 'Select All',
+                                ? 'All'
+                                : 'All',
                             style: TextStyle(
                               color: Theme.of(context).primaryColor,
                               fontWeight: FontWeight.w500,
