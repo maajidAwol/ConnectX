@@ -224,24 +224,93 @@
 //   }
 // }
 class ChapaOrderResponse {
+  final String id;
+  final String orderNumber;
   final String status;
-  final String message;
-  final ChapaOrderData data;
+  final String subtotal;
+  final String taxes;
+  final String shipping;
+  final String discount;
+  final String? notes;
+  final String email;
+  final String phone;
+  final String shippingAddress;
+  final List<ChapaOrderItem> items;
 
   ChapaOrderResponse({
+    required this.id,
+    required this.orderNumber,
     required this.status,
-    required this.message,
-    required this.data,
+    required this.subtotal,
+    required this.taxes,
+    required this.shipping,
+    required this.discount,
+    this.notes,
+    required this.email,
+    required this.phone,
+    required this.shippingAddress,
+    required this.items,
   });
 
   factory ChapaOrderResponse.fromJson(Map<String, dynamic> json) =>
       ChapaOrderResponse(
-        status: json['status'],
-        message: json['message'],
-        data: ChapaOrderData.fromJson(json['data']),
+        id: json['id'] ?? '',
+        orderNumber: json['order_number'] ?? '',
+        status: json['status'] ?? '',
+        subtotal: json['subtotal']?.toString() ?? '0.00',
+        taxes: json['taxes']?.toString() ?? '0.00',
+        shipping: json['shipping']?.toString() ?? '0.00',
+        discount: json['discount']?.toString() ?? '0.00',
+        notes: json['notes'],
+        email: json['email'] ?? '',
+        phone: json['phone'] ?? '',
+        shippingAddress: json['shipping_address'] ?? '',
+        items:
+            json['items'] != null
+                ? List<ChapaOrderItem>.from(
+                  json['items'].map((item) => ChapaOrderItem.fromJson(item)),
+                )
+                : [],
       );
 }
 
+class ChapaOrderItem {
+  final String id;
+  final String product;
+  final Map<String, dynamic>? productDetails;
+  final String? productOwnerTenantId;
+  final String? productOwnerTenantName;
+  final int quantity;
+  final String price;
+  final String? customProfitPercentage;
+  final String customSellingPrice;
+
+  ChapaOrderItem({
+    required this.id,
+    required this.product,
+    this.productDetails,
+    this.productOwnerTenantId,
+    this.productOwnerTenantName,
+    required this.quantity,
+    required this.price,
+    this.customProfitPercentage,
+    required this.customSellingPrice,
+  });
+
+  factory ChapaOrderItem.fromJson(Map<String, dynamic> json) => ChapaOrderItem(
+    id: json['id'] ?? '',
+    product: json['product'] ?? '',
+    productDetails: json['product_details'],
+    productOwnerTenantId: json['product_owner_tenant_id'],
+    productOwnerTenantName: json['product_owner_tenant_name'],
+    quantity: json['quantity'] ?? 0,
+    price: json['price']?.toString() ?? '0.00',
+    customProfitPercentage: json['custom_profit_percentage']?.toString(),
+    customSellingPrice: json['custom_selling_price']?.toString() ?? '0.00',
+  );
+}
+
+// Keep the old models commented for reference
 class ChapaOrderData {
   final int orderId;
   final String orderNumber;
@@ -260,11 +329,11 @@ class ChapaOrderData {
   });
 
   factory ChapaOrderData.fromJson(Map<String, dynamic> json) => ChapaOrderData(
-        orderId: json['order_id'],
-        orderNumber: json['order_number'],
-        invoiceNumber: json['invoice_number'],
-        total: json['total'],
-        status: json['status'],
-        createdAt: DateTime.parse(json['created_at']),
-      );
+    orderId: json['order_id'],
+    orderNumber: json['order_number'],
+    invoiceNumber: json['invoice_number'],
+    total: json['total'],
+    status: json['status'],
+    createdAt: DateTime.parse(json['created_at']),
+  );
 }

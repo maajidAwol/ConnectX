@@ -25,10 +25,13 @@ class ProductCard extends StatelessWidget {
     return OutlinedButton(
       onPressed: press,
       style: OutlinedButton.styleFrom(
-          minimumSize: const Size(140, 220),
-          maximumSize: const Size(140, 220),
-          padding: const EdgeInsets.all(8)),
+        minimumSize: const Size(140, 220),
+        maximumSize: const Size(140, 240),
+        padding: const EdgeInsets.all(8),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           AspectRatio(
             aspectRatio: 1.15,
@@ -45,8 +48,10 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: NetworkImageWithLoader(image,
-                      radius: defaultBorderRadious),
+                  child: NetworkImageWithLoader(
+                    image,
+                    radius: defaultBorderRadious,
+                  ),
                 ),
                 if (dicountpercent != null)
                   Positioned(
@@ -54,83 +59,83 @@ class ProductCard extends StatelessWidget {
                     top: defaultPadding / 2,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: defaultPadding / 2),
+                        horizontal: defaultPadding / 2,
+                      ),
                       height: 16,
                       decoration: const BoxDecoration(
                         color: errorColor,
                         borderRadius: BorderRadius.all(
-                            Radius.circular(defaultBorderRadious)),
+                          Radius.circular(defaultBorderRadious),
+                        ),
                       ),
                       child: Text(
                         "$dicountpercent% off",
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500),
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  )
+                  ),
               ],
             ),
           ),
-          Expanded(
-            child: Padding(
+          const SizedBox(height: 4),
+          Flexible(
+            child: Container(
               padding: const EdgeInsets.symmetric(
-                  horizontal: defaultPadding / 2, vertical: defaultPadding / 2),
+                horizontal: defaultPadding / 2,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     brandName.toUpperCase(),
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium!
-                        .copyWith(fontSize: 10),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium!.copyWith(fontSize: 9),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: defaultPadding / 2),
+                  const SizedBox(height: 3),
                   Text(
                     title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall!
-                        .copyWith(fontSize: 12),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleSmall!.copyWith(fontSize: 11),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 3),
                   priceAfetDiscount != null
                       ? Row(
-                          children: [
-                            Text(
+                        children: [
+                          Flexible(
+                            child: Text(
                               "$priceAfetDiscount Birr",
                               style: const TextStyle(
                                 color: Color(0xFF31B0D8),
                                 fontWeight: FontWeight.w500,
-                                fontSize: 12,
+                                fontSize: 11,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: defaultPadding / 4),
-                            // Text(
-                            //   "${price} Birr",
-                            //   style: TextStyle(
-                            //     color: Theme.of(context)
-                            //         .textTheme
-                            //         .bodyMedium!
-                            //         .color,
-                            //     fontSize: 10,
-                            //     decoration: TextDecoration.lineThrough,
-                            //   ),
-                            // ),
-                          ],
-                        )
-                      : Text(
-                          "$price Birr",
-                          style: const TextStyle(
-                            color: Color(0xFF31B0D8),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
                           ),
+                        ],
+                      )
+                      : Text(
+                        "$price Birr",
+                        style: const TextStyle(
+                          color: Color(0xFF31B0D8),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                 ],
               ),
             ),

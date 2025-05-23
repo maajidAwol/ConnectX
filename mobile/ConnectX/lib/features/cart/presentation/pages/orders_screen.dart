@@ -4,7 +4,7 @@ import 'package:korecha/constants.dart';
 import 'package:korecha/features/cart/data/models/my_orders_model.dart';
 import 'package:korecha/features/cart/presentation/state/order/bloc/order_bloc.dart';
 import 'package:korecha/features/cart/presentation/widgets/order_card.dart';
-import 'package:korecha/features/cart/presentation/widgets/order_details_sheet.dart';
+import 'package:korecha/features/cart/presentation/widgets/order_details_sheet_v2.dart';
 import 'package:korecha/features/cart/presentation/widgets/orders_shimmer.dart';
 
 // class Order {
@@ -60,7 +60,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => OrderDetailsSheet(order: order),
+      builder: (context) => OrderDetailsSheetV2(orderId: order.id),
     );
   }
 
@@ -68,10 +68,31 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<OrderBloc, OrderState>(
       builder: (context, state) {
+        // Handle different states while preserving orders list
+        MyOrdersModel? myOrders;
+        bool isLoading = false;
+        String? errorMessage;
+
         if (state is OrderLoading) {
+          isLoading = true;
+        } else if (state is OrderFailure) {
+          errorMessage = state.message;
+        } else if (state is OrderLoaded) {
+          myOrders = state.myOrders;
+        } else if (state is OrderDetailsLoading) {
+          myOrders = state.existingOrders;
+        } else if (state is OrderDetailsLoaded) {
+          myOrders = state.existingOrders;
+        } else if (state is OrderDetailsFailure) {
+          myOrders = state.existingOrders;
+          // Don't show error for order details failure, just preserve the list
+        }
+
+        if (isLoading && myOrders == null) {
           return const Scaffold(body: OrdersShimmer());
         }
-        if (state is OrderFailure) {
+
+        if (errorMessage != null && myOrders == null) {
           return Scaffold(
             body: Center(
               child: Column(
@@ -79,14 +100,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 children: [
                   Icon(Icons.error_outline, size: 60, color: Colors.red[300]),
                   const SizedBox(height: 16),
-                  Text(state.message),
+                  Text(errorMessage),
                 ],
               ),
             ),
           );
         }
-        if (state is OrderLoaded) {
-          final orders = state.myOrders.orders;
+
+        if (myOrders != null) {
+          final orders = myOrders.orders;
 
           return Scaffold(
             appBar: AppBar(
@@ -110,6 +132,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ),
           );
         }
+
         return const SizedBox.shrink();
       },
     );

@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -8,6 +12,7 @@ import 'package:korecha/features/authentication/presentation/widgets/profile/pro
 import 'package:korecha/features/authentication/presentation/widgets/profile/profile_menu_item_list_tile.dart';
 import 'package:korecha/route/screen_export.dart';
 import 'package:korecha/features/authentication/presentation/widgets/profile/profile_shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -193,7 +198,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 ProfileMenuListTile(
                   text: "FAQ",
                   svgSrc: "assets/icons/FAQ.svg",
-                  press: () {},
+                  press: () {
+                    launchUrl(Uri.parse("https://connect-x-peach.vercel.app/"));
+                  },
                   isShowDivider: true,
                 ),
                 const SizedBox(height: defaultPadding),
@@ -204,7 +211,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {
                     context.read<AuthBloc>().add(LogoutRequested());
 
-                    Navigator.pushNamed(context, logInScreenRoute);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      logInScreenRoute,
+                      (route) => false,
+                    );
                   },
                   // minLeadingWidth: 24,
                   leading: SvgPicture.asset(

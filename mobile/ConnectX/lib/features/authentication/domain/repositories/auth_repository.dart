@@ -6,7 +6,6 @@ import '../entities/address.dart';
 abstract class AuthRepository {
   Future<Either<Failure, User>> login(String email, String password);
   Future<Either<Failure, User>> signup({
-    required String tenant,
     required String name,
     required String email,
     required String password,
