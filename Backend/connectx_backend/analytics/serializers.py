@@ -73,6 +73,38 @@ class AdminAnalyticsOverviewSerializer(serializers.Serializer):
     active_tenants = serializers.IntegerField()
 
 
+class TenantAnalyticsOverviewSerializer(serializers.Serializer):
+    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_orders = serializers.IntegerField()
+    total_products = serializers.IntegerField()
+    total_customers = serializers.IntegerField()
+
+
+class RecentOrderSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    order_number = serializers.CharField()
+    customer_name = serializers.CharField()
+    total_amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    status = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class SalesOverviewSerializer(serializers.Serializer):
+    date = serializers.DateField(required=False)
+    week = serializers.DateField(required=False)
+    month = serializers.DateField(required=False)
+    total_sales = serializers.DecimalField(max_digits=15, decimal_places=2)
+    order_count = serializers.IntegerField()
+
+
+class TopProductSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    total_sales = serializers.IntegerField()
+    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
+    quantity = serializers.IntegerField()
+
+
 class TopTenantSerializer(serializers.Serializer):
     tenant_name = serializers.CharField()
     total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
