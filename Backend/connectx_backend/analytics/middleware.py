@@ -35,6 +35,7 @@ class APIUsageLoggingMiddleware:
         response_time = time.time() - start_time
 
         # Only log API requests
+        request_data = None
         if request.path.startswith("/api/"):
             try:
                 # Get request data safely
