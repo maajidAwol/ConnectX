@@ -45,8 +45,7 @@ export default function Header({ isOffset }: Props) {
           }),
         }}
       >
-        {/* <Logo /> */}
-        <b>LOGO</b>
+        <Logo />
 
         <Stack spacing={1} direction="row" alignItems="center">
           <SettingsDrawer />

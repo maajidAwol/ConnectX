@@ -10,7 +10,6 @@ import Iconify from 'src/components/iconify';
 // store
 import { useAuthStore } from 'src/store/auth';
 //
-import EcommerceHeader from '../header';
 import EcommerceAccountMenu from './EcommerceAccountMenu';
 
 // ----------------------------------------------------------------------
@@ -38,7 +37,7 @@ export default function EcommerceAccountLayout({ children }: Props) {
 
   return (
     <>
-      <EcommerceHeader />
+      {/* <EcommerceHeader /> */}
 
       {isMdUp ? (
         <Container sx={{ my: 5 }}>

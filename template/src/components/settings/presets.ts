@@ -8,11 +8,25 @@ import { ThemeColorPresetsValue } from './types';
 const themePalette = palette('light');
 
 export const presets = [
-  // DEFAULT
+  // DEFAULT (Custom Branding Colors)
   {
     name: 'default',
-    primary: themePalette.primary,
-    secondary: themePalette.secondary,
+    primary: {
+      lighter: '#64B5F6', // Lighter shade of blue
+      light: '#42A5F5',   // Light shade of blue
+      main: '#1976D2',    // Your logo's blue
+      dark: '#1565C0',     // Dark shade of blue
+      darker: '#0D47A1',   // Darker shade of blue
+      contrastText: '#FFFFFF', // White text for contrast
+    },
+    secondary: {
+      lighter: '#E0F2F1', // Lighter shade of light green
+      light: '#A7FFEB',   // Light shade of light green
+      main: '#C8E6C9',    // Your requested light green
+      dark: '#388E3C',     // Dark shade of light green
+      darker: '#1B5E20',   // Darker shade of light green
+      contrastText: themePalette.grey[800], // Dark text for contrast
+    },
   },
 
   // GREEN - BLUE

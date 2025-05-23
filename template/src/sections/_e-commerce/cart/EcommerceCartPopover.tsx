@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import NextLink from 'next/link';
+import { useRouter } from 'next/router';
 // @mui
 import {
   Box,
@@ -25,6 +26,7 @@ import { useCartStore } from 'src/store/cart';
 export function EcommerceCartPopover() {
   const [open, setOpen] = useState(false);
   const { items, removeItem, getTotalItems, getTotalPrice } = useCartStore();
+  const { push } = useRouter();
 
   const handleOpen = () => {
     setOpen(true);
@@ -32,6 +34,11 @@ export function EcommerceCartPopover() {
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleViewCart = () => {
+    handleClose();
+    push(paths.eCommerce.cart);
   };
 
   return (
@@ -130,12 +137,11 @@ export function EcommerceCartPopover() {
             </Stack>
 
             <Button
-              component={NextLink}
-              href={paths.eCommerce.cart}
               fullWidth
               size="large"
               variant="contained"
               color="primary"
+              onClick={handleViewCart}
             >
               View Cart
             </Button>

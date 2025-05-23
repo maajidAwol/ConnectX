@@ -10,6 +10,8 @@ import { paths } from 'src/routes/paths';
 // components
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
+// store
+import { useCartStore } from 'src/store/cart';
 //
 import { ProductColorPicker, ProductPrice } from '../../components';
 
@@ -37,6 +39,7 @@ export default function EcommerceProductDetailsInfo({
   colors,
 }: Props) {
   const isMdUp = useResponsive('up', 'md');
+  const { addItem } = useCartStore();
 
   const [color, setColor] = useState(colors[0] || '');
   const [quantity, setQuantity] = useState(1);
@@ -56,6 +59,17 @@ export default function EcommerceProductDetailsInfo({
     label: color,
     value: color,
   }));
+
+  const handleAddToCart = () => {
+    addItem({
+      id: name, // You might want to pass the actual product ID here
+      name,
+      price,
+      quantity,
+      cover_url: '', // You might want to pass the actual cover URL here
+      color,
+    });
+  };
 
   return (
     <>
@@ -115,21 +129,20 @@ export default function EcommerceProductDetailsInfo({
 
         <Stack direction="row" spacing={2}>
           <Button
-            component={NextLink}
-            href={paths.eCommerce.cart}
             fullWidth={!isMdUp}
             size="large"
             color="inherit"
             variant="contained"
             startIcon={<Iconify icon="carbon:shopping-cart-plus" />}
             disabled={inStock === 0}
+            onClick={handleAddToCart}
           >
             Add to Cart
           </Button>
 
           <Button
             component={NextLink}
-            href={paths.eCommerce.cart}
+            href={paths.eCommerce.checkout}
             fullWidth={!isMdUp}
             size="large"
             color="primary"

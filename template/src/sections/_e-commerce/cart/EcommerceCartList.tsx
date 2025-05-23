@@ -16,24 +16,16 @@ import { useRouter } from 'next/router';
 import { paths } from 'src/routes/paths';
 // utils
 import { fCurrency } from 'src/utils/formatNumber';
+import { CartItem } from 'src/store/cart';
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  products: any[]; // Changed from IProductItemProps[] to any[] to match cart items
-  onDelete: (id: string) => void;
-  onDecreaseQuantity: (id: string) => void;
-  onIncreaseQuantity: (id: string) => void;
+  products: CartItem[];
 };
 
-export default function EcommerceCartList({
-  products,
-  onDelete,
-  onDecreaseQuantity,
-  onIncreaseQuantity,
-}: Props) {
-  const { replace } = useRouter();
-  const { items, removeItem, updateQuantity } = useCartStore();
+export default function EcommerceCartList({ products }: Props) {
+  const { items, removeItem, increaseQuantity, decreaseQuantity } = useCartStore();
 
   const handleDelete = (id: string) => {
     removeItem(id);
@@ -42,19 +34,15 @@ export default function EcommerceCartList({
   const handleDecreaseQuantity = (id: string) => {
     const item = items.find((item) => item.id === id);
     if (item && item.quantity > 1) {
-      updateQuantity(id, item.quantity - 1);
+      decreaseQuantity(id);
     }
   };
 
   const handleIncreaseQuantity = (id: string) => {
     const item = items.find((item) => item.id === id);
     if (item) {
-      updateQuantity(id, item.quantity + 1);
+      increaseQuantity(id);
     }
-  };
-
-  const handleCheckout = () => {
-    replace(paths.eCommerce.checkout);
   };
 
   return (
@@ -121,25 +109,6 @@ export default function EcommerceCartList({
           </Stack>
         </Stack>
       ))}
-
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Button
-          color="inherit"
-          onClick={() => replace(paths.eCommerce.products)}
-          startIcon={<Iconify icon="carbon:chevron-left" />}
-        >
-          Continue Shopping
-        </Button>
-
-        <Button
-          variant="contained"
-          color="inherit"
-          onClick={handleCheckout}
-          disabled={items.length === 0}
-        >
-          Checkout
-        </Button>
-      </Stack>
     </Stack>
   );
 }

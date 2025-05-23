@@ -1,10 +1,14 @@
 // ----------------------------------------------------------------------
 
 export type IProductItemHeroProps = {
+  id: string;
   title: string;
   caption: string;
   coverImg: string;
   label: string;
+  price: number;
+  priceSale?: number;
+  colors?: string[];
 };
 
 export type IProductItemCompareProps = {
@@ -26,13 +30,7 @@ export interface IProductItemProps {
   profit_percentage: number | null;
   selling_price: number | null;
   quantity: number;
-  category: {
-    id: string;
-    name: string;
-    description: string;
-    created_at: string;
-    updated_at: string;
-  };
+  category: Category;
   is_public: boolean;
   description: string;
   short_description: string;
@@ -49,6 +47,15 @@ export interface IProductItemProps {
   total_reviews: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  icon: string | null;
 }
 
 export type IProductFiltersProps = {

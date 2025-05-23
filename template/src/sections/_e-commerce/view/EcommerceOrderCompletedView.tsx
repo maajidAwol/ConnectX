@@ -16,7 +16,7 @@ import { useAuthStore } from 'src/store/auth';
 // api
 import { apiRequest } from 'src/lib/api-config';
 //
-import { EcommerceHeader } from '../layout';
+// import { EcommerceHeader } from '../layout';
 
 // ----------------------------------------------------------------------
 
@@ -76,7 +76,7 @@ export default function EcommerceOrderCompletedView() {
 
   return (
     <>
-      <EcommerceHeader />
+      {/* <EcommerceHeader /> */}
 
       <Container
         component={MotionContainer}

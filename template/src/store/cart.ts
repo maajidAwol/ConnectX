@@ -1,20 +1,26 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface CartItem {
+export type CartItem = {
   id: string;
   name: string;
-  price: number;
-  quantity: number;
   cover_url: string;
+  price: number;
+  selling_price?: number;
+  colors: string[];
+  sizes: string[];
+  category: string;
+  quantity: number;
   color?: string;
-}
+  size?: string;
+};
 
 interface CartState {
   items: CartItem[];
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  decreaseQuantity: (id: string) => void;
+  increaseQuantity: (id: string) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -49,10 +55,18 @@ export const useCartStore = create<CartState>()(
         }));
       },
       
-      updateQuantity: (id, quantity) => {
+      decreaseQuantity: (id) => {
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id ? { ...item, quantity } : item
+            item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+          ),
+        }));
+      },
+      
+      increaseQuantity: (id) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id ? { ...item, quantity: item.quantity + 1 } : item
           ),
         }));
       },

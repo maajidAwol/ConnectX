@@ -11,7 +11,6 @@ import { useProductStore } from 'src/store/product';
 import { useAuthStore } from 'src/store/auth';
 //
 import ReviewEcommerce from '../../review/e-commerce';
-import { EcommerceHeader } from '../layout';
 import {
   EcommerceProductDetailsInfo,
   EcommerceProductDetailsCarousel,
@@ -85,7 +84,7 @@ export default function EcommerceProductView() {
 
   return (
     <>
-      <EcommerceHeader />
+      {/* <EcommerceHeader /> */}
 
       <Container sx={{ overflow: 'hidden' }}>
         <CustomBreadcrumbs

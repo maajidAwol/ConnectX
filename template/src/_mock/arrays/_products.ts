@@ -68,7 +68,7 @@ const DESCRIPTION = `
   <li> Anti-static lining. </li>
 </ul>
 
-<p>Living in today’s metropolitan world of cellular phones, mobile computers and other high-tech gadgets is not just hectic but very impersonal. We make money and then invest our time and effort in making more money..</p>
+<p>Living in today's metropolitan world of cellular phones, mobile computers and other high-tech gadgets is not just hectic but very impersonal. We make money and then invest our time and effort in making more money..</p>
 `;
 
 // ----------------------------------------------------------------------
@@ -90,6 +90,7 @@ export const _productsCarousel = [...Array(4)].map((_, index) => ({
   caption: _mock.text.description(index),
   coverImg: _mock.image.product(index),
   label: 'Opening Sale Discount 50%',
+  price: _mock.number.price(index),
 }));
 
 // ----------------------------------------------------------------------
@@ -118,25 +119,23 @@ export const _productsCompare = [
 
 export const _products = [...Array(24)].map((_, index) => ({
   id: _mock.id(index),
+  tenant: ['default'],
+  owner: 'admin',
+  sku: `SKU-${index + 1000}`,
   name: NAME[index],
-  caption: _mock.text.description(index),
-  description: DESCRIPTION,
-  coverImg: _mock.image.product(index),
-  review: index * 2 + 40,
+  base_price: _mock.number.price(index).toString(),
+  profit_percentage: 20,
+  selling_price: _mock.number.price(index),
+  quantity: 100,
   category: CATEGORIES[index],
-  sold: index * 2 + 40,
-  inStock: 100,
-  rating: _mock.number.rating(index),
-  label: ['sale', 'new', 'sale', 'sale'][index] || '',
-  price: _mock.number.price(index),
-  priceSale:
-    [
-      _mock.number.price(1),
-      _mock.number.price(2),
-      _mock.number.price(3),
-      _mock.number.price(4),
-      _mock.number.price(5),
-    ][index] || 0,
+  is_public: true,
+  description: DESCRIPTION,
+  short_description: _mock.text.description(index),
+  tag: ['sale', 'new', 'featured'],
+  brand: 'Brand',
+  additional_info: {},
+  warranty: '1 year',
+  cover_url: _mock.image.product(index),
   images: [
     _mock.image.product(1),
     _mock.image.product(2),
@@ -147,4 +146,11 @@ export const _products = [...Array(24)].map((_, index) => ({
     _mock.image.product(7),
     _mock.image.product(8),
   ],
+  colors: ['red', 'blue', 'green'],
+  sizes: ['S', 'M', 'L'],
+  total_sold: index * 2 + 40,
+  total_ratings: index * 2 + 40,
+  total_reviews: index * 2 + 40,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 }));

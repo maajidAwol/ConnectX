@@ -23,13 +23,13 @@ import { paths } from 'src/routes/paths';
 // components
 import Iconify from 'src/components/iconify';
 import FormProvider from 'src/components/hook-form';
+import LoadingScreen from 'src/components/loading-screen';
 // store
 import { useCartStore } from 'src/store/cart';
 import { useAuthStore } from 'src/store/auth';
 // api
 import { apiRequest } from 'src/lib/api-config';
 //
-import { EcommerceHeader } from '../layout';
 import {
   EcommerceCheckoutNewCardForm,
   EcommerceCheckoutOrderSummary,
@@ -38,6 +38,8 @@ import {
   EcommerceCheckoutPersonalDetails,
   EcommerceCheckoutShippingDetails,
 } from '../checkout';
+// types
+import { CartItem } from 'src/store/cart';
 
 // ----------------------------------------------------------------------
 
@@ -130,7 +132,14 @@ const PAYMENT_OPTIONS = [
 
 // ----------------------------------------------------------------------
 
-export default function EcommerceCheckoutView() {
+type Props = {
+  products: CartItem[];
+  onDelete?: (id: string) => void;
+  onDecreaseQuantity?: (id: string) => void;
+  onIncreaseQuantity?: (id: string) => void;
+};
+
+export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQuantity, onIncreaseQuantity }: Props) {
   const { replace } = useRouter();
   const { items, getTotalPrice, clearCart } = useCartStore();
   const { user, accessToken } = useAuthStore();
@@ -600,13 +609,11 @@ export default function EcommerceCheckoutView() {
   };
 
   if (loading) {
-    return null;
+    return <LoadingScreen />;
   }
 
   return (
     <>
-      <EcommerceHeader />
-
       <Container
         sx={{
           overflow: 'hidden',

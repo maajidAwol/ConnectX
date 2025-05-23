@@ -52,14 +52,24 @@ interface ProductResponse {
 interface ProductState {
   products: Product[];
   featuredProducts: Product[];
+  topProducts: Product[];
+  popularProducts: Product[];
+  hotDealProducts: Product[];
+  featuredBrandsProducts: Product[];
   currentProduct: Product | null;
   totalCount: number;
   currentPage: number;
   loading: boolean;
   error: string | null;
-  fetchProducts: (page?: number, filters?: Record<string, any>) => Promise<void>;
+  categories: Category[];
+  fetchProducts: (page?: number, type?: string, categoryId?: string | null, sort?: string) => Promise<void>;
   fetchFeaturedProducts: () => Promise<void>;
+  fetchTopProducts: () => Promise<void>;
+  fetchPopularProducts: () => Promise<void>;
+  fetchHotDealProducts: () => Promise<void>;
+  fetchFeaturedBrandsProducts: () => Promise<void>;
   fetchProductById: (id: string) => Promise<void>;
+  fetchListedCategories: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -76,40 +86,48 @@ const processProductImage = (imageUrl: string) => {
 export const useProductStore = create<ProductState>()((set, get) => ({
   products: [],
   featuredProducts: [],
+  topProducts: [],
+  popularProducts: [],
+  hotDealProducts: [],
+  featuredBrandsProducts: [],
   currentProduct: null,
   totalCount: 0,
   currentPage: 1,
   loading: false,
   error: null,
+  categories: [],
 
-  fetchProducts: async (page = 1, filters = {}) => {
+  fetchProducts: async (
+    page = 1,
+    type = 'listed',
+    categoryId?: string | null,
+    sort?: string
+  ) => {
     try {
       set({ loading: true, error: null });
       
-      // Get access token from auth store
-      const accessToken = useAuthStore.getState().accessToken;
-      if (!accessToken) {
-        throw new Error('No access token available');
-      }
-      
-      // Build query parameters
       const queryParams = new URLSearchParams({
         page: page.toString(),
-        ...filters,
+        page_size: '5',
+        filter_type: type,
+        ...(categoryId && { category__name: categoryId }),
+        ...(sort && { sort }),
       });
 
       const data = await apiRequest<ProductResponse>(
         `/products/?${queryParams.toString()}`,
-        {},
-        true, // Include authentication
-        accessToken // Pass the access token
+        {
+          headers: {
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+        },
+        false // Don't include authentication
       );
       
       if (!data || !data.results) {
         throw new Error('Invalid response format from API');
       }
 
-      // Process images for each product
       const processedProducts = data.results.map(product => ({
         ...product,
         cover_url: processProductImage(product.cover_url),
@@ -136,21 +154,142 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     try {
       set({ loading: true, error: null });
       
-      const data = await apiRequest<ProductResponse>('/products/?page=1&is_public=true');
+      const data = await apiRequest<ProductResponse>(
+        '/products/?page_size=4&is_public=true&sort=total_sold',
+        {
+          headers: {
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+        },
+        false
+      );
       
-      // Process images and sort by total_sold to get featured products
-      const processedProducts = data.results
-        .map(product => ({
+      const processedProducts = data.results.map(product => ({
           ...product,
           cover_url: processProductImage(product.cover_url),
           images: product.images.map(processProductImage),
-        }))
-        .sort((a, b) => b.total_sold - a.total_sold);
+      }));
 
       set({
         featuredProducts: processedProducts,
         loading: false,
       });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        loading: false,
+      });
+    }
+  },
+
+  fetchTopProducts: async () => {
+    try {
+      set({ loading: true, error: null });
+      
+      const data = await apiRequest<ProductResponse>(
+        '/products/?page_size=8&sort=total_ratings',
+        {
+          headers: {
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+        },
+        false
+      );
+      
+      const processedProducts = data.results.map(product => ({
+        ...product,
+        cover_url: processProductImage(product.cover_url),
+        images: product.images.map(processProductImage),
+      }));
+
+      set({ topProducts: processedProducts, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        loading: false,
+      });
+    }
+  },
+
+  fetchPopularProducts: async () => {
+    try {
+      set({ loading: true, error: null });
+      
+      const data = await apiRequest<ProductResponse>(
+        '/products/?page_size=8&sort=-total_sold',
+        {
+          headers: {
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+        },
+        false
+      );
+      
+      const processedProducts = data.results.map(product => ({
+        ...product,
+        cover_url: processProductImage(product.cover_url),
+        images: product.images.map(processProductImage),
+      }));
+
+      set({ popularProducts: processedProducts, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        loading: false,
+      });
+    }
+  },
+
+  fetchHotDealProducts: async () => {
+    try {
+      set({ loading: true, error: null });
+      
+      const data = await apiRequest<ProductResponse>(
+        '/products/?page_size=6&sort=-created_at',
+        {
+          headers: {
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+        },
+        false
+      );
+      
+      const processedProducts = data.results.map(product => ({
+        ...product,
+        cover_url: processProductImage(product.cover_url),
+        images: product.images.map(processProductImage),
+      }));
+
+      set({ hotDealProducts: processedProducts, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        loading: false,
+      });
+    }
+  },
+
+  fetchFeaturedBrandsProducts: async () => {
+    try {
+      set({ loading: true, error: null });
+      
+      const data = await apiRequest<ProductResponse>(
+        '/products/?page_size=3&sort=-total_sold',
+        {
+          headers: {
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+        },
+        false
+      );
+      
+      const processedProducts = data.results.map(product => ({
+        ...product,
+        cover_url: processProductImage(product.cover_url),
+        images: product.images.map(processProductImage),
+      }));
+
+      set({ featuredBrandsProducts: processedProducts, loading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'An error occurred',
@@ -184,7 +323,32 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     }
   },
 
-  clearError: () => {
-    set({ error: null });
+  fetchListedCategories: async () => {
+    try {
+      set({ loading: true, error: null });
+
+      const data = await apiRequest<{ count: number; results: Category[] }>(
+        '/products/listed-categories/',
+        {
+          headers: {
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+        },
+        false // Don't include authentication
+      );
+
+      if (!data || !data.results) {
+        throw new Error('Invalid response format for categories');
+      }
+
+      set({ categories: data.results, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred fetching categories',
+        loading: false,
+      });
+    }
   },
+
+  clearError: () => set({ error: null }),
 })); 

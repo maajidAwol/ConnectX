@@ -24,12 +24,12 @@ type Props = {
 export default function EcommerceProductItemHot({ product, hotProduct = false, sx }: Props) {
   const PLACEHOLDER_IMAGE = '/assets/placeholder.jpg';
 
-  const coverImg = product.coverImg && !product.coverImg.includes('example.com') 
-    ? product.coverImg 
+  const coverImg = product.cover_url && !product.cover_url.includes('example.com') 
+    ? product.cover_url 
     : PLACEHOLDER_IMAGE;
 
   return (
-    <Link component={NextLink} href={`${paths.eCommerce.product}/${product.id}`} color="inherit">
+    <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
       <Box
         sx={{
           position: 'relative',
@@ -50,7 +50,7 @@ export default function EcommerceProductItemHot({ product, hotProduct = false, s
 
         <Stack spacing={0.5}>
           <TextMaxLine variant="caption" line={1} sx={{ color: 'text.disabled' }}>
-            {product.category}
+            {product.category.name}
           </TextMaxLine>
 
           <TextMaxLine variant="body2" line={1} sx={{ fontWeight: 'fontWeightMedium' }}>
@@ -58,8 +58,8 @@ export default function EcommerceProductItemHot({ product, hotProduct = false, s
           </TextMaxLine>
 
           <ProductPrice
-            price={product.price}
-            priceSale={product.priceSale}
+            price={parseFloat(product.base_price)}
+            priceSale={product.selling_price || undefined}
             sx={{
               ...(hotProduct && {
                 color: 'error.main',
@@ -73,14 +73,14 @@ export default function EcommerceProductItemHot({ product, hotProduct = false, s
             <LinearProgress
               color="inherit"
               variant="determinate"
-              value={(product.sold / product.inStock) * 100}
+              value={(product.total_sold / product.quantity) * 100}
               sx={{ width: 1 }}
             />
 
             <Typography
               variant="caption"
               sx={{ flexShrink: 0, color: 'text.disabled' }}
-            >{`🔥 ${product.sold} Sold`}</Typography>
+            >{`🔥 ${product.total_sold} Sold`}</Typography>
           </Stack>
         )}
       </Box>

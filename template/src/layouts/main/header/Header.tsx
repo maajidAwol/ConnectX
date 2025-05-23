@@ -17,6 +17,7 @@ import Logo from 'src/components/logo';
 import Label from 'src/components/label';
 import SettingsDrawer from 'src/components/settings/drawer';
 import AuthButtons from 'src/components/auth/AuthButtons';
+import { EcommerceCartPopover } from 'src/sections/_e-commerce/cart';
 //
 import { NavMobile, NavDesktop, navConfig } from '../nav';
 import Searchbar from '../../components/Searchbar';
@@ -62,26 +63,7 @@ export default function Header({ headerOnDark }: Props) {
       >
         <Container sx={{ height: 1, display: 'flex', alignItems: 'center' }}>
           <Box sx={{ lineHeight: 0, position: 'relative' }}>
-            {/* <Logo /> */}
-            <h1>ConnectX</h1>
-
-            <Link href="" target="_blank" rel="noopener">
-              <Label
-                color="info"
-                sx={{
-                  ml: 0.5,
-                  px: 0.5,
-                  top: -14,
-                  left: 60,
-                  height: 20,
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  position: 'absolute',
-                }}
-              >
-                Coming soon...
-              </Label>
-            </Link>
+            <Logo />
           </Box>
 
           {isMdUp && <NavDesktop data={navConfig} />}
@@ -97,6 +79,9 @@ export default function Header({ headerOnDark }: Props) {
               <Searchbar />
 
               <SettingsDrawer />
+
+              <EcommerceCartPopover />
+
             </Stack>
 
             {isMdUp && <AuthButtons />}

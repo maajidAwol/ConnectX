@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 // @mui
 import {
@@ -15,6 +15,8 @@ import {
   SelectChangeEvent,
   ToggleButtonGroup,
 } from '@mui/material';
+// hooks
+import useResponsive from 'src/hooks/useResponsive';
 // config
 import { NAV } from 'src/config-global';
 // components
@@ -22,12 +24,18 @@ import Iconify from 'src/components/iconify';
 // store
 import { useProductStore } from 'src/store/product';
 import { useAuthStore } from 'src/store/auth';
+// api
+import { apiRequest } from 'src/lib/api-config';
 //
-import { EcommerceHeader } from '../layout';
 import EcommerceFilters from '../product/filters';
 import { EcommerceProductList, EcommerceProductListBestSellers } from '../product/list';
 
 // ----------------------------------------------------------------------
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 const VIEW_OPTIONS = [
   { value: 'list', icon: <Iconify icon="carbon:list-boxes" /> },
@@ -46,16 +54,60 @@ export default function EcommerceProductsView() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [sort, setSort] = useState('latest');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   const router = useRouter();
   const { products, loading, error, fetchProducts } = useProductStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, accessToken } = useAuthStore();
+  const isMdUp = useResponsive('up', 'md');
+
+  const fetchListedCategories = useCallback(async () => {
+    try {
+      const response = await apiRequest<{
+        count: number;
+        next: string | null;
+        previous: string | null;
+        results: Category[];
+      }>('/products/listed-categories/', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (response?.results) {
+        setCategories(response.results);
+      }
+    } catch (error) {
+      console.error('Error fetching listed categories:', error);
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchProducts();
+      fetchListedCategories();
     }
-  }, [fetchProducts, isAuthenticated]);
+  }, [isAuthenticated, fetchListedCategories]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProducts(
+        1, // Start with page 1
+        'listed', // Filter type - ensure we only get listed products
+        selectedCategoryId, // Category ID for filtering
+        sort // Sorting option
+      );
+    }
+  }, [isAuthenticated, fetchProducts, selectedCategoryId, sort]);
+
+  // Add a separate effect for initial load
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Reset to initial state when component mounts
+      setSelectedCategoryId(null);
+      setSort('latest');
+      fetchProducts(1, 'listed', null, 'latest');
+    }
+  }, [isAuthenticated, fetchProducts]);
 
   const handleChangeViewMode = (event: React.MouseEvent<HTMLElement>, newMode: string | null) => {
     if (newMode !== null) {
@@ -73,6 +125,10 @@ export default function EcommerceProductsView() {
 
   const handleMobileClose = () => {
     setMobileOpen(false);
+  };
+
+  const handleCategorySelect = (categoryId: string | null) => {
+    setSelectedCategoryId(categoryId);
   };
 
   if (!isAuthenticated) {
@@ -95,8 +151,6 @@ export default function EcommerceProductsView() {
 
   return (
     <>
-      <EcommerceHeader />
-
       <Container>
         <Stack
           direction="row"
@@ -108,46 +162,19 @@ export default function EcommerceProductsView() {
         >
           <Typography variant="h3">Products</Typography>
 
-          <Button
-            color="inherit"
-            variant="contained"
-            startIcon={<Iconify icon="carbon:filter" width={18} />}
-            onClick={handleMobileOpen}
-            sx={{
-              display: { md: 'none' },
-            }}
-          >
-            Filters
-          </Button>
-        </Stack>
-
-        <Stack
-          direction={{
-            xs: 'column-reverse',
-            md: 'row',
-          }}
-          sx={{ mb: { xs: 8, md: 10 } }}
-        >
-          <Stack spacing={5} divider={<Divider sx={{ borderStyle: 'dashed' }} />}>
-            <EcommerceFilters mobileOpen={mobileOpen} onMobileClose={handleMobileClose} />
-            <EcommerceProductListBestSellers 
-              products={products.slice(0, 3)} 
-            />
-          </Stack>
-
-          <Box
-            sx={{
-              flexGrow: 1,
-              pl: { md: 8 },
-              width: { md: `calc(100% - ${NAV.W_DRAWER}px)` },
-            }}
-          >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 5 }}
+          {!isMdUp && (
+            <Button
+              color="inherit"
+              variant="contained"
+              startIcon={<Iconify icon="carbon:filter" width={18} />}
+              onClick={handleMobileOpen}
             >
+              Filters
+            </Button>
+          )}
+
+          {isMdUp && (
+            <Stack direction="row" alignItems="center" spacing={2}>
               <ToggleButtonGroup
                 exclusive
                 size="small"
@@ -180,7 +207,22 @@ export default function EcommerceProductsView() {
                 </Select>
               </FormControl>
             </Stack>
+          )}
 
+        </Stack>
+
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={{ md: 8 }}>
+          <Box sx={{ width: { md: NAV.W_DRAWER }, flexShrink: 0 }}>
+            <EcommerceFilters 
+              mobileOpen={mobileOpen}
+              onMobileClose={handleMobileClose}
+              categories={categories}
+              onSelectCategory={handleCategorySelect}
+              selectedCategoryId={selectedCategoryId}
+            />
+          </Box>
+
+          <Box sx={{ flexGrow: 1 }}>
             {error ? (
               <Typography color="error" align="center">
                 {error}
@@ -194,6 +236,7 @@ export default function EcommerceProductsView() {
             )}
           </Box>
         </Stack>
+
       </Container>
     </>
   );
