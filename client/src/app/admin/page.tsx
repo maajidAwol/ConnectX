@@ -5,8 +5,17 @@ import { ArrowUpRight, BarChart3, CheckCircle, Clock, DollarSign, Users } from "
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { adminMetrics, systemMetrics, topMerchants, apiUsage, adminActivity } from "@/lib/data"
 import ProtectedRoute from "@/components/protected-route"
+import usePendingVerificationsStore from "@/store/usePendingVerificationsStore"
+import { useEffect } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function AdminPage() {
+  const { pendingVerifications, isLoading, error, fetchPendingVerifications } = usePendingVerificationsStore()
+
+  useEffect(() => {
+    fetchPendingVerifications()
+  }, [fetchPendingVerifications])
+
   return (
     <ProtectedRoute requiredRole="admin">
       <div className="space-y-6">
@@ -61,7 +70,7 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid gap-4">
           <Card className="lg:col-span-4">
             <CardHeader>
               <CardTitle>Merchant Approval Queue</CardTitle>
@@ -69,56 +78,42 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {/* In a real app, this would be fetched from an API */}
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                    <div className="space-y-1">
-                      <p className="font-medium">Acme E-Commerce {i}</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="mr-1 h-3 w-3" />
-                        <span>
-                          Submitted {i} day{i !== 1 ? "s" : ""} ago
-                        </span>
+                {isLoading ? (
+                  // Loading skeleton
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-3 w-[150px]" />
+                      </div>
+                      <Skeleton className="h-8 w-[80px]" />
+                    </div>
+                  ))
+                ) : error ? (
+                  <div className="text-red-500">{error}</div>
+                ) : (
+                  pendingVerifications.map((merchant) => (
+                    <div key={merchant.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-1">
+                        <p className="font-medium">{merchant.name}</p>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Clock className="mr-1 h-3 w-3" />
+                          <span>
+                            Submitted {new Date(merchant.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Link 
+                          href={`/admin/merchants/${merchant.id}`} 
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+                        >
+                          Review
+                        </Link>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Link href="#" className="text-sm font-medium text-blue-600 hover:underline">
-                        Review
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>System Metrics</CardTitle>
-              <CardDescription>Performance and health indicators</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {systemMetrics.map((metric, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{metric.name}</span>
-                      <span className="font-medium">{metric.value}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-100">
-                      <div
-                        className={`h-full rounded-full ${
-                          metric.percentage < 30
-                            ? "bg-green-500"
-                            : metric.percentage < 70
-                              ? "bg-blue-500"
-                              : "bg-yellow-500"
-                        }`}
-                        style={{ width: `${metric.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
