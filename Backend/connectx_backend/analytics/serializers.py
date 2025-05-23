@@ -58,12 +58,35 @@ class ActivityLogSerializer(serializers.ModelSerializer):
 
 
 class APIUsageLogSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    tenant = TenantSerializer(read_only=True)
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_name = serializers.CharField(source="user.name", read_only=True)
+    tenant_name = serializers.CharField(source="tenant.name", read_only=True)
+    response_time_ms = serializers.SerializerMethodField()
 
     class Meta:
         model = APIUsageLog
-        fields = "__all__"
+        fields = [
+            "id",
+            "endpoint",
+            "method",
+            "status_code",
+            "response_time",
+            "response_time_ms",
+            "user",
+            "user_email",
+            "user_name",
+            "tenant",
+            "tenant_name",
+            "request_data",
+            "response_data",
+            "timestamp",
+            "ip_address",
+        ]
+        read_only_fields = fields
+
+    def get_response_time_ms(self, obj):
+        """Convert response time to milliseconds."""
+        return round(obj.response_time * 1000, 2) if obj.response_time else None
 
 
 class AdminAnalyticsOverviewSerializer(serializers.Serializer):
