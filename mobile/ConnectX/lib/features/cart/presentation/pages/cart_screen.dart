@@ -165,144 +165,20 @@ class _CartScreenState extends State<CartScreen> {
                   amount: selectedTotal,
                   items: itemsToCheckout,
                   selectedAddress: address,
+                  selectedItemIds: selectedItems.toList(),
                 ),
           ),
-        ).then((paymentMethod) {
-          if (paymentMethod == null || !context.mounted) return;
-
-          // Create order
-          final order = chapa.ChapaOrderModel(
-            payment: chapa.Payment(
-              amount: selectedTotal,
-              txRef: 'ORD${DateTime.now().millisecondsSinceEpoch}',
-              transactionId: DateTime.now().millisecondsSinceEpoch.toString(),
-            ),
-            status: 'pending',
-            amount: selectedTotal,
-            currency: 'ETB',
-            items:
-                itemsToCheckout
-                    .map(
-                      (item) => chapa.Item(
-                        id: item.id,
-                        quantity: item.quantity,
-                        price: item.price,
-                        name: item.name,
-                        coverUrl: item.coverUrl,
-                      ),
-                    )
-                    .toList(),
-            billing: chapa.Billing(
-              name:
-                  address.fullAddress.split(
-                    ',',
-                  )[0], // Use part of address as name
-              email: "customer@example.com", // Default email
-              phoneNumber: "N/A", // Default phone
-              fullAddress: address.fullAddress,
-              company: "",
-              addressType: address.type,
-            ),
-            shipping: chapa.Shipping(
-              address: address.fullAddress,
-              phoneNumber: "N/A", // Default phone
-              method: chapa.ShippingMethod(
-                label: deliveryMethod.name,
-                description: deliveryMethod.description,
-                value: deliveryMethod.fee,
-              ),
-            ),
-            delivery: chapa.Delivery(
-              method: deliveryMethod.name,
-              fee: deliveryMethod.fee,
-            ),
-            discount: 0.0,
-            total: selectedTotal + deliveryMethod.fee,
-            subtotal: selectedTotal,
-          );
-          final cashOnDeliveryOrder = cod.CashOnDeliveryOrder(
-            items:
-                itemsToCheckout
-                    .map(
-                      (item) => CodItem(
-                        id: item.id,
-                        quantity: item.quantity,
-                        price: item.price,
-                        name: item.name,
-                        coverUrl: item.coverUrl,
-                        sku: "item.sku",
-                        vendorId: "item.vendorId",
-                      ),
-                    )
-                    .toList(),
-            status: "pending",
-            total: selectedTotal + deliveryMethod.fee,
-            subtotal: selectedTotal,
-            billing: cod.CodBilling(
-              name:
-                  address.fullAddress.split(
-                    ',',
-                  )[0], // Use part of address as name
-              email: "customer@example.com", // Default email
-              phoneNumber: "N/A", // Default phone
-              fullAddress: address.fullAddress,
-            ),
-            shipping: cod.CodShipping(
-              address: address.fullAddress,
-              method: cod.CodShippingMethod(
-                id: deliveryMethod.id,
-                label: deliveryMethod.name,
-                description: deliveryMethod.description,
-                value: deliveryMethod.fee,
-              ),
-            ),
-            payment: cod.CodPayment(
-              method: "cod",
-              currency: "ETB",
-              amount: selectedTotal,
-            ),
-            notes: "",
-            source: "mobile",
-          );
-
-          // Create the actual order based on payment method
-          final PaymentMethod selectedPaymentMethod =
-              paymentMethod['method'] as PaymentMethod;
-          if (selectedPaymentMethod.isChapa) {
-            context.read<OrderBloc>().add(CreateChapaOrder(order));
-          } else if (selectedPaymentMethod.isCashOnDelivery) {
-            context.read<OrderBloc>().add(
-              CreateCashOnDeliveryOrder(cashOnDeliveryOrder),
-            );
+        ).then((paymentResult) {
+          if (paymentResult != null && paymentResult['success'] == true) {
+            // Order was successful, remove the selected items from cart
+            for (final itemId in selectedItems.toList()) {
+              context.read<CartBloc>().add(RemoveFromCart(itemId));
+            }
+            // Clear selection
+            setState(() {
+              selectedItems.clear();
+            });
           }
-
-          // Remove checked out items from cart
-          context.read<CartBloc>().add(ClearCart());
-
-          // Navigate to order confirmation
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => OrderConfirmationScreen(
-                    orderNumber: 'ORD${DateTime.now().millisecondsSinceEpoch}',
-                    amount: order.amount,
-                    email: 'john.davids@gmail.com',
-                    order: Order_Model(
-                      subtotal: selectedTotal,
-                      paymentMethod: selectedPaymentMethod.name,
-                      id: "1",
-                      orderNumber: order.payment.txRef,
-                      amount: order.amount,
-                      date: DateTime.now(),
-                      status: order.status,
-                      items: itemsToCheckout,
-                      deliveryMethod: deliveryMethod.name,
-                      address: address.fullAddress,
-                    ),
-                  ),
-            ),
-          );
         });
       });
     });
@@ -375,20 +251,26 @@ class _CartScreenState extends State<CartScreen> {
             return Column(
               children: [
                 if (state.items.length > 1)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: Row(
+                      children: [
+                        Radio<bool>(
+                          value: selectedItems.length == state.items.length,
+                          groupValue: true,
+                          onChanged: (value) {
+                            setState(() {
+                              if (selectedItems.length == state.items.length) {
+                                selectedItems.clear();
+                              } else {
+                                selectedItems =
+                                    state.items.map((item) => item.id).toSet();
+                              }
+                            });
+                          },
+                          activeColor: Theme.of(context).primaryColor,
+                        ),
+                        GestureDetector(
                           onTap: () {
                             setState(() {
                               if (selectedItems.length == state.items.length) {
@@ -399,36 +281,18 @@ class _CartScreenState extends State<CartScreen> {
                               }
                             });
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  selectedItems.length == state.items.length
-                                      ? Icons.check_circle
-                                      : Icons.check_circle_outline,
-                                  size: 20,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  selectedItems.length == state.items.length
-                                      ? 'Deselect All'
-                                      : 'Select All',
-                                  style: TextStyle(
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                          child: Text(
+                            selectedItems.length == state.items.length
+                                ? 'Deselect All'
+                                : 'Select All',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 Expanded(

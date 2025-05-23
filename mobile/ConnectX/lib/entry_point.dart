@@ -121,8 +121,8 @@ class _EntryPointState extends State<EntryPoint> {
               "assets/connectx/transparent_logo.png",
 
               // color: Theme.of(context).iconTheme.color,
-              height: height * 0.09,
-              width: width * 0.6,
+              height: height * 0.05,
+              width: width * 0.4,
             ),
             actions: [
               // IconButton(
