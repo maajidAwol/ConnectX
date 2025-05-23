@@ -110,23 +110,6 @@ class OrderConfirmationScreen extends StatelessWidget {
                                     width: 40,
                                     height: 40,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[200],
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.image_not_supported,
-                                          color: Colors.grey[400],
-                                          size: 20,
-                                        ),
-                                      );
-                                    },
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -140,8 +123,6 @@ class OrderConfirmationScreen extends StatelessWidget {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w500,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
                                         '${item.quantity}x ${item.price.toStringAsFixed(2)} Birr',

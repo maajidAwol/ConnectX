@@ -11,22 +11,18 @@ import 'package:korecha/features/cart/domain/entities/cart_item.dart';
 import 'package:korecha/features/cart/domain/entities/order.dart';
 import 'package:korecha/features/cart/presentation/pages/order_confirmation_screen.dart';
 import 'package:korecha/features/cart/presentation/state/order/bloc/order_bloc.dart';
-import 'package:korecha/features/cart/presentation/state/cart/bloc/cart_bloc.dart';
 import '../../domain/entities/payment_method.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final double amount;
   final List<CartItem> items;
   final Address? selectedAddress; // Address from checkout flow
-  final List<String>?
-  selectedItemIds; // Item IDs to remove from cart after order
 
   const PaymentMethodScreen({
     super.key,
     required this.amount,
     required this.items,
     this.selectedAddress, // Optional address from checkout
-    this.selectedItemIds, // Optional item IDs to remove
   });
 
   @override
@@ -211,254 +207,245 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         ),
         title: const Text('Payment method'),
       ),
-      body: Stack(
+      body: Column(
         children: [
-          Column(
-            children: [
-              // Payment Method Selection Tabs - Now at the top
-              Container(
-                margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children:
-                      paymentMethods.map((method) {
-                        final isSelected = method.id == selectedMethod?.id;
-                        return Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.all(2),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
+          // Payment Method Selection Tabs - Now at the top
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children:
+                  paymentMethods.map((method) {
+                    final isSelected = method.id == selectedMethod?.id;
+                    return Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () {
+                              setState(() {
+                                selectedMethod = method;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isSelected
+                                        ? Theme.of(context).primaryColor
+                                        : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
-                                onTap: () {
-                                  setState(() {
-                                    selectedMethod = method;
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    method.isCashOnDelivery
+                                        ? Icons.payments_outlined
+                                        : Icons.payment,
+                                    size: 18,
                                     color:
                                         isSelected
-                                            ? Theme.of(context).primaryColor
-                                            : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(10),
+                                            ? Colors.white
+                                            : Colors.grey[700],
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        method.isCashOnDelivery
-                                            ? Icons.payments_outlined
-                                            : Icons.payment,
-                                        size: 18,
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      method.name,
+                                      style: TextStyle(
                                         color:
                                             isSelected
                                                 ? Colors.white
                                                 : Colors.grey[700],
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 13,
                                       ),
-                                      const SizedBox(width: 8),
-                                      Flexible(
-                                        child: Text(
-                                          method.name,
-                                          style: TextStyle(
-                                            color:
-                                                isSelected
-                                                    ? Colors.white
-                                                    : Colors.grey[700],
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 13,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
                             ),
                           ),
-                        );
-                      }).toList(),
-                ),
-              ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ),
 
-              // Expanded content area
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildOrderSummary(),
+          // Expanded content area
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildOrderSummary(),
 
-                      // Delivery Address Section
-                      if (_selectedAddress != null)
-                        Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[200]!),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Delivery Address',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _selectedAddress!.label,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _selectedAddress!.fullAddress,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  height: 1.4,
-                                ),
-                              ),
-                              if (_selectedAddress!.phoneNumber.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _selectedAddress!.phoneNumber,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        )
-                      else if (widget.selectedAddress == null &&
-                          _userAddresses.isEmpty &&
-                          context.watch<AddressBloc>().state is! AddressLoading)
-                        Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.orange[200]!),
-                          ),
-                          child: Row(
+                  // Delivery Address Section
+                  if (_selectedAddress != null)
+                    Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
                               Icon(
-                                Icons.warning_amber_rounded,
-                                color: Colors.orange[700],
+                                Icons.location_on,
+                                color: Theme.of(context).primaryColor,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'No delivery address found. Please add an address to continue.',
-                                  style: TextStyle(
-                                    color: Colors.orange[700],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                              Text(
+                                'Delivery Address',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
-                        ),
-
-                      // Payment Method Content
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        child: Builder(
-                          builder: (context) {
-                            if (selectedMethod?.isChapa == true) {
-                              return Column(
-                                children: [
-                                  Image.asset(
-                                    'assets/connectx/chapa.png',
-                                    height: 120,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Secure Payment with Chapa',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Pay securely using Telebirr, CBE Birr, or other payment methods',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            } else if (selectedMethod?.isCashOnDelivery ==
-                                true) {
-                              return Column(
-                                children: [
-                                  Image.asset(
-                                    'assets/Illustration/PayWithCash_lightTheme.png',
-                                    height: 120,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Cash on Delivery',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Pay in cash when your order is delivered',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _selectedAddress!.label,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _selectedAddress!.fullAddress,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              height: 1.4,
+                            ),
+                          ),
+                          if (_selectedAddress!.phoneNumber.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _selectedAddress!.phoneNumber,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
+                    )
+                  else if (widget.selectedAddress == null &&
+                      _userAddresses.isEmpty &&
+                      context.watch<AddressBloc>().state is! AddressLoading)
+                    Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange[700],
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'No delivery address found. Please add an address to continue.',
+                              style: TextStyle(
+                                color: Colors.orange[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Payment Method Content
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    child: Builder(
+                      builder: (context) {
+                        if (selectedMethod?.isChapa == true) {
+                          return Column(
+                            children: [
+                              Image.asset(
+                                'assets/connectx/chapa.png',
+                                height: 120,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Secure Payment with Chapa',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Pay securely using Telebirr, CBE Birr, or other payment methods',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          );
+                        } else if (selectedMethod?.isCashOnDelivery == true) {
+                          return Column(
+                            children: [
+                              Image.asset(
+                                'assets/Illustration/PayWithCash_lightTheme.png',
+                                height: 120,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Cash on Delivery',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Pay in cash when your order is delivered',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
 
           // Bottom Payment Button
@@ -497,19 +484,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   BlocListener<OrderBloc, OrderState>(
                     listener: (context, state) {
                       if (state is ChapaOrderCreated) {
-                        // Order created successfully on backend
+                        // Order created successfully on backend, navigate to confirmation
                         setState(() {
                           _isProcessing = false;
                         });
-
-                        // Remove ordered items from cart if selectedItemIds provided
-                        if (widget.selectedItemIds != null) {
-                          for (final itemId in widget.selectedItemIds!) {
-                            context.read<CartBloc>().add(
-                              RemoveFromCart(itemId),
-                            );
-                          }
-                        }
 
                         final order = Order_Model(
                           id: _currentTransactionRef ?? 'chapa-order',
@@ -560,15 +538,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         setState(() {
                           _isProcessing = false;
                         });
-
-                        // Remove ordered items from cart if selectedItemIds provided
-                        if (widget.selectedItemIds != null) {
-                          for (final itemId in widget.selectedItemIds!) {
-                            context.read<CartBloc>().add(
-                              RemoveFromCart(itemId),
-                            );
-                          }
-                        }
 
                         final order = Order_Model(
                           id:
@@ -812,39 +781,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               ),
             ),
           ),
-
-          // Progress Overlay
-          if (_isProcessing)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Creating your order...',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Please wait while we process your payment and create your order.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
