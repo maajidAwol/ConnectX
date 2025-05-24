@@ -1,38 +1,63 @@
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 // @mui
 import { alpha } from '@mui/material/styles';
 import { Box, Typography, Container, Stack } from '@mui/material';
 // components
 import Image from 'src/components/image';
 import TextMaxLine from 'src/components/text-max-line';
+// api
+import { apiRequest } from 'src/lib/api-config';
 
 // ----------------------------------------------------------------------
 
-const CATEGORIES = [
-  { label: 'Men Clothes', icon: '/assets/icons/e-commerce/ic_men_clothes.svg', path: '#' },
-  {
-    label: 'Women Clothes',
-    icon: '/assets/icons/e-commerce/ic_women_clothes.svg',
-    path: '#',
-  },
-  { label: 'Watches', icon: '/assets/icons/e-commerce/ic_watches.svg', path: '#' },
-  {
-    label: 'Home Appliances',
-    icon: '/assets/icons/e-commerce/ic_home_appliances.svg',
-    path: '#',
-  },
-  { label: 'Sport & Outdoor', icon: '/assets/icons/e-commerce/ic_sport.svg', path: '#' },
-  { label: 'Books & Stationery', icon: '/assets/icons/e-commerce/ic_book.svg', path: '#' },
-  { label: 'Home & Living', icon: '/assets/icons/e-commerce/ic_home_living.svg', path: '#' },
-  { label: 'Health', icon: '/assets/icons/e-commerce/ic_health.svg', path: '#' },
-  { label: 'Mobile', icon: '/assets/icons/e-commerce/ic_mobile.svg', path: '#' },
-  { label: 'Laptop', icon: '/assets/icons/e-commerce/ic_laptop.svg', path: '#' },
-  { label: 'Tablet', icon: '/assets/icons/e-commerce/ic_tablet.svg', path: '#' },
-  { label: 'Headphones', icon: '/assets/icons/e-commerce/ic_headphones.svg', path: '#' },
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+const MOCK_CATEGORIES = [
+  { label: 'Watches', icon: '/assets/icons/e-commerce/ic_watches.svg' },
+  { label: 'Home Appliances', icon: '/assets/icons/e-commerce/ic_home_appliances.svg' },
+  { label: 'Sport & Outdoor', icon: '/assets/icons/e-commerce/ic_sport.svg' },
+  { label: 'Books & Stationery', icon: '/assets/icons/e-commerce/ic_book.svg' },
+  { label: 'Home & Living', icon: '/assets/icons/e-commerce/ic_home_living.svg' },
+  { label: 'Health', icon: '/assets/icons/e-commerce/ic_health.svg' },
 ];
 
 // ----------------------------------------------------------------------
 
 export default function EcommerceLandingCategories() {
+  const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await apiRequest('/products/listed-categories/', {
+          method: 'GET',
+        });
+        
+        if (response && 'results' in response) {
+          setCategories(response.results);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleCategoryClick = () => {
+    router.push('/e-commerce/products');
+  };
+
   return (
     <Container
       sx={{
@@ -58,11 +83,45 @@ export default function EcommerceLandingCategories() {
           md: 'repeat(6, 1fr)',
         }}
       >
-        {CATEGORIES.map((category) => (
+        {/* Real Categories */}
+        {categories.map((category) => (
+          <Stack
+            key={category.id}
+            alignItems="center"
+            justifyContent="center"
+            onClick={handleCategoryClick}
+            sx={{
+              px: 1,
+              py: 3,
+              borderRadius: 2,
+              cursor: 'pointer',
+              border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.24)}`,
+              '&:hover': {
+                boxShadow: (theme) => `0 0 0 2px ${theme.palette.text.primary}`,
+              },
+            }}
+          >
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.neutral', borderRadius: '50%' }}>
+              <Image 
+                src={category.icon || '/assets/icons/e-commerce/ic_electronics.svg'} 
+                alt={category.name}
+                sx={{ width: 40, height: 40 }} 
+              />
+            </Box>
+
+            <TextMaxLine variant="subtitle2" line={1}>
+              {category.name}
+            </TextMaxLine>
+          </Stack>
+        ))}
+
+        {/* Mock Categories */}
+        {MOCK_CATEGORIES.map((category) => (
           <Stack
             key={category.label}
             alignItems="center"
             justifyContent="center"
+            onClick={handleCategoryClick}
             sx={{
               px: 1,
               py: 3,

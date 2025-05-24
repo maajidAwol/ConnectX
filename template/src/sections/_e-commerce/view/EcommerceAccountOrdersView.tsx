@@ -127,7 +127,7 @@ export default function EcommerceAccountOrdersView() {
   };
 
   if (selectedOrder) {
-    return (
+  return (
       <Container maxWidth="lg" sx={{ py: 3 }}>
         <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, boxShadow: (theme) => theme.customShadows?.z16 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
@@ -182,8 +182,8 @@ export default function EcommerceAccountOrdersView() {
                       label={selectedOrder.payment_status.display_status}
                       color={selectedOrder.payment_status.display_status === 'Pending' ? 'warning' : 'success'}
                       size="small"
-                    />
-                  </Stack>
+        />
+      </Stack>
                   <Stack direction="row" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">Items Count</Typography>
                     <Typography variant="subtitle2">{selectedOrder.items_count}</Typography>
@@ -206,13 +206,13 @@ export default function EcommerceAccountOrdersView() {
                   <Box
                     component="img"
                     src={selectedOrder.first_item.cover_url}
-                    sx={{
+        sx={{
                       width: '100%',
                       height: 300,
                       borderRadius: 2,
                       objectFit: 'cover',
                       boxShadow: (theme) => theme.customShadows?.z8,
-                    }}
+        }}
                   />
                   <Stack spacing={2}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -271,7 +271,7 @@ export default function EcommerceAccountOrdersView() {
                 <TableRow key={order.id}>
                   <TableCell>{order.order_number}</TableCell>
                   <TableCell>{fDateTime(order.created_at)}</TableCell>
-                  <TableCell>
+                    <TableCell>
                     <Chip
                       label={order.status}
                       color={getStatusColor(order.status) as any}
@@ -310,28 +310,28 @@ export default function EcommerceAccountOrdersView() {
                           </IconButton>
                         </Tooltip>
                       )}
-                    </Stack>
-                  </TableCell>
-                </TableRow>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+      </TableContainer>
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
           <Pagination
             count={totalPages}
-            page={page}
+          page={page}
             onChange={(_, value) => setPage(value)}
             color="primary"
             shape="rounded"
-            sx={{
+          sx={{
               '& .MuiPaginationItem-root': {
                 borderRadius: 1,
-              },
-            }}
-          />
-        </Box>
+            },
+          }}
+        />
+      </Box>
       </Card>
     </Container>
   );

@@ -111,7 +111,7 @@ export const _productsCarousel = [
   },
   {
     id: _mock.id(3),
-    title: 'Join Our Community',
+    title: 'Subscribe to our news letter and know new products release',
     caption: 'Be the first to know about new products, exclusive deals, and special events.',
     coverImg: _mock.image.product(3),
     label: 'Stay Connected',

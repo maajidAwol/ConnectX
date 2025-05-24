@@ -93,7 +93,7 @@ export async function apiRequest<T>(
     const url = `/api/proxy/${cleanEndpoint}`;
 
     const headers = getApiHeaders(includeAuth, accessToken);
-
+    
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -114,7 +114,7 @@ export async function apiRequest<T>(
     return response.json();
   } catch (error) {
     if (error instanceof Error) {
-      throw error;
+    throw error;
     }
     throw new Error('An unexpected error occurred');
   }
