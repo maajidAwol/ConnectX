@@ -208,11 +208,11 @@ export default function EcommerceAccountPersonalView() {
       setIsEditingAvatar(false);
       setAvatarFileToUpload(null);
       setAvatarPreviewToUpload(null);
-      setSuccess('Avatar updated successfully');
+      setSuccess('Profile picyure updated successfully');
 
     } catch (error) {
       console.error('Avatar upload error:', error);
-      setAvatarError(error instanceof Error ? error.message : 'Failed to upload avatar');
+      setAvatarError(error instanceof Error ? error.message : 'Failed to upload profile picture');
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -242,7 +242,6 @@ export default function EcommerceAccountPersonalView() {
       if (showPasswordSection && data.newPassword) {
         formData.append('password', data.newPassword);
       }
-      // Do NOT include avatar here anymore, it's handled separately
       formData.append('role', user.role);
 
       const response = await fetch(`${API_URL}/users/update-profile/`, {

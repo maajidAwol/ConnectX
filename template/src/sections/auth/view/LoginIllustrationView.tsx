@@ -16,6 +16,11 @@ import { AuthWithSocial, AuthLoginForm } from '../components';
 export default function LoginIllustrationView() {
   const isMdUp = useResponsive('up', 'md');
 
+  const handleRegisterClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.location.href = paths.registerIllustration;
+  };
+
   return (
     <Container
       sx={{
@@ -52,12 +57,21 @@ export default function LoginIllustrationView() {
               </Typography>
 
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {`Don’t have an account? `}
+                {`Don't have an account? `}
                 <Link
-                  component={NextLink}
-                  href={paths.registerIllustration}
+                  component="button"
+                  onClick={handleRegisterClick}
                   variant="subtitle2"
                   color="primary"
+                  sx={{ 
+                    border: 'none', 
+                    background: 'none', 
+                    cursor: 'pointer', 
+                    p: 0,
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
+                  }}
                 >
                   Get started
                 </Link>

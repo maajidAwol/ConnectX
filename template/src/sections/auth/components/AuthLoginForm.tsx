@@ -61,12 +61,23 @@ export default function AuthLoginForm() {
   const onSubmit = async (data: FormValuesProps) => {
     try {
       setLocalError(null);
+      console.log('Attempting login with:', { email: data.email }); // Debug log
       await login(data.email, data.password);
+      console.log('Login successful, redirecting...'); // Debug log
       // Redirect to the e-commerce landing page after successful login
-      router.push(paths.eCommerce.landing);
+      window.location.href = paths.eCommerce.landing;
     } catch (error) {
       console.error('Login error:', error);
-      setLocalError(error instanceof Error ? error.message : 'Login failed');
+      let errorMessage = 'Login failed';
+      if (error instanceof Error) {
+        try {
+          const errorData = JSON.parse(error.message);
+          errorMessage = errorData.message || error.message;
+        } catch {
+          errorMessage = error.message;
+        }
+      }
+      setLocalError(errorMessage);
     }
   };
 
@@ -97,11 +108,24 @@ export default function AuthLoginForm() {
         />
 
         <Link
-          component={NextLink}
-          href={paths.resetPassword}
+          component="button"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = paths.resetPassword;
+          }}
           variant="body2"
           underline="always"
           color="text.secondary"
+          sx={{ 
+            border: 'none', 
+            background: 'none', 
+            cursor: 'pointer', 
+            p: 0,
+            textAlign: 'left',
+            '&:hover': {
+              textDecoration: 'underline'
+            }
+          }}
         >
           Forgot password?
         </Link>

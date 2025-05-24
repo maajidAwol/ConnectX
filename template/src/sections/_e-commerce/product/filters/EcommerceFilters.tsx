@@ -56,7 +56,7 @@ type Props = {
   selectedCategoryId: string | null;
 };
 
-export default function EcommerceFilters({ mobileOpen, onMobileClose, categories, onSelectCategory, selectedCategoryId }: Props) {
+export default function EcommerceFilters({ mobileOpen, onMobileClose, categories = [], onSelectCategory, selectedCategoryId }: Props) {
   const isMdUp = useResponsive('up', 'md');
 
   const [filters, setFilters] = useState<IProductFiltersProps>(defaultValues);
@@ -67,7 +67,8 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
       : [...selectedItems, item];
 
   const handleChangeCategories = (name: string) => {
-    onSelectCategory(name);
+    const selectedCategory = categories.find(cat => cat.name === name);
+    onSelectCategory(selectedCategory?.id || null);
   };
 
   const handleChangeBrand = (name: string) => {

@@ -25,22 +25,12 @@ export default function EcommerceProductView() {
   const productId = searchParams.get('id');
 
   const { currentProduct, loading, error, fetchProductById } = useProductStore();
-  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-      return;
-    }
-
     if (productId) {
       fetchProductById(productId);
     }
-  }, [fetchProductById, productId, isAuthenticated, router]);
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  }, [fetchProductById, productId]);
 
   if (loading) {
     return <LoadingScreen />;

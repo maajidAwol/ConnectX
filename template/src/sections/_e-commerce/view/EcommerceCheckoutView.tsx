@@ -142,7 +142,7 @@ type Props = {
 export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQuantity, onIncreaseQuantity }: Props) {
   const { replace } = useRouter();
   const { items, getTotalPrice, clearCart } = useCartStore();
-  const { user, accessToken } = useAuthStore();
+  const { user, accessToken, isAuthenticated } = useAuthStore();
   const [shippingAddresses, setShippingAddresses] = useState<ShippingAddress[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<ShippingAddress | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
@@ -151,19 +151,24 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
   const [paymentMethod, setPaymentMethod] = useState<'chapa' | 'cod'>('chapa');
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      replace('/auth/login');
+      return;
+    }
+
     if (user?.id && accessToken) {
       fetchUserDetails();
       fetchShippingAddresses();
     }
-  }, [user?.id, accessToken]);
+  }, [user?.id, accessToken, isAuthenticated, replace]);
 
   const fetchUserDetails = async () => {
     try {
+      if (!accessToken) return;
       const response = await apiRequest(`/users/${user?.id}/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+        method: 'GET',
+      }, true, accessToken || undefined);
       if (response) {
         setUserDetails(response as UserDetails);
       }
@@ -176,11 +181,10 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
 
   const fetchShippingAddresses = async () => {
     try {
+      if (!accessToken) return;
       const response = await apiRequest('/shipping-addresses/', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+        method: 'GET',
+      }, true, accessToken || undefined);
       if (response && typeof response === 'object' && 'results' in response && Array.isArray(response.results)) {
         const addresses = response.results as ShippingAddress[];
         setShippingAddresses(addresses);
@@ -195,27 +199,35 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
     }
   };
 
-  const createShippingAddress = async (data: any) => {
+  const createShippingAddress = async (data: typeof defaultValues) => {
     try {
-      const response = await apiRequest('/shipping-addresses/', {
+      if (!accessToken) return;
+      
+      const addressData = {
+        label: 'Home',
+        full_address: `${data.streetAddress}, ${data.city}, ${data.country}`,
+        phone_number: data.phoneNumber || user?.phone_number || '',
+        is_default: true
+      };
+
+      const response = await apiRequest<ShippingAddress>('/shipping-addresses/', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          'Authorization': `Bearer ${accessToken}`
         },
-        body: JSON.stringify({
-          label: data.label || 'Home',
-          full_address: `${data.streetAddress}, ${data.city}, ${data.country}`,
-          phone_number: data.phoneNumber,
-          is_default: true,
-        }),
-      });
+        body: JSON.stringify(addressData)
+      }, true, accessToken);
       
-      if (response) {
-        const newAddress = response as ShippingAddress;
-        setShippingAddresses([...shippingAddresses, newAddress]);
-        setSelectedAddress(newAddress);
-        return newAddress;
+      if (!response) {
+        throw new Error('Failed to create shipping address');
       }
+      
+      setShippingAddresses(prev => [...prev, response]);
+      setSelectedAddress(response);
+      return response;
     } catch (error) {
       console.error('Error creating shipping address:', error);
       throw error;
@@ -227,6 +239,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
     city: Yup.string().required('City is required'),
     zipCode: Yup.string().required('Zip code is required'),
     country: Yup.string().required('Country is required'),
+    phoneNumber: Yup.string().required('Phone number is required'),
   });
 
   const defaultValues = {
@@ -234,6 +247,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
     city: '',
     country: 'United States',
     zipCode: '',
+    phoneNumber: user?.phone_number || '',
   };
 
   const methods = useForm<typeof defaultValues>({
@@ -373,146 +387,42 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
   const onSubmit = async (data: typeof defaultValues) => {
     try {
       setSubmitting(true);
-      let addressId = selectedAddress?.id;
       
-      // If no address is selected, create a new one
-      if (!addressId) {
-        console.log('No address selected, creating new address');
-        const newAddress = await createShippingAddress(data);
-        if (newAddress) {
-          addressId = newAddress.id;
-        } else {
-          throw new Error('Failed to create shipping address');
-        }
-      } else {
-        console.log('Using existing address:', selectedAddress);
+      // Create new shipping address
+      const newAddress = await createShippingAddress(data);
+      if (!newAddress) {
+        throw new Error('Failed to create shipping address');
       }
-
-      if (!addressId) {
-        throw new Error('No shipping address available');
-      }
-
-      const totalAmount = (getTotalPrice() + 50).toString();
-
-      // Create order first
-      console.log('Creating order with address ID:', addressId);
-        const orderData = {
-          status: 'pending',
-          subtotal: getTotalPrice().toString(),
-          taxes: '0.00',
-        shipping: '50.00',
-          discount: '0.00',
-          notes: 'Order placed through web application',
-          email: user?.email || '',
-        phone: selectedAddress?.phone_number || (user as User)?.phone_number || '',
-          shipping_address: addressId,
-        items: items.map(item => ({
-          product: item.id,
-          quantity: item.quantity,
-          price: item.price.toString(),
-          custom_profit_percentage: 0,
-          custom_selling_price: item.price.toString()
-        })),
-      };
-
-      console.log('Creating order with data:', orderData);
-
-      const orderResponse = await apiRequest<OrderResponse>('/orders/', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      if (!orderResponse) {
-        throw new Error('Failed to create order');
-      }
-
-      if (paymentMethod === 'chapa') {
-        // Initialize Chapa payment
-        const phoneNumber = selectedAddress?.phone_number || (user as User)?.phone_number || '';
-        const formattedPhone = formatPhoneNumber(phoneNumber);
-
-        console.log('Initializing Chapa payment with:', {
-          orderId: orderResponse.id,
-          phoneNumber: formattedPhone,
-          returnUrl: `${window.location.origin}/payment/success`
-        });
-
-        const chapaResponse = await apiRequest<ChapaPaymentResponse>('/payments/initialize_chapa_payment/', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-          body: JSON.stringify({
-            order_id: orderResponse.id,
-            phone_number: formattedPhone,
-            return_url: `${window.location.origin}/payment/success`
-          }),
-        });
-
-        console.log('Chapa payment response:', chapaResponse);
-
-        if (!chapaResponse || chapaResponse.status !== 'success' || !chapaResponse.data?.checkout_url) {
-          throw new Error('Failed to initialize Chapa payment');
-        }
-
-        // Store order data and transaction reference in session storage
-        const pendingOrder = {
-          orderId: orderResponse.id,
-          addressId: addressId,
-          items: items.map(item => ({
-            product: item.id,
-            quantity: item.quantity,
-            price: item.price.toString(),
-            custom_profit_percentage: 0,
-            custom_selling_price: item.price.toString()
-          })),
-          totalAmount: totalAmount,
-          paymentMethod: 'chapa',
-          tx_ref: chapaResponse.data.tx_ref // Store the transaction reference
-        };
-        sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
-
-        // Redirect to Chapa checkout
-        window.location.href = chapaResponse.data.checkout_url;
-      } else if (paymentMethod === 'cod') {
-        // For COD, create payment record and confirm
-        const paymentResponse = await createPayment(orderResponse.id, totalAmount);
-        if (paymentResponse) {
-          await confirmCodPayment(paymentResponse.id);
-          clearCart();
-          reset();
-          replace(paths.eCommerce.orderCompleted);
-        }
-      }
+      
+      // Set the new address as selected
+      setSelectedAddress(newAddress);
+      
+      // Proceed with order creation
+      await handlePlaceOrder(newAddress);
     } catch (error) {
-      console.error('Error in checkout:', error);
+      console.error('Error in form submission:', error);
       if (error instanceof Error) {
-        console.error('Error details:', error.message);
+        alert(error.message);
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleAddressSelect = (address: ShippingAddress) => {
-    console.log('Selected address:', address);
-    setSelectedAddress(address);
-  };
-
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (address?: ShippingAddress) => {
     try {
-      if (!selectedAddress) {
-        return;
+      if (!accessToken) {
+        throw new Error('Authentication required. Please log in again.');
       }
 
       setSubmitting(true);
+
+      // Use provided address or selected address
+      const shippingAddress = address || selectedAddress;
+
+      if (!shippingAddress) {
+        throw new Error('Please select or add a shipping address');
+      }
 
       const totalAmount = (getTotalPrice() + 50).toString();
 
@@ -525,8 +435,8 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         discount: '0.00',
         notes: 'Order placed through web application',
         email: user?.email || '',
-        phone: selectedAddress.phone_number,
-        shipping_address: selectedAddress.id,
+        phone: shippingAddress.phone_number,
+        shipping_address: shippingAddress.id,
         items: items.map(item => ({
           product: item.id,
           quantity: item.quantity,
@@ -534,39 +444,42 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
           custom_profit_percentage: 0,
           custom_selling_price: item.price.toString()
         })),
+        total_amount: totalAmount,
+        payment_method: paymentMethod
       };
+
+      console.log('Creating order with data:', orderData);
 
       const orderResponse = await apiRequest<OrderResponse>('/orders/', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify(orderData),
-      });
+      }, true, accessToken);
 
       if (!orderResponse) {
         throw new Error('Failed to create order');
       }
 
       if (paymentMethod === 'chapa') {
-        // Initialize Chapa payment
-        const formattedPhone = formatPhoneNumber(selectedAddress.phone_number);
+        const formattedPhone = formatPhoneNumber(shippingAddress.phone_number);
 
         const chapaResponse = await apiRequest<ChapaPaymentResponse>('/payments/initialize_chapa_payment/', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+            'Authorization': `Bearer ${accessToken}`
           },
           body: JSON.stringify({
             order_id: orderResponse.id,
             phone_number: formattedPhone,
             return_url: `${window.location.origin}/payment/success`
           }),
-        });
+        }, true, accessToken);
 
         if (!chapaResponse || chapaResponse.status !== 'success' || !chapaResponse.data?.checkout_url) {
           throw new Error('Failed to initialize Chapa payment');
@@ -575,7 +488,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         // Store order data and transaction reference in session storage
         const pendingOrder = {
           orderId: orderResponse.id,
-          addressId: selectedAddress.id,
+          addressId: shippingAddress.id,
           items: items.map(item => ({
             product: item.id,
             quantity: item.quantity,
@@ -592,7 +505,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         // Redirect to Chapa checkout
         window.location.href = chapaResponse.data.checkout_url;
       } else if (paymentMethod === 'cod') {
-        // For COD, create payment record and confirm
         const paymentResponse = await createPayment(orderResponse.id, totalAmount);
         if (paymentResponse) {
           await confirmCodPayment(paymentResponse.id);
@@ -602,10 +514,18 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         }
       }
     } catch (error) {
-      // Silent error handling
+      console.error('Error in checkout:', error);
+      if (error instanceof Error) {
+        alert(error.message);
+      }
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleAddressSelect = (address: ShippingAddress) => {
+    console.log('Selected address:', address);
+    setSelectedAddress(address);
   };
 
   if (loading) {
@@ -669,7 +589,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
                 discount={0}
                 products={items}
                 loading={submitting}
-                onPlaceOrder={handlePlaceOrder}
+                onPlaceOrder={() => handlePlaceOrder()}
               />
             </Grid>
           </Grid>

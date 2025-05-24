@@ -18,8 +18,8 @@ export default function EcommerceWishlistPage() {
       <Head>
         <title>Wishlist | ConnectX</title>
       </Head>
-    
-      <EcommerceWishlistView products={_products} />
+
+      {/* <EcommerceWishlistView products={_products} /> */}
     </>
   );
 }

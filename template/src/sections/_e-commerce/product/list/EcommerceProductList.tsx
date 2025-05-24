@@ -59,16 +59,18 @@ export default function EcommerceProductList({ loading, viewMode, products }: Pr
 
   return (
     <>
-      <Stack direction="row" spacing={1} sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}>
-        {categories.map((category) => (
-          <Chip
-            key={category.id}
-            label={category.name}
-            onClick={() => handleCategoryClick(category.id)}
-            sx={{ m: 0.5 }}
-          />
-        ))}
-      </Stack>
+      {Array.isArray(categories) && categories.length > 0 && (
+        <Stack direction="row" spacing={1} sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}>
+          {categories.map((category) => (
+            <Chip
+              key={category.id}
+              label={category.name}
+              onClick={() => handleCategoryClick(category.id)}
+              sx={{ m: 0.5 }}
+            />
+          ))}
+        </Stack>
+      )}
 
       {viewMode === 'grid' ? (
         <Box

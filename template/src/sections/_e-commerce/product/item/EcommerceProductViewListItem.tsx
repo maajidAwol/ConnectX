@@ -24,6 +24,12 @@ interface Props extends StackProps {
 
 export default function EcommerceProductViewListItem({ product, ...other }: Props) {
   const { addItem } = useCartStore();
+  
+  // Add null check for product
+  if (!product || !product.id) {
+    return null; // or return a loading/error state
+  }
+
   const isNew = new Date(product.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days
   const isSale = product.selling_price && Number(product.selling_price) < Number(product.base_price);
 
@@ -37,6 +43,9 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
       price: Number(product.base_price),
       quantity: 1,
       cover_url: product.cover_url,
+      colors: product.colors,
+      sizes: product.sizes,
+      category: product.category.name,
       color: product.colors[0],
     });
   };
@@ -64,23 +73,25 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
         </Label>
       )}
 
-      <Link
-        component={NextLink}
-        href={`${paths.eCommerce.product}?id=${product.id}`}
-        sx={{ display: 'block' }}
-      >
-        <Image
-          src={product.cover_url}
-          alt={product.name}
-          sx={{
-            mr: 2,
-            width: 160,
-            flexShrink: 0,
-            borderRadius: 1.5,
-            bgcolor: 'background.neutral',
-          }}
-        />
-      </Link>
+      {product.id && (
+        <Link
+          component={NextLink}
+          href={`${paths.eCommerce.product}?id=${product.id}`}
+          sx={{ display: 'block' }}
+        >
+          <Image
+            src={product.cover_url}
+            alt={product.name}
+            sx={{
+              mr: 2,
+              width: 160,
+              flexShrink: 0,
+              borderRadius: 1.5,
+              bgcolor: 'background.neutral',
+            }}
+          />
+        </Link>
+      )}
 
       <Fab
         className="add-to-cart"
@@ -108,11 +119,17 @@ export default function EcommerceProductViewListItem({ product, ...other }: Prop
           {product.category.name}
         </TextMaxLine>
 
-        <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
-          <TextMaxLine variant="h6" line={1}>
-            {product.name}
-          </TextMaxLine>
-        </Link>
+        {product.id && (
+          <Link 
+            component={NextLink} 
+            href={`${paths.eCommerce.product}?id=${product.id}`} 
+            color="inherit"
+          >
+            <TextMaxLine variant="h6" line={1}>
+              {product.name}
+            </TextMaxLine>
+          </Link>
+        )}
 
         <ProductRating 
           rating={product.total_ratings / (product.total_reviews || 1)} 

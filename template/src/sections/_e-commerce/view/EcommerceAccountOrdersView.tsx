@@ -1,344 +1,338 @@
 import { useState, useEffect } from 'react';
-// @mui
-import { DatePicker } from '@mui/x-date-pickers';
 import {
-  Box,
-  Tab,
-  Tabs,
   Table,
-  Stack,
-  Switch,
-  TableRow,
   TableBody,
   TableCell,
-  TextField,
-  Typography,
   TableContainer,
-  InputAdornment,
-  TablePagination,
-  FormControlLabel,
-  CircularProgress,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Typography,
+  Box,
+  Card,
+  Stack,
+  Chip,
+  IconButton,
+  Tooltip,
+  Pagination,
+  Container,
+  Grid,
 } from '@mui/material';
-// components
-import Iconify from 'src/components/iconify';
-import Scrollbar from 'src/components/scrollbar';
-import Label from 'src/components/label';
-// utils
-import { fDate } from 'src/utils/formatTime';
-import { fCurrency } from 'src/utils/formatNumber';
-// store
 import { useAuthStore } from 'src/store/auth';
-// api
 import { apiRequest } from 'src/lib/api-config';
-//
-import { EcommerceAccountLayout } from '../layout';
-import {
-  stableSort,
-  getComparator,
-  EcommerceAccountOrdersTableHead,
-} from '../account/orders';
+import Iconify from 'src/components/iconify';
+import { fDateTime } from 'src/utils/format-time';
+import { fCurrency } from 'src/utils/format-number';
 
-// ----------------------------------------------------------------------
+interface OrderItem {
+  product_name: string;
+  product_id: string;
+  cover_url: string;
+}
+
+interface PaymentStatus {
+  display_status: string;
+  method: string;
+}
 
 interface Order {
   id: string;
   order_number: string;
+  seller_tenant_id: string;
   seller_tenant_name: string;
   status: string;
   total_amount: string;
   created_at: string;
   items_count: number;
   total_quantity: number;
-  first_item: {
-    product_name: string;
-    product_id: string;
-    cover_url: string;
-  };
-  payment_status: {
-    display_status: string;
-    method: string;
-  };
+  first_item: OrderItem;
+  payment_status: PaymentStatus;
 }
 
-interface OrdersResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Order[];
-}
-
-const TABS = [
-  'All Orders',
-  'Pending',
-  'Processing',
-  'Confirmed',
-  'Shipped',
-  'Delivered',
-  'Cancelled',
-  'Refunded',
-  'Failed',
-];
-
-export const TABLE_HEAD = [
-  { id: 'order_number', label: 'Order ID' },
-  { id: 'first_item', label: 'Item' },
-  { id: 'created_at', label: 'Order Date', width: 160 },
-  { id: 'total_amount', label: 'Price', width: 100 },
-  { id: 'status', label: 'Status', width: 100 },
-  { id: '' },
-];
-
-// ----------------------------------------------------------------------
-
-export default function EcommerceAccountOrdersPage() {
+export default function EcommerceAccountOrdersView() {
   const { accessToken } = useAuthStore();
-  const [tab, setTab] = useState('All Orders');
-  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-  const [orderBy, setOrderBy] = useState('created_at');
-  const [page, setPage] = useState(0);
-  const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    fetchOrders();
-  }, [page, rowsPerPage, tab, searchQuery]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const fetchOrders = async () => {
     try {
-      setLoading(true);
-      const status = tab === 'All Orders' ? '' : tab.toLowerCase();
-      const response = await apiRequest<OrdersResponse>(`/orders/my-orders/?page=${page + 1}&page_size=${rowsPerPage}&status=${status}&search=${searchQuery}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      if (!accessToken) return;
 
-      if (response) {
+      const response = await apiRequest<{ results: Order[]; count: number }>(`/orders/my-orders/?page=${page}&page_size=10`, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }, true, accessToken);
+
+      if (response?.results) {
         setOrders(response.results);
-        setTotalCount(response.count);
+        setTotalPages(Math.ceil(response.count / 10));
       }
     } catch (error) {
-      // Silent error handling
+      // Handle error silently
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangeTab = (event: React.SyntheticEvent, newValue: string) => {
-    setTab(newValue);
-    setPage(0);
+  useEffect(() => {
+    fetchOrders();
+  }, [page, accessToken]);
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
   };
 
-  const handleSort = (id: string) => {
-    const isAsc = orderBy === id && order === 'asc';
-    if (id !== '') {
-      setOrder(isAsc ? 'desc' : 'asc');
-      setOrderBy(id);
-    } else {
-      setOrder('desc');
-      setOrderBy('created_at');
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      if (!accessToken) return;
+
+      await apiRequest(`/orders/${orderId}/cancel/`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }, true, accessToken);
+
+      fetchOrders();
+    } catch (error) {
+      // Handle error silently
     }
-  };
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDense(event.target.checked);
-  };
-
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-    setPage(0);
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'completed':
-        return 'success';
       case 'pending':
         return 'warning';
       case 'processing':
         return 'info';
-      case 'cancelled':
-        return 'error';
-      case 'shipped':
-        return 'primary';
-      case 'delivered':
+      case 'completed':
         return 'success';
-      case 'refunded':
-        return 'secondary';
-      case 'failed':
+      case 'cancelled':
         return 'error';
       default:
         return 'default';
     }
   };
 
-  return (
-    <EcommerceAccountLayout>
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        Orders
-      </Typography>
+  if (selectedOrder) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, boxShadow: (theme) => theme.customShadows?.z16 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
+            <Typography variant="h4">Order Details</Typography>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="eva:arrow-back-fill" />}
+              onClick={() => setSelectedOrder(null)}
+              sx={{ borderRadius: 2 }}
+            >
+              Back to Orders
+            </Button>
+          </Stack>
 
-      <Tabs
-        value={tab}
-        scrollButtons="auto"
-        variant="scrollable"
-        allowScrollButtonsMobile
-        onChange={handleChangeTab}
-      >
-        {TABS.map((category) => (
-          <Tab key={category} value={category} label={category} />
-        ))}
-      </Tabs>
-
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 5, mb: 3 }}>
-        <TextField
-          fullWidth
-          hiddenLabel
-          placeholder="Search orders..."
-          value={searchQuery}
-          onChange={handleSearch}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Iconify icon="carbon:search" width={24} sx={{ color: 'text.disabled' }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Stack>
-
-      <TableContainer
-        sx={{
-          overflow: 'unset',
-          '& .MuiTableCell-head': {
-            color: 'text.primary',
-          },
-          '& .MuiTableCell-root': {
-            bgcolor: 'background.default',
-            borderBottomColor: (theme) => theme.palette.divider,
-          },
-        }}
-      >
-        <Scrollbar>
-          <Table
-            sx={{
-              minWidth: 720,
-            }}
-            size={dense ? 'small' : 'medium'}
-          >
-            <EcommerceAccountOrdersTableHead
-              order={order}
-              orderBy={orderBy}
-              onSort={handleSort}
-              headCells={TABLE_HEAD}
-            />
-
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No orders found
+          <Grid container spacing={4}>
+            {/* Order Information */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ p: 3, height: '100%', bgcolor: 'background.neutral' }}>
+                <Typography variant="h6" gutterBottom>
+                  Order Information
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Order Number</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.order_number}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Date</Typography>
+                    <Typography variant="subtitle2">{fDateTime(selectedOrder.created_at)}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Status</Typography>
+                    <Chip 
+                      label={selectedOrder.status} 
+                      color={getStatusColor(selectedOrder.status) as any}
+                      size="small"
+                    />
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Total Amount</Typography>
+                    <Typography variant="subtitle2" color="primary.main">
+                      {fCurrency(parseFloat(selectedOrder.total_amount))}
                     </Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Payment Method</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.payment_status.method}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Payment Status</Typography>
+                    <Chip 
+                      label={selectedOrder.payment_status.display_status}
+                      color={selectedOrder.payment_status.display_status === 'Pending' ? 'warning' : 'success'}
+                      size="small"
+                    />
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Items Count</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.items_count}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Total Quantity</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.total_quantity}</Typography>
+                  </Stack>
+                </Stack>
+              </Card>
+            </Grid>
+
+            {/* Product Information */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ p: 3, height: '100%', bgcolor: 'background.neutral' }}>
+                <Typography variant="h6" gutterBottom>
+                  Product Information
+                </Typography>
+                <Stack spacing={3}>
+                  <Box
+                    component="img"
+                    src={selectedOrder.first_item.cover_url}
+                    sx={{
+                      width: '100%',
+                      height: 300,
+                      borderRadius: 2,
+                      objectFit: 'cover',
+                      boxShadow: (theme) => theme.customShadows?.z8,
+                    }}
+                  />
+                  <Stack spacing={2}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {selectedOrder.first_item.product_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Product ID: {selectedOrder.first_item.product_id}
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </Card>
+            </Grid>
+
+            {/* Action Buttons */}
+            {selectedOrder.status === 'pending' && (
+              <Grid item xs={12}>
+                <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleCancelOrder(selectedOrder.id)}
+                    startIcon={<Iconify icon="eva:close-circle-fill" />}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Cancel Order
+                  </Button>
+                </Stack>
+              </Grid>
+            )}
+          </Grid>
+        </Card>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, boxShadow: (theme) => theme.customShadows?.z16 }}>
+        <Typography variant="h4" sx={{ mb: 4 }}>
+          My Orders
+        </Typography>
+
+        <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Order Number</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Total</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {orders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.order_number}</TableCell>
+                  <TableCell>{fDateTime(order.created_at)}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={order.status}
+                      color={getStatusColor(order.status) as any}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="right">{fCurrency(parseFloat(order.total_amount))}</TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Tooltip title="View Details">
+                        <IconButton 
+                          onClick={() => handleViewOrder(order)}
+                          sx={{ 
+                            '&:hover': { 
+                              bgcolor: 'primary.lighter',
+                              color: 'primary.main'
+                            }
+                          }}
+                        >
+                          <Iconify icon="eva:eye-fill" />
+                        </IconButton>
+                      </Tooltip>
+                      {order.status === 'pending' && (
+                        <Tooltip title="Cancel Order">
+                          <IconButton 
+                            color="error"
+                            onClick={() => handleCancelOrder(order.id)}
+                            sx={{ 
+                              '&:hover': { 
+                                bgcolor: 'error.lighter',
+                                color: 'error.main'
+                              }
+                            }}
+                          >
+                            <Iconify icon="eva:close-circle-fill" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
                   </TableCell>
                 </TableRow>
-              ) : (
-                stableSort(orders, getComparator(order, orderBy)).map((row) => (
-                  <TableRow
-                    key={row.id}
-                    hover
-                  >
-                    <TableCell>{row.order_number}</TableCell>
-
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={2}>
-                        <Box
-                          component="img"
-                          src={row.first_item?.cover_url || '/assets/images/placeholder.svg'}
-                          alt={row.first_item?.product_name || 'Product'}
-                          sx={{ 
-                            width: 48, 
-                            height: 48, 
-                            borderRadius: 1,
-                            objectFit: 'cover',
-                            bgcolor: 'background.neutral'
-                          }}
-                        />
-                        <Box>
-                          <Typography variant="body2">
-                            {row.first_item?.product_name || 'Product'}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {row.items_count} {row.items_count === 1 ? 'item' : 'items'}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-
-                    <TableCell>{fDate(row.created_at)}</TableCell>
-
-                    <TableCell>{fCurrency(parseFloat(row.total_amount))}</TableCell>
-
-                    <TableCell>
-                      <Label color={getStatusColor(row.status)}>
-                        {row.status}
-                      </Label>
-                    </TableCell>
-
-                    <TableCell align="right">
-                      <Iconify icon="carbon:overflow-menu-vertical" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
-        </Scrollbar>
-      </TableContainer>
+        </TableContainer>
 
-      <Box sx={{ position: 'relative' }}>
-        <TablePagination
-          page={page}
-          component="div"
-          count={totalCount}
-          rowsPerPage={rowsPerPage}
-          onPageChange={handleChangePage}
-          rowsPerPageOptions={[5, 10, 25]}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-
-        <FormControlLabel
-          control={<Switch checked={dense} onChange={handleChangeDense} />}
-          label="Dense padding"
-          sx={{
-            pl: 2,
-            py: 1.5,
-            top: 0,
-            position: {
-              sm: 'absolute',
-            },
-          }}
-        />
-      </Box>
-    </EcommerceAccountLayout>
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+            shape="rounded"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                borderRadius: 1,
+              },
+            }}
+          />
+        </Box>
+      </Card>
+    </Container>
   );
 }

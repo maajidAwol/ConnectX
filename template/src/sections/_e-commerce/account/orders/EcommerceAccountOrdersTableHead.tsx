@@ -21,7 +21,6 @@ export default function EcommerceAccountOrdersTableHead({
   return (
     <TableHead>
       <TableRow>
-        {/* Removed checkbox cell */}
 
         {headCells.map((headCell) => (
           <TableCell

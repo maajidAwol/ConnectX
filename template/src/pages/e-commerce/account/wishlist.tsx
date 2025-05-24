@@ -17,7 +17,7 @@ export default function EcommerceAccountWishlistPage() {
   return (
     <>
       <Head>
-        <title>Account: Wishlist | ZONE UI</title>
+        <title>Account: Wishlist | ConnectX</title>
       </Head>
 
       <EcommerceAccountWishlistView />

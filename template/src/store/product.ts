@@ -1,11 +1,32 @@
 import { create } from 'zustand';
-import { useAuthStore } from './auth';
 import { apiRequest } from '../lib/api-config';
 
-interface Category {
+export interface Product {
   id: string;
-  icon: string | null;
   name: string;
+  description: string;
+  short_description: string;
+  base_price: string;
+  selling_price: string;
+  quantity: number;
+  category: {
+    id: string;
+    name: string;
+  };
+  brand: string;
+  warranty: string;
+  sku: string;
+  cover_url: string;
+  images: string[];
+  colors: string[];
+  total_ratings: number;
+  total_reviews: number;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string | null;
   description: string;
   created_at: string;
   updated_at: string;
@@ -13,286 +34,65 @@ interface Category {
   parent: string | null;
 }
 
-interface Product {
-  id: string;
-  tenant: string[];
-  owner: string;
-  sku: string;
-  name: string;
-  base_price: string;
-  profit_percentage: number | null;
-  selling_price: number | null;
-  quantity: number;
-  category: Category;
-  is_public: boolean;
-  description: string;
-  short_description: string;
-  tag: string[];
-  brand: string;
-  additional_info: Record<string, any>;
-  warranty: string;
-  cover_url: string;
-  images: string[];
-  colors: string[];
-  sizes: string[];
-  total_sold: number;
-  total_ratings: number;
-  total_reviews: number;
-  created_at: string;
-  updated_at: string;
+interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }
 
 interface ProductResponse {
   count: number;
-  next: string | null;
-  previous: string | null;
   results: Product[];
 }
 
 interface ProductState {
   products: Product[];
-  featuredProducts: Product[];
-  topProducts: Product[];
-  popularProducts: Product[];
-  hotDealProducts: Product[];
-  featuredBrandsProducts: Product[];
+  categories: Category[];
   currentProduct: Product | null;
-  totalCount: number;
-  currentPage: number;
   loading: boolean;
   error: string | null;
-  categories: Category[];
-  fetchProducts: (page?: number, type?: string, categoryId?: string | null, sort?: string) => Promise<void>;
-  fetchFeaturedProducts: () => Promise<void>;
-  fetchTopProducts: () => Promise<void>;
-  fetchPopularProducts: () => Promise<void>;
-  fetchHotDealProducts: () => Promise<void>;
-  fetchFeaturedBrandsProducts: () => Promise<void>;
+  totalCount: number;
+  currentPage: number;
+  featuredProducts: Product[];
+  fetchProducts: (page?: number, status?: string, categoryId?: string | null, sortBy?: string) => Promise<void>;
   fetchProductById: (id: string) => Promise<void>;
   fetchListedCategories: () => Promise<void>;
-  clearError: () => void;
+  fetchFeaturedProducts: () => Promise<void>;
 }
 
-// Placeholder image for products without images
-const PLACEHOLDER_IMAGE = '/assets/placeholder.jpg';
-
-const processProductImage = (imageUrl: string) => {
-  if (!imageUrl || imageUrl.includes('example.com') || !imageUrl.startsWith('http')) {
-    return PLACEHOLDER_IMAGE;
-  }
-  return imageUrl;
-};
-
-export const useProductStore = create<ProductState>()((set, get) => ({
+export const useProductStore = create<ProductState>((set) => ({
   products: [],
-  featuredProducts: [],
-  topProducts: [],
-  popularProducts: [],
-  hotDealProducts: [],
-  featuredBrandsProducts: [],
+  categories: [],
   currentProduct: null,
-  totalCount: 0,
-  currentPage: 1,
   loading: false,
   error: null,
-  categories: [],
+  totalCount: 0,
+  currentPage: 1,
+  featuredProducts: [],
 
-  fetchProducts: async (
-    page = 1,
-    type = 'listed',
-    categoryId?: string | null,
-    sort?: string
-  ) => {
+  fetchProducts: async (page = 1, status = 'listed', categoryId = null, sortBy = 'latest') => {
     try {
       set({ loading: true, error: null });
       
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        page_size: '5',
-        filter_type: type,
-        ...(categoryId && { category__name: categoryId }),
-        ...(sort && { sort }),
-      });
-
-      const data = await apiRequest<ProductResponse>(
-        `/products/?${queryParams.toString()}`,
-        {
-          headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-        },
-        false // Don't include authentication
-      );
-      
-      if (!data || !data.results) {
-        throw new Error('Invalid response format from API');
+      let url = `/products/?page=${page}&status=${status}&sort_by=${sortBy}`;
+      if (categoryId) {
+        url += `&category=${categoryId}`;
       }
 
-      const processedProducts = data.results.map(product => ({
-        ...product,
-        cover_url: processProductImage(product.cover_url),
-        images: product.images.map(processProductImage),
-      }));
+      const response = await apiRequest<ProductResponse>(url, {
+        method: 'GET',
+      });
 
       set({
-        products: processedProducts,
-        totalCount: data.count || 0,
+        products: response.results || [],
+        totalCount: response.count || 0,
         currentPage: page,
         loading: false,
       });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'An error occurred',
-        loading: false,
-        products: [],
-        totalCount: 0,
-      });
-    }
-  },
-
-  fetchFeaturedProducts: async () => {
-    try {
-      set({ loading: true, error: null });
-      
-      const data = await apiRequest<ProductResponse>(
-        '/products/?page_size=4&is_public=true&sort=total_sold',
-        {
-          headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-        },
-        false
-      );
-      
-      const processedProducts = data.results.map(product => ({
-          ...product,
-          cover_url: processProductImage(product.cover_url),
-          images: product.images.map(processProductImage),
-      }));
-
-      set({
-        featuredProducts: processedProducts,
-        loading: false,
-      });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'An error occurred',
-        loading: false,
-      });
-    }
-  },
-
-  fetchTopProducts: async () => {
-    try {
-      set({ loading: true, error: null });
-      
-      const data = await apiRequest<ProductResponse>(
-        '/products/?page_size=8&sort=total_ratings',
-        {
-          headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-        },
-        false
-      );
-      
-      const processedProducts = data.results.map(product => ({
-        ...product,
-        cover_url: processProductImage(product.cover_url),
-        images: product.images.map(processProductImage),
-      }));
-
-      set({ topProducts: processedProducts, loading: false });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'An error occurred',
-        loading: false,
-      });
-    }
-  },
-
-  fetchPopularProducts: async () => {
-    try {
-      set({ loading: true, error: null });
-      
-      const data = await apiRequest<ProductResponse>(
-        '/products/?page_size=8&sort=-total_sold',
-        {
-          headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-        },
-        false
-      );
-      
-      const processedProducts = data.results.map(product => ({
-        ...product,
-        cover_url: processProductImage(product.cover_url),
-        images: product.images.map(processProductImage),
-      }));
-
-      set({ popularProducts: processedProducts, loading: false });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'An error occurred',
-        loading: false,
-      });
-    }
-  },
-
-  fetchHotDealProducts: async () => {
-    try {
-      set({ loading: true, error: null });
-      
-      const data = await apiRequest<ProductResponse>(
-        '/products/?page_size=6&sort=-created_at',
-        {
-          headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-        },
-        false
-      );
-      
-      const processedProducts = data.results.map(product => ({
-        ...product,
-        cover_url: processProductImage(product.cover_url),
-        images: product.images.map(processProductImage),
-      }));
-
-      set({ hotDealProducts: processedProducts, loading: false });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'An error occurred',
-        loading: false,
-      });
-    }
-  },
-
-  fetchFeaturedBrandsProducts: async () => {
-    try {
-      set({ loading: true, error: null });
-      
-      const data = await apiRequest<ProductResponse>(
-        '/products/?page_size=3&sort=-total_sold',
-        {
-          headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-        },
-        false
-      );
-      
-      const processedProducts = data.results.map(product => ({
-        ...product,
-        cover_url: processProductImage(product.cover_url),
-        images: product.images.map(processProductImage),
-      }));
-
-      set({ featuredBrandsProducts: processedProducts, loading: false });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'An error occurred',
+        error: error instanceof Error ? error.message : 'Failed to fetch products',
         loading: false,
       });
     }
@@ -301,23 +101,13 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   fetchProductById: async (id: string) => {
     try {
       set({ loading: true, error: null });
-      
-      const product = await apiRequest<Product>(`/products/${id}/`);
-      
-      // Process images for the product
-      const processedProduct = {
-        ...product,
-        cover_url: processProductImage(product.cover_url),
-        images: product.images.map(processProductImage),
-      };
-
-      set({
-        currentProduct: processedProduct,
-        loading: false,
+      const product = await apiRequest<Product>(`/products/${id}/`, {
+        method: 'GET',
       });
+      set({ currentProduct: product, loading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'An error occurred',
+        error: error instanceof Error ? error.message : 'Failed to fetch product',
         loading: false,
       });
     }
@@ -325,30 +115,41 @@ export const useProductStore = create<ProductState>()((set, get) => ({
 
   fetchListedCategories: async () => {
     try {
+      const response = await apiRequest<PaginatedResponse<Category>>('/products/listed-categories/', {
+        method: 'GET',
+      });
+      
+      // Extract unique categories by name to avoid duplicates
+      const uniqueCategories = response.results.reduce((acc: Category[], current) => {
+        const exists = acc.find(item => item.name === current.name);
+        if (!exists) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
+
+      set({ categories: uniqueCategories });
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      set({ categories: [] });
+    }
+  },
+
+  fetchFeaturedProducts: async () => {
+    try {
       set({ loading: true, error: null });
-
-      const data = await apiRequest<{ count: number; results: Category[] }>(
-        '/products/listed-categories/',
-        {
-          headers: {
-            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-        },
-        false // Don't include authentication
-      );
-
-      if (!data || !data.results) {
-        throw new Error('Invalid response format for categories');
-      }
-
-      set({ categories: data.results, loading: false });
+      const response = await apiRequest<ProductResponse>('/products/?featured=true', {
+        method: 'GET',
+      });
+      set({
+        featuredProducts: response.results || [],
+        loading: false,
+      });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'An error occurred fetching categories',
+        error: error instanceof Error ? error.message : 'Failed to fetch featured products',
         loading: false,
       });
     }
   },
-
-  clearError: () => set({ error: null }),
 })); 

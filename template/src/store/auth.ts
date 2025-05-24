@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { apiRequest, User, Tenant } from '../lib/api-config';
+import { apiRequest, Tenant } from '../lib/api-config';
 
 export interface User {
   id: string;
@@ -84,13 +84,19 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
           
+          const requestBody = JSON.stringify({ 
+            email, 
+            password,
+          });
+          
           const data = await apiRequest<LoginResponse>('/auth/login/', {
             method: 'POST',
-            body: JSON.stringify({ 
-              email, 
-              password,
-            }),
+            body: requestBody,
           });
+          
+          if (!data.access || !data.refresh || !data.user) {
+            throw new Error('Invalid response from server');
+          }
           
           set({
             user: data.user,
@@ -104,8 +110,9 @@ export const useAuthStore = create<AuthState>()(
           const store = useAuthStore.getState();
           await store.fetchTenantDetails();
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'An error occurred during login';
           set({
-            error: error instanceof Error ? error.message : 'An error occurred',
+            error: errorMessage,
             isLoading: false,
           });
           throw error;
@@ -123,7 +130,7 @@ export const useAuthStore = create<AuthState>()(
 
           set({ tenant: tenantData });
         } catch (error) {
-          console.error('Failed to fetch tenant details');
+          // Silent fail for tenant details
         }
       },
 

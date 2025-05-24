@@ -15,7 +15,7 @@ export default function EcommerceProductPage() {
   return (
     <>
       <Head>
-        <title>Apple iPhone | ConnectX</title>
+        <title>Product | ConnectX</title>
       </Head>
 
       <EcommerceProductView />

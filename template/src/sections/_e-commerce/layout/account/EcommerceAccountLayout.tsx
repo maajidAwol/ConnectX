@@ -41,7 +41,7 @@ export default function EcommerceAccountLayout({ children }: Props) {
 
       {isMdUp ? (
         <Container sx={{ my: 5 }}>
-          <Typography variant="h3">My Account</Typography>
+          <Typography variant="h3">Profile</Typography>
           <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
             Welcome back, {user.name}
           </Typography>
@@ -55,7 +55,7 @@ export default function EcommerceAccountLayout({ children }: Props) {
               startIcon={<Iconify icon="carbon:menu" />}
               onClick={handleMenuOpen}
             >
-              Account
+              Profile
             </Button>
           </Container>
         </Box>

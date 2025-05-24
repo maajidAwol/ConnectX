@@ -14,6 +14,7 @@ import {
   ToggleButton,
   SelectChangeEvent,
   ToggleButtonGroup,
+  Grid,
 } from '@mui/material';
 // hooks
 import useResponsive from 'src/hooks/useResponsive';
@@ -29,6 +30,7 @@ import { apiRequest } from 'src/lib/api-config';
 //
 import EcommerceFilters from '../product/filters';
 import { EcommerceProductList, EcommerceProductListBestSellers } from '../product/list';
+import LoadingScreen from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
 
@@ -54,60 +56,18 @@ export default function EcommerceProductsView() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [sort, setSort] = useState('latest');
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-
   const router = useRouter();
+
   const { products, loading, error, fetchProducts } = useProductStore();
-  const { isAuthenticated, accessToken } = useAuthStore();
-  const isMdUp = useResponsive('up', 'md');
-
-  const fetchListedCategories = useCallback(async () => {
-    try {
-      const response = await apiRequest<{
-        count: number;
-        next: string | null;
-        previous: string | null;
-        results: Category[];
-      }>('/products/listed-categories/', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      if (response?.results) {
-        setCategories(response.results);
-      }
-    } catch (error) {
-      console.error('Error fetching listed categories:', error);
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchListedCategories();
-    }
-  }, [isAuthenticated, fetchListedCategories]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchProducts(
-        1, // Start with page 1
-        'listed', // Filter type - ensure we only get listed products
-        selectedCategoryId, // Category ID for filtering
-        sort // Sorting option
-      );
-    }
-  }, [isAuthenticated, fetchProducts, selectedCategoryId, sort]);
 
   // Add a separate effect for initial load
   useEffect(() => {
-    if (isAuthenticated) {
-      // Reset to initial state when component mounts
-      setSelectedCategoryId(null);
-      setSort('latest');
-      fetchProducts(1, 'listed', null, 'latest');
-    }
-  }, [isAuthenticated, fetchProducts]);
+    // Reset to initial state when component mounts
+    setSelectedCategoryId(null);
+    setSort('latest');
+    fetchProducts(1, 'listed', null, 'latest');
+  }, [fetchProducts]);
 
   const handleChangeViewMode = (event: React.MouseEvent<HTMLElement>, newMode: string | null) => {
     if (newMode !== null) {
@@ -131,18 +91,23 @@ export default function EcommerceProductsView() {
     setSelectedCategoryId(categoryId);
   };
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (error) {
     return (
       <Container>
         <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ minHeight: '50vh' }}>
-          <Typography variant="h4">Please Login to View Products</Typography>
+          <Typography color="error" variant="h6">
+            {error}
+          </Typography>
           <Button
             variant="contained"
-            color="primary"
-            onClick={() => router.push('/auth/login')}
-            startIcon={<Iconify icon="carbon:login" />}
+            onClick={() => router.back()}
+            startIcon={<Iconify icon="carbon:arrow-left" />}
           >
-            Login
+            Go Back
           </Button>
         </Stack>
       </Container>
@@ -156,87 +121,64 @@ export default function EcommerceProductsView() {
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{
-            py: 5,
-          }}
+          sx={{ mb: 5 }}
         >
-          <Typography variant="h3">Products</Typography>
+          <Stack direction="row" spacing={1} flexShrink={0}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={handleChangeViewMode}
+              aria-label="view mode"
+            >
+              <ToggleButton value="grid" aria-label="grid view">
+                <Iconify icon="carbon:grid-view" />
+              </ToggleButton>
+              <ToggleButton value="list" aria-label="list view">
+                <Iconify icon="carbon:list" />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
 
-          {!isMdUp && (
+          <Stack direction="row" spacing={2} alignItems="center">
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+              <Select value={sort} onChange={handleChangeSort}>
+                <MenuItem value="latest">Latest</MenuItem>
+                <MenuItem value="price-asc">Price: Low to High</MenuItem>
+                <MenuItem value="price-desc">Price: High to Low</MenuItem>
+                <MenuItem value="rating">Top Rated</MenuItem>
+              </Select>
+            </FormControl>
+
             <Button
               color="inherit"
-              variant="contained"
-              startIcon={<Iconify icon="carbon:filter" width={18} />}
+              variant="outlined"
+              startIcon={<Iconify icon="carbon:filter" />}
               onClick={handleMobileOpen}
+              sx={{ display: { md: 'none' } }}
             >
               Filters
             </Button>
-          )}
-
-          {isMdUp && (
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={viewMode}
-                onChange={handleChangeViewMode}
-                sx={{ borderColor: 'transparent' }}
-              >
-                {VIEW_OPTIONS.map((option) => (
-                  <ToggleButton key={option.value} value={option.value}>
-                    {option.icon}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-
-              <FormControl size="small" hiddenLabel variant="filled" sx={{ width: 120 }}>
-                <Select
-                  value={sort}
-                  onChange={handleChangeSort}
-                  MenuProps={{
-                    PaperProps: {
-                      sx: { px: 1 },
-                    },
-                  }}
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-          )}
-
+          </Stack>
         </Stack>
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={{ md: 8 }}>
-          <Box sx={{ width: { md: NAV.W_DRAWER }, flexShrink: 0 }}>
-            <EcommerceFilters 
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={3}>
+            <EcommerceFilters
               mobileOpen={mobileOpen}
               onMobileClose={handleMobileClose}
-              categories={categories}
               onSelectCategory={handleCategorySelect}
               selectedCategoryId={selectedCategoryId}
             />
-          </Box>
+          </Grid>
 
-          <Box sx={{ flexGrow: 1 }}>
-            {error ? (
-              <Typography color="error" align="center">
-                {error}
-              </Typography>
-            ) : (
-              <EcommerceProductList
-                loading={loading}
-                viewMode={viewMode}
-                products={products}
-              />
-            )}
-          </Box>
-        </Stack>
-
+          <Grid item xs={12} md={9}>
+            <EcommerceProductList
+              loading={loading}
+              viewMode={viewMode}
+              products={products}
+            />
+          </Grid>
+        </Grid>
       </Container>
     </>
   );

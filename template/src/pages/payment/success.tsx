@@ -67,7 +67,7 @@ export default function PaymentSuccessPage() {
                 Your order has been placed successfully.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                The merchant will process your order shortly. You can track your order status in your account.
+                The team will process your order shortly. You can track your order status in your account.
               </Typography>
             </Stack>
             <Button 

@@ -56,7 +56,7 @@ export default function RegisterCoverView() {
       </Box>
 
       <AuthCarousel
-        title={`Manage The Job \n More Effectively`}
+        title={`Register for ecommerce as customer`}
         images={[
           '/assets/images/travel/travel_post_01.jpg',
           '/assets/images/travel/travel_post_03.jpg',

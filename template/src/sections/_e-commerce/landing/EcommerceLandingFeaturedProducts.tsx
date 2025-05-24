@@ -5,6 +5,7 @@ import { useProductStore } from 'src/store/product';
 import { useEffect } from 'react';
 //
 import { EcommerceProductItemHot, EcommerceProductItemCountDown } from '../product/item';
+import { EcommerceProductList } from '../product/list';
 
 // ----------------------------------------------------------------------
 
@@ -15,7 +16,7 @@ export default function EcommerceLandingFeaturedProducts() {
     fetchFeaturedProducts();
   }, [fetchFeaturedProducts]);
 
-  if (loading || featuredProducts.length === 0) {
+  if (loading || !featuredProducts || featuredProducts.length === 0) {
     return null;
   }
 
@@ -37,57 +38,16 @@ export default function EcommerceLandingFeaturedProducts() {
   });
 
   return (
-    <Container
-      sx={{
-        py: { xs: 5, md: 8 },
-      }}
-    >
-      <Typography
-        variant="h3"
-        sx={{
-          mb: 8,
-          textAlign: { xs: 'center', md: 'unset' },
-        }}
-      >
+    <Container>
+      <Typography variant="h3" sx={{ mb: 8, textAlign: 'center' }}>
         Featured Products
       </Typography>
 
-      <Grid container spacing={3}>
-        <Grid xs={12} lg={8}>
-          <Box
-            gap={3}
-            display="grid"
-            gridTemplateColumns={{ xs: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }}
-          >
-            {featuredProducts.slice(0, 2).map((product, index) => (
-              <EcommerceProductItemCountDown
-                key={product.id}
-                product={mapProductToProps(product)}
-                color={index === 0 ? 'primary' : 'secondary'}
-              />
-            ))}
-          </Box>
-        </Grid>
-
-        <Grid xs={12} lg={4}>
-          <Box
-            gap={3}
-            display="grid"
-            gridTemplateColumns={{
-              xs: 'repeat(2, 1fr)',
-              md: 'repeat(4, 1fr)',
-              lg: 'repeat(2, 1fr)',
-            }}
-          >
-            {featuredProducts.slice(2, 6).map((product) => (
-              <EcommerceProductItemHot
-                key={product.id}
-                product={mapProductToProps(product)}
-              />
-            ))}
-          </Box>
-        </Grid>
-      </Grid>
+      <EcommerceProductList
+        products={featuredProducts}
+        loading={loading}
+        viewMode="grid"
+      />
     </Container>
   );
 }

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useAuthStore } from './auth';
 
 export type CartItem = {
   id: string;
@@ -32,6 +33,14 @@ export const useCartStore = create<CartState>()(
       items: [],
       
       addItem: (item) => {
+        // Check if user is authenticated
+        const isAuthenticated = useAuthStore.getState().isAuthenticated;
+        if (!isAuthenticated) {
+          // Redirect to login with a message
+          window.location.href = '/auth/login-illustration?message=Please login to add items to cart';
+          return;
+        }
+
         set((state) => {
           const existingItem = state.items.find((i) => i.id === item.id);
           
@@ -88,6 +97,11 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'cart-storage',
+      // Only persist cart data if user is authenticated
+      partialize: (state) => {
+        const isAuthenticated = useAuthStore.getState().isAuthenticated;
+        return isAuthenticated ? state : { items: [] };
+      },
     }
   )
 );
