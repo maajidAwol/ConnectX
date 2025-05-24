@@ -84,14 +84,40 @@ export const _productsTable = [...Array(12)].map((_, index) => ({
 
 // ----------------------------------------------------------------------
 
-export const _productsCarousel = [...Array(4)].map((_, index) => ({
-  id: _mock.id(index),
-  title: _mock.text.blogTitle(index),
-  caption: _mock.text.description(index),
-  coverImg: _mock.image.product(index),
-  label: 'Opening Sale Discount 50%',
-  price: _mock.number.price(index),
-}));
+export const _productsCarousel = [
+  {
+    id: _mock.id(0),
+    title: 'Discover Our Premium Collection',
+    caption: 'Explore our handpicked selection of high-quality products, crafted with care and attention to detail.',
+    coverImg: _mock.image.product(0),
+    label: 'New Arrivals',
+    price: _mock.number.price(0),
+  },
+  {
+    id: _mock.id(1),
+    title: 'Exclusive Deals Await',
+    caption: 'Unlock special discounts and offers on our most popular items. Limited time only!',
+    coverImg: _mock.image.product(1),
+    label: 'Special Offers',
+    price: _mock.number.price(1),
+  },
+  {
+    id: _mock.id(2),
+    title: 'Shop with Confidence',
+    caption: 'Enjoy secure payments, fast shipping, and exceptional customer service with every purchase.',
+    coverImg: _mock.image.product(2),
+    label: 'Trusted Shopping',
+    price: _mock.number.price(2),
+  },
+  {
+    id: _mock.id(3),
+    title: 'Join Our Community',
+    caption: 'Be the first to know about new products, exclusive deals, and special events.',
+    coverImg: _mock.image.product(3),
+    label: 'Stay Connected',
+    price: _mock.number.price(3),
+  },
+];
 
 // ----------------------------------------------------------------------
 
