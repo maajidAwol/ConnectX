@@ -220,12 +220,18 @@ export default function AdminPage() {
                   recentActivities.map((activity, i) => (
                     <div key={i} className="flex items-start gap-4 border-b pb-4 last:border-0 last:pb-0">
                       <div className="relative h-8 w-8 rounded-full overflow-hidden">
-                        <Image
-                          src={activity.user.avatar_url || "/placeholder.svg"}
-                          alt={activity.user.name}
-                          fill
-                          className="object-cover"
-                        />
+                        {activity.user ? (
+                          <Image
+                            src={activity.user.avatar_url || "/placeholder.svg"}
+                            alt={activity.user.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
                       </div>
                       <div>
                         <p className="font-medium">{activity.action}</p>

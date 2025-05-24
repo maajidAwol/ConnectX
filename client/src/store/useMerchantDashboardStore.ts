@@ -2,20 +2,20 @@ import { create } from 'zustand'
 import axios from 'axios'
 import { useAuthStore } from './authStore'
 
-interface OverviewAnalytics {
-  total_merchants: number
+interface OverviewData {
   total_revenue: string
   total_orders: number
-  active_tenants: number
+  total_products: number
+  total_customers: number
 }
 
 interface RecentActivity {
-  user?: {
+  user: {
     id: string
     name: string
     email: string
     avatar_url: string
-  } | null
+  }
   tenant: {
     id: string
     name: string
@@ -30,61 +30,64 @@ interface RecentActivity {
   }
 }
 
-interface TopTenant {
-  tenant_name: string
+interface RecentOrder {
+  id: string
+  order_number: string
+  customer_name: string
+  total_amount: string
+  status: string
+  created_at: string
+}
+
+interface TopProduct {
+  id: string
+  name: string
+  total_sales: number
   total_revenue: string
-  total_orders: number
+  quantity: number
 }
 
-interface ApiUsage {
-  endpoint: string
-  method: string
-  total_calls: number
-  avg_response_time: number
-  success_rate: number
-}
-
-interface AdminAnalyticsState {
-  overview: OverviewAnalytics | null
+interface MerchantDashboardState {
+  overview: OverviewData | null
   recentActivities: RecentActivity[]
-  topTenants: TopTenant[]
-  apiUsage: ApiUsage[]
+  recentOrders: RecentOrder[]
+  topProducts: TopProduct[]
   isLoading: {
     overview: boolean
     activities: boolean
-    tenants: boolean
-    api: boolean
+    orders: boolean
+    products: boolean
   }
   error: {
     overview: string | null
     activities: string | null
-    tenants: string | null
-    api: string | null
+    orders: string | null
+    products: string | null
   }
   fetchOverview: () => Promise<void>
   fetchRecentActivities: () => Promise<void>
-  fetchTopTenants: () => Promise<void>
-  fetchApiUsage: () => Promise<void>
+  fetchRecentOrders: () => Promise<void>
+  fetchTopProducts: () => Promise<void>
 }
 
 const API_URL = 'https://connectx-backend-295168525338.europe-west1.run.app/api'
 
-const useAdminAnalyticsStore = create<AdminAnalyticsState>((set) => ({
+const useMerchantDashboardStore = create<MerchantDashboardState>((set) => ({
   overview: null,
   recentActivities: [],
-  topTenants: [],
-  apiUsage: [],
+  recentOrders: [],
+  topProducts: [],
   isLoading: {
     overview: false,
     activities: false,
-    tenants: false,
-    api: false
+    orders: false,
+    products: false
   },
   error: {
     overview: null,
     activities: null,
-    tenants: null,
-    api: null
+    orders: null,
+    products: null
   },
 
   fetchOverview: async () => {
@@ -95,8 +98,8 @@ const useAdminAnalyticsStore = create<AdminAnalyticsState>((set) => ({
       }))
       const { accessToken } = useAuthStore.getState()
 
-      const response = await axios.get<OverviewAnalytics>(
-        `${API_URL}/admin/analytics/overview/`,
+      const response = await axios.get<OverviewData>(
+        `${API_URL}/tenant/overview/`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -113,7 +116,7 @@ const useAdminAnalyticsStore = create<AdminAnalyticsState>((set) => ({
       set((state) => ({ 
         error: { 
           ...state.error, 
-          overview: error instanceof Error ? error.message : 'Failed to fetch overview analytics'
+          overview: error instanceof Error ? error.message : 'Failed to fetch overview data'
         },
         isLoading: { ...state.isLoading, overview: false }
       }))
@@ -129,7 +132,7 @@ const useAdminAnalyticsStore = create<AdminAnalyticsState>((set) => ({
       const { accessToken } = useAuthStore.getState()
 
       const response = await axios.get(
-        `${API_URL}/admin/analytics/recent_activities/?page=1&page_size=4`,
+        `${API_URL}/tenant/recent_activities/?page=1&page_size=4`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -153,16 +156,16 @@ const useAdminAnalyticsStore = create<AdminAnalyticsState>((set) => ({
     }
   },
 
-  fetchTopTenants: async () => {
+  fetchRecentOrders: async () => {
     try {
       set((state) => ({ 
-        isLoading: { ...state.isLoading, tenants: true },
-        error: { ...state.error, tenants: null }
+        isLoading: { ...state.isLoading, orders: true },
+        error: { ...state.error, orders: null }
       }))
       const { accessToken } = useAuthStore.getState()
 
       const response = await axios.get(
-        `${API_URL}/admin/analytics/top_tenants/?page=1&page_size=4`,
+        `${API_URL}/tenant/recent_orders/?page=1&page_size=4`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -172,30 +175,30 @@ const useAdminAnalyticsStore = create<AdminAnalyticsState>((set) => ({
       )
 
       set((state) => ({ 
-        topTenants: response.data.results,
-        isLoading: { ...state.isLoading, tenants: false }
+        recentOrders: response.data.results,
+        isLoading: { ...state.isLoading, orders: false }
       }))
     } catch (error) {
       set((state) => ({ 
         error: { 
           ...state.error, 
-          tenants: error instanceof Error ? error.message : 'Failed to fetch top tenants'
+          orders: error instanceof Error ? error.message : 'Failed to fetch recent orders'
         },
-        isLoading: { ...state.isLoading, tenants: false }
+        isLoading: { ...state.isLoading, orders: false }
       }))
     }
   },
 
-  fetchApiUsage: async () => {
+  fetchTopProducts: async () => {
     try {
       set((state) => ({ 
-        isLoading: { ...state.isLoading, api: true },
-        error: { ...state.error, api: null }
+        isLoading: { ...state.isLoading, products: true },
+        error: { ...state.error, products: null }
       }))
       const { accessToken } = useAuthStore.getState()
 
       const response = await axios.get(
-        `${API_URL}/admin/analytics/api_usage/?page=1&page_size=4`,
+        `${API_URL}/tenant/top_products/?page=1&page_size=4`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -205,19 +208,19 @@ const useAdminAnalyticsStore = create<AdminAnalyticsState>((set) => ({
       )
 
       set((state) => ({ 
-        apiUsage: response.data.results,
-        isLoading: { ...state.isLoading, api: false }
+        topProducts: response.data.results,
+        isLoading: { ...state.isLoading, products: false }
       }))
     } catch (error) {
       set((state) => ({ 
         error: { 
           ...state.error, 
-          api: error instanceof Error ? error.message : 'Failed to fetch API usage'
+          products: error instanceof Error ? error.message : 'Failed to fetch top products'
         },
-        isLoading: { ...state.isLoading, api: false }
+        isLoading: { ...state.isLoading, products: false }
       }))
     }
   },
 }))
 
-export default useAdminAnalyticsStore 
+export default useMerchantDashboardStore 
