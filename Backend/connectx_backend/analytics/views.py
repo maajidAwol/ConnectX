@@ -58,7 +58,7 @@ class CustomPagination(PageNumberPagination):
 
 
 class AdminAnalyticsViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     pagination_class = CustomPagination
 
     @swagger_auto_schema(
