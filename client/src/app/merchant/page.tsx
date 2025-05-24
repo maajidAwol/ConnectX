@@ -51,7 +51,7 @@ export default function MerchantPage() {
                 <div className="text-red-500 text-sm">{error.overview}</div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">${Number(overview?.total_revenue).toLocaleString()}</div>
+                  <div className="text-2xl font-bold">{Number(overview?.total_revenue).toLocaleString()} ETB</div>
                   <div className="flex items-center pt-1">
                     <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                     <span className="text-xs text-green-500">+12.5%</span>

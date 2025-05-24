@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search } from 'lucide-react'
 import { CategoryListItem } from "@/components/categories/category-list-item"
 import { CategoryTips } from "@/components/categories/category-tips"
 import { AddCategoryDialog } from "@/components/categories/add-category-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle } from 'lucide-react'
 import useCategoryStore from "@/store/useCategoryStore"
 import { useAuthStore } from "@/store/authStore"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ProductCategories() {
   const { 
@@ -32,6 +33,7 @@ export default function ProductCategories() {
   const { isAuthenticated, user, isTenantVerified } = useAuthStore()
   const isVerified = isTenantVerified()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [localSearchValue, setLocalSearchValue] = useState(searchQuery)
 
   console.log(isVerified)
 
@@ -39,11 +41,6 @@ export default function ProductCategories() {
   useEffect(() => {
     fetchCategories()
   }, [fetchCategories])
-
-  // Handle search change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-  }
 
   // Add a new category
   const handleAddCategory = async (data: {
@@ -130,6 +127,10 @@ export default function ProductCategories() {
     return range;
   };
 
+  useEffect(() => {
+    setLocalSearchValue(searchQuery)
+  }, [searchQuery])
+
   // if (!isAuthenticated) {
   //   return (
   //     <div className="space-y-6">
@@ -186,8 +187,13 @@ export default function ProductCategories() {
             type="search"
             placeholder="Search categories..."
             className="pl-8 w-full"
-            value={searchQuery}
-            onChange={handleSearchChange}
+            value={localSearchValue}
+            onChange={(e) => setLocalSearchValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSearchQuery(localSearchValue)
+              }
+            }}
           />
         </div>
       </div>
@@ -199,8 +205,36 @@ export default function ProductCategories() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="p-8 flex justify-center">
-              <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
+            <div className="rounded-md border">
+              <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                <div className="col-span-5">Category Name</div>
+                <div className="col-span-3">Products</div>
+                <div className="col-span-2">Parent</div>
+                <div className="col-span-2 text-right">Actions</div>
+              </div>
+              <div className="divide-y">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="grid grid-cols-12 p-3">
+                    <div className="col-span-5 flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                    <div className="col-span-3 flex items-center">
+                      <Skeleton className="h-4 w-8" />
+                    </div>
+                    <div className="col-span-2 flex items-center">
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <div className="col-span-2 flex items-center justify-end gap-2">
+                      <Skeleton className="h-8 w-8 rounded" />
+                      <Skeleton className="h-8 w-8 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="rounded-md border">

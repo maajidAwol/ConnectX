@@ -10,12 +10,12 @@ interface OverviewAnalytics {
 }
 
 interface RecentActivity {
-  user: {
+  user?: {
     id: string
     name: string
     email: string
     avatar_url: string
-  }
+  } | null
   tenant: {
     id: string
     name: string
