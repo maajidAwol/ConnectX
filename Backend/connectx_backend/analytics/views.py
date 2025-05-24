@@ -601,10 +601,15 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
             7: "Sunday",
         }
 
+        # Build a map from weekday number to (count, revenue)
+        weekday_map = {item["weekday"]: {"count": item["count"], "revenue": float(item["revenue"] or 0)} for item in weekday_transactions}
+        labels = [weekday_names[i] for i in range(1, 8)]
+        counts = [weekday_map.get(i, {"count": 0})["count"] for i in range(1, 8)]
+        revenue = [weekday_map.get(i, {"revenue": 0.0})["revenue"] for i in range(1, 8)]
         data = {
-            "labels": [weekday_names[item["weekday"]] for item in weekday_transactions],
-            "counts": [item["count"] for item in weekday_transactions],
-            "revenue": [float(item["revenue"] or 0) for item in weekday_transactions],
+            "labels": labels,
+            "counts": counts,
+            "revenue": revenue,
         }
 
         return Response(data)
