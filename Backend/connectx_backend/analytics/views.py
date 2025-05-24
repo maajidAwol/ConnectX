@@ -10,6 +10,7 @@ from django.db.models.functions import (
     TruncHour,
     Length,
     Substr,
+    ExtractWeekDay,
 )
 from django.utils import timezone
 from datetime import timedelta
@@ -45,6 +46,7 @@ from tenants.models import Tenant
 from orders.models import Order
 from users.models import User
 from products.models import Product
+from dateutil.relativedelta import relativedelta
 
 from users.permissions import IsTenantMember
 
@@ -475,6 +477,185 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
         paginated_activities = paginator.paginate_queryset(activities, request)
         serializer = RecentActivitySerializer(paginated_activities, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get monthly revenue distribution for the past 12 months",
+        responses={200: "Monthly revenue data for graph visualization"},
+    )
+    @action(detail=False, methods=["get"])
+    def monthly_revenue_graph(self, request):
+        """Get monthly revenue data for the past 12 months."""
+
+        end_date = timezone.now()
+        end_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_date = end_date - relativedelta(months=12)
+
+        # Generate all months between start_date and end_date (inclusive)
+        months = []
+        current = start_date
+        for _ in range(13):
+            months.append(current)
+            # Move to next month
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1)
+            else:
+                current = current.replace(month=current.month + 1)
+
+        # Query revenue per month
+        monthly_revenue = (
+            Order.objects.filter(
+                created_at__gte=months[0],
+                created_at__lt=months[-1] + relativedelta(months=1),
+                status__in=["confirmed", "shipped", "delivered"],
+            )
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(revenue=Sum("total_amount"))
+        )
+
+        # Normalize month keys to (year, month) tuple for matching
+        revenue_map = {
+            (item["month"].year, item["month"].month): float(item["revenue"] or 0)
+            for item in monthly_revenue
+        }
+        labels = [dt.strftime("%B %Y") for dt in months]
+        values = [revenue_map.get((dt.year, dt.month), 0) for dt in months]
+        data = {"labels": labels, "values": values}
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_description="Get new merchants distribution for the past 12 months",
+        responses={200: "Monthly new merchants data for graph visualization"},
+    )
+    @action(detail=False, methods=["get"])
+    def new_merchants_graph(self, request):
+        """Get new merchants data for the past 12 months."""
+
+        end_date = timezone.now()
+        end_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_date = end_date - relativedelta(months=12)
+
+        # Generate all months between start_date and end_date (inclusive)
+        months = []
+        current = start_date
+        for _ in range(13):
+            months.append(current)
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1)
+            else:
+                current = current.replace(month=current.month + 1)
+
+        monthly_merchants = (
+            User.objects.filter(
+                created_at__gte=months[0],
+                created_at__lt=months[-1] + relativedelta(months=1),
+                role__in=["owner", "member"],
+            )
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(count=Count("id"))
+        )
+        merchant_map = {
+            (item["month"].year, item["month"].month): int(item["count"] or 0)
+            for item in monthly_merchants
+        }
+        labels = [dt.strftime("%B %Y") for dt in months]
+        values = [merchant_map.get((dt.year, dt.month), 0) for dt in months]
+        data = {"labels": labels, "values": values}
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_description="Get transaction distribution by weekday",
+        responses={200: "Daily transaction data for graph visualization"},
+    )
+    @action(detail=False, methods=["get"])
+    def weekday_transactions_graph(self, request):
+        """Get transaction distribution by weekday."""
+        end_date = timezone.now()
+        start_date = end_date - timedelta(
+            days=30
+        )  # Last 30 days for better distribution
+
+        weekday_transactions = (
+            Order.objects.filter(
+                created_at__range=[start_date, end_date],
+                status__in=["confirmed", "shipped", "delivered"],
+            )
+            .annotate(weekday=ExtractWeekDay("created_at"))
+            .values("weekday")
+            .annotate(
+                count=Count("id"),
+                revenue=Sum("total_amount"),
+            )
+            .order_by("weekday")
+        )
+
+        # Map weekday numbers to names
+        weekday_names = {
+            1: "Monday",
+            2: "Tuesday",
+            3: "Wednesday",
+            4: "Thursday",
+            5: "Friday",
+            6: "Saturday",
+            7: "Sunday",
+        }
+
+        # Build a map from weekday number to (count, revenue)
+        weekday_map = {item["weekday"]: {"count": item["count"], "revenue": float(item["revenue"] or 0)} for item in weekday_transactions}
+        labels = [weekday_names[i] for i in range(1, 8)]
+        counts = [weekday_map.get(i, {"count": 0})["count"] for i in range(1, 8)]
+        revenue = [weekday_map.get(i, {"revenue": 0.0})["revenue"] for i in range(1, 8)]
+        data = {
+            "labels": labels,
+            "counts": counts,
+            "revenue": revenue,
+        }
+
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_description="Get API usage distribution by main endpoints",
+        responses={200: "API usage data by main endpoints for graph visualization"},
+    )
+    @action(detail=False, methods=["get"])
+    def api_endpoints_graph(self, request):
+        """Get API usage distribution by main endpoints."""
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=30)  # Last 30 days
+
+        # Get all logs for the period
+        logs = APIUsageLog.objects.filter(
+            timestamp__range=[start_date, end_date],
+            endpoint__isnull=False,
+        ).exclude(endpoint="")
+
+        # Define main endpoint categories
+        endpoint_categories = {
+            "products": ["/api/products", "/products"],
+            "tenants": ["/api/tenants", "/tenants"],
+            "analytics": ["/api/analytics", "/analytics"],
+            "orders": ["/api/orders", "/orders"],
+            "users": ["/api/users", "/users"],
+            "auth": ["/api/auth", "/auth"],
+        }
+
+        # Initialize category counts
+        category_stats = {category: 0 for category in endpoint_categories.keys()}
+
+        # Count requests for each category
+        for log in logs:
+            for category, patterns in endpoint_categories.items():
+                if any(log.endpoint.startswith(pattern) for pattern in patterns):
+                    category_stats[category] += 1
+                    break
+
+        data = {
+            "labels": list(category_stats.keys()),
+            "values": list(category_stats.values()),
+        }
+
+        return Response(data)
 
 
 class AnalyticsViewSet(viewsets.ViewSet):
