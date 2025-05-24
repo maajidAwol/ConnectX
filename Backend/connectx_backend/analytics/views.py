@@ -46,6 +46,7 @@ from tenants.models import Tenant
 from orders.models import Order
 from users.models import User
 from products.models import Product
+from dateutil.relativedelta import relativedelta
 
 from users.permissions import IsTenantMember
 
@@ -484,25 +485,42 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def monthly_revenue_graph(self, request):
         """Get monthly revenue data for the past 12 months."""
-        end_date = timezone.now()
-        start_date = end_date - timedelta(days=365)
 
+        end_date = timezone.now()
+        end_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_date = end_date - relativedelta(months=12)
+
+        # Generate all months between start_date and end_date (inclusive)
+        months = []
+        current = start_date
+        for _ in range(13):
+            months.append(current)
+            # Move to next month
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1)
+            else:
+                current = current.replace(month=current.month + 1)
+
+        # Query revenue per month
         monthly_revenue = (
             Order.objects.filter(
-                created_at__range=[start_date, end_date],
+                created_at__gte=months[0],
+                created_at__lt=months[-1] + relativedelta(months=1),
                 status__in=["confirmed", "shipped", "delivered"],
             )
             .annotate(month=TruncMonth("created_at"))
             .values("month")
             .annotate(revenue=Sum("total_amount"))
-            .order_by("month")
         )
 
-        data = {
-            "labels": [item["month"].strftime("%B %Y") for item in monthly_revenue],
-            "values": [float(item["revenue"] or 0) for item in monthly_revenue],
+        # Normalize month keys to (year, month) tuple for matching
+        revenue_map = {
+            (item["month"].year, item["month"].month): float(item["revenue"] or 0)
+            for item in monthly_revenue
         }
-
+        labels = [dt.strftime("%B %Y") for dt in months]
+        values = [revenue_map.get((dt.year, dt.month), 0) for dt in months]
+        data = {"labels": labels, "values": values}
         return Response(data)
 
     @swagger_auto_schema(
@@ -512,25 +530,38 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def new_merchants_graph(self, request):
         """Get new merchants data for the past 12 months."""
+
         end_date = timezone.now()
-        start_date = end_date - timedelta(days=365)
+        end_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_date = end_date - relativedelta(months=12)
+
+        # Generate all months between start_date and end_date (inclusive)
+        months = []
+        current = start_date
+        for _ in range(13):
+            months.append(current)
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1)
+            else:
+                current = current.replace(month=current.month + 1)
 
         monthly_merchants = (
             User.objects.filter(
-                created_at__range=[start_date, end_date],
+                created_at__gte=months[0],
+                created_at__lt=months[-1] + relativedelta(months=1),
                 role__in=["owner", "member"],
             )
             .annotate(month=TruncMonth("created_at"))
             .values("month")
             .annotate(count=Count("id"))
-            .order_by("month")
         )
-
-        data = {
-            "labels": [item["month"].strftime("%B %Y") for item in monthly_merchants],
-            "values": [item["count"] for item in monthly_merchants],
+        merchant_map = {
+            (item["month"].year, item["month"].month): int(item["count"] or 0)
+            for item in monthly_merchants
         }
-
+        labels = [dt.strftime("%B %Y") for dt in months]
+        values = [merchant_map.get((dt.year, dt.month), 0) for dt in months]
+        data = {"labels": labels, "values": values}
         return Response(data)
 
     @swagger_auto_schema(
