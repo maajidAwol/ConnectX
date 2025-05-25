@@ -10,6 +10,12 @@ interface User {
   avatar_url: string | null
   created_at: string
   updated_at: string
+  phone_number: string | null
+  bio: string | null
+  tenant_name: string
+  tenant_id: string
+  is_active: boolean
+  groups: string[]
 }
 
 interface TenantData {
@@ -36,18 +42,32 @@ interface TenantData {
   updated_at: string
 }
 
+interface SignupData {
+  name: string
+  email: string
+  password: string
+  fullname: string
+}
+
 interface AuthState {
   isAuthenticated: boolean
   user: User | null
   tenantData: TenantData | null
   accessToken: string | null
   refreshToken: string | null
-  signup: (data: { name: string; email: string; password: string; fullname: string }) => Promise<void>
+  isLoading: boolean
+  error: string | null
+  signup: (data: SignupData) => Promise<void>
   login: (data: { email: string; password: string }) => Promise<void>
   logout: () => void
   getRedirectPath: () => string
   fetchTenantData: () => Promise<void>
+  fetchUserProfile: () => Promise<void>
   isTenantVerified: () => boolean
+  clearError: () => void
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>
+  validateToken: () => boolean
+  updateProfile: (formData: FormData) => Promise<void>
 }
 
 // In Next.js, cookies need to be set server-side
@@ -74,6 +94,7 @@ const deleteCookie = (name: string) => {
 const loadStateFromCookies = () => {
   const accessToken = getCookie('accessToken');
   const refreshToken = getCookie('refreshToken');
+  const userRole = getCookie('userRole');
   
   let user = null;
   let tenantData = null;
@@ -92,8 +113,11 @@ const loadStateFromCookies = () => {
     console.error('Error parsing data from cookies:', error);
   }
   
+  // Only consider authenticated if we have both tokens and user data
+  const isAuthenticated = !!accessToken && !!refreshToken && !!user && !!userRole;
+  
   return {
-    isAuthenticated: !!accessToken && !!refreshToken,
+    isAuthenticated,
     user,
     tenantData,
     accessToken,
@@ -103,28 +127,52 @@ const loadStateFromCookies = () => {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   ...loadStateFromCookies(),
-  signup: async (data) => {
+  isLoading: false,
+  error: null,
+
+  signup: async (data: SignupData) => {
+    set({ isLoading: true, error: null });
     try {
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('email', data.email);
+      formData.append('password', data.password);
+      formData.append('fullname', data.fullname);
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'accept': 'application/json',
         },
-        body: JSON.stringify(data),
-      })
+        body: formData,
+      });
+
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error('Signup failed')
+        throw new Error(responseData.message || 'Signup failed');
       }
 
-      const userData = await response.json()
-      set({ user: userData, isAuthenticated: true })
+      // Don't set authentication state on signup
+      // User needs to verify email and login first
+      set({ 
+        isLoading: false,
+        error: null
+      });
+
+      return responseData;
     } catch (error) {
-      console.error('Signup error:', error)
-      throw error
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      });
+      throw error;
     }
   },
+
   login: async (data) => {
+    set({ isLoading: true, error: null });
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login/`, {
         method: 'POST',
@@ -132,13 +180,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-      })
+      });
+
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error('Invalid credentials')
+        // Check if the error is due to unverified email
+        if (responseData.error?.includes("verify your email")) {
+          throw new Error(responseData.error);
+        }
+        throw new Error(responseData.message || 'Invalid credentials');
       }
 
-      const { access, refresh, user } = await response.json()
+      const { access, refresh, user } = responseData;
       
       // Set cookies with expiration - 7 days for refresh token, 24 hours for access token
       setCookie('accessToken', access, 1); // 1 day
@@ -146,20 +200,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       setCookie('userRole', user.role, 7);
       setCookie('user', encodeURIComponent(JSON.stringify(user)), 7);
       
+      // Update state with new auth data
       set({ 
         user, 
         accessToken: access,
         refreshToken: refresh,
-        isAuthenticated: true 
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
       });
 
-      // Fetch tenant data after successful login
-      await get().fetchTenantData();
+      // Fetch user profile to ensure we have the latest data
+      await get().fetchUserProfile();
+      
+      // Only fetch tenant data if user is not an admin
+      if (user.role !== 'admin') {
+        await get().fetchTenantData();
+      }
     } catch (error) {
-      console.error('Login error:', error)
-      throw error
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      });
+      throw error;
     }
   },
+
   logout: () => {
     // Clear cookies
     deleteCookie('accessToken');
@@ -173,7 +239,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      tenantData: null
+      tenantData: null,
+      error: null
     });
     
     // Redirect to home page after logout
@@ -181,25 +248,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       window.location.href = '/';
     }
   },
+
   getRedirectPath: () => {
-    const { user } = get()
-    if (!user) return '/login'
+    const { user } = get();
+    if (!user) return '/login';
     
     // Redirect based on user role
     if (user.role === 'owner') {
-      return '/merchant'
+      return '/merchant';
     } else if (user.role === 'admin') {
-      return '/admin'
+      return '/admin';
     }
     
-    return '/'
+    return '/';
   },
+
   fetchTenantData: async () => {
+    set({ isLoading: true, error: null });
     try {
       const { accessToken, user } = get();
       if (!accessToken || !user?.tenant) {
-        console.warn('No access token or tenant ID available for fetching tenant data');
-        return;
+        throw new Error('No access token or tenant ID available');
       }
 
       const response = await fetch(
@@ -213,19 +282,67 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       );
 
       if (!response.ok) {
-        console.error('Failed to fetch tenant data:', response.status);
-        return;
+        throw new Error('Failed to fetch tenant data');
       }
 
       const tenantData = await response.json();
       
       // Store tenant data in state and cookie
-      set({ tenantData });
+      set({ 
+        tenantData,
+        isLoading: false,
+        error: null
+      });
       setCookie('tenantData', encodeURIComponent(JSON.stringify(tenantData)), 7);
     } catch (error) {
-      console.error('Error fetching tenant data:', error);
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch tenant data'
+      });
+      throw error;
     }
   },
+
+  fetchUserProfile: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { accessToken } = get();
+      if (!accessToken) {
+        throw new Error('No access token available');
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/me/`,
+        {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const userData = await response.json();
+      
+      // Update user data in state and cookie
+      set({ 
+        user: userData,
+        isLoading: false,
+        error: null
+      });
+      setCookie('user', encodeURIComponent(JSON.stringify(userData)), 7);
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch user profile'
+      });
+      throw error;
+    }
+  },
+
   isTenantVerified: () => {
     const { tenantData } = get();
     if (!tenantData) {
@@ -234,5 +351,151 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     }
     return tenantData.is_verified || false;
-  }
+  },
+
+  clearError: () => {
+    set({ error: null });
+  },
+
+  validateToken: () => {
+    const accessToken = getCookie('accessToken');
+    const refreshToken = getCookie('refreshToken');
+    const userRole = getCookie('userRole');
+    const userJson = getCookie('user');
+    
+    if (!accessToken || !refreshToken || !userRole || !userJson) {
+      set({ isAuthenticated: false, user: null });
+      return false;
+    }
+    
+    try {
+      const user = JSON.parse(decodeURIComponent(userJson));
+      if (!user || !user.role) {
+        set({ isAuthenticated: false, user: null });
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error validating token:', error);
+      set({ isAuthenticated: false, user: null });
+      return false;
+    }
+  },
+
+  changePassword: async (oldPassword: string, newPassword: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { accessToken } = get();
+      if (!accessToken) {
+        throw new Error('No access token available. Please log in again.');
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/change-password/`,
+        {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            old_password: oldPassword,
+            new_password: newPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token is invalid, clear auth state
+          set({ 
+            isAuthenticated: false, 
+            user: null, 
+            accessToken: null,
+            refreshToken: null,
+            error: 'Your session has expired. Please log in again.'
+          });
+          // Clear cookies
+          deleteCookie('accessToken');
+          deleteCookie('refreshToken');
+          deleteCookie('userRole');
+          deleteCookie('user');
+          throw new Error('Your session has expired. Please log in again.');
+        }
+        if (response.status === 400 && data.error === "Old password is incorrect") {
+          throw new Error("Current password is incorrect");
+        } else if (response.status === 400 && data.new_password) {
+          throw new Error(data.new_password[0]);
+        }
+        throw new Error(data.detail || data.message || "Failed to change password");
+      }
+
+      set({ isLoading: false, error: null });
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to change password'
+      });
+      throw error;
+    }
+  },
+
+  updateProfile: async (formData: FormData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { accessToken } = get();
+      if (!accessToken) {
+        throw new Error('No access token available. Please log in again.');
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/update-profile/`,
+        {
+          method: 'PUT',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token is invalid, clear auth state
+          set({ 
+            isAuthenticated: false, 
+            user: null, 
+            accessToken: null,
+            refreshToken: null,
+            error: 'Your session has expired. Please log in again.'
+          });
+          // Clear cookies
+          deleteCookie('accessToken');
+          deleteCookie('refreshToken');
+          deleteCookie('userRole');
+          deleteCookie('user');
+          throw new Error('Your session has expired. Please log in again.');
+        }
+        throw new Error(data.detail || data.message || "Failed to update profile");
+      }
+
+      // After successful update, fetch the latest user data
+      await get().fetchUserProfile();
+      
+      set({ isLoading: false, error: null });
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to update profile'
+      });
+      throw error;
+    }
+  },
 }))

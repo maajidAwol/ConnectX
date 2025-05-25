@@ -56,12 +56,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final password = event.password;
 
       final result = await signup(
-        SignUpParams(
-          name: event.name,
-          email: email,
-          password: password,
-          tenant: tenant,
-        ),
+        SignUpParams(name: event.name, email: email, password: password),
       );
 
       result.fold(
@@ -76,7 +71,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             emit(AuthError(message: failure.toString()));
           }
         },
-        (user) => emit(SignUpRedirectToLogin(email: email, password: password)),
+        (user) {
+          if (user.is_verified == false) {
+            emit(SignUpVerificationNeeded(email: email));
+          } else {
+            emit(SignUpRedirectToLogin(email: email, password: password));
+          }
+        },
       );
     });
 

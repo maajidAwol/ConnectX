@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../models/user_model.dart';
 import '../models/address_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> login(String email, String password);
   Future<UserModel> signup({
-    required String tenant,
     required String name,
     required String email,
     required String password,
@@ -42,6 +42,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'X-API-KEY': API_KEY,
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -49,8 +50,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> login(String email, String password) async {
     final response = await client.post(
-      Uri.parse('https://connectx-9agd.onrender.com/api/auth/login/'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('$baseUrl/auth/login/'),
+      headers: _headers,
       body: json.encode({'email': email, 'password': password}),
     );
 
@@ -78,27 +79,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> signup({
-    required String tenant,
     required String name,
     required String email,
     required String password,
     required String role,
   }) async {
+    print(role);
+    print(baseUrl);
+
     final response = await client.post(
-      Uri.parse('https://connectx-9agd.onrender.com/api/users/'),
+      Uri.parse('$baseUrl/users/'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'X-API-KEY': API_KEY,
       },
       body: json.encode({
-        'tenant': tenant,
         'name': name,
         'email': email,
         'password': password,
         'role': role,
       }),
     );
-
+    print(response.body);
+    print(response.statusCode);
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
       final user = UserModel.fromJson(data);
@@ -142,10 +146,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     final response = await client.get(
-      Uri.parse(
-        'https://connectx-9agd.onrender.com/api/shipping-addresses/my_address/',
-      ),
-      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+      Uri.parse('$baseUrl/shipping-addresses/my_address/'),
+      headers: _headers,
     );
 
     if (response.statusCode == 200) {
@@ -169,11 +171,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     try {
       final response = await client.post(
-        Uri.parse('https://connectx-9agd.onrender.com/api/shipping-addresses/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        Uri.parse('$baseUrl/shipping-addresses/'),
+        headers: _headers,
         body: json.encode({
           "label": address.label,
           "full_address": address.fullAddress,
@@ -201,13 +200,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     final response = await client.put(
-      Uri.parse(
-        'https://connectx-9agd.onrender.com/api/shipping-addresses/${address.id}/',
-      ),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      Uri.parse('$baseUrl/shipping-addresses/${address.id}/'),
+      headers: _headers,
       body: json.encode(address.toJson()),
     );
 
@@ -226,10 +220,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     final response = await client.delete(
-      Uri.parse(
-        'https://connectx-9agd.onrender.com/api/shipping-addresses/$id/',
-      ),
-      headers: {'Authorization': 'Bearer $token'},
+      Uri.parse('$baseUrl/shipping-addresses/$id/'),
+      headers: _headers,
     );
 
     if (response.statusCode != 204 && response.statusCode != 200) {
@@ -245,11 +237,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> verifyEmail(String email, String otp) async {
     final response = await client.post(
-      Uri.parse('https://connectx-9agd.onrender.com/api/auth/email/verify'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
+      Uri.parse('$baseUrl/auth/email/verify'),
+      headers: _headers,
       body: json.encode({'email': email, 'otp': otp}),
     );
     if (response.statusCode != 200) {
@@ -261,13 +250,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> resendVerification(String email) async {
     final response = await client.post(
-      Uri.parse(
-        'https://connectx-9agd.onrender.com/api/auth/email/verify/resend',
-      ),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
+      Uri.parse('$baseUrl/auth/email/verify/resend'),
+      headers: _headers,
       body: json.encode({'email': email}),
     );
 
@@ -291,8 +275,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final userId = user.id;
 
     final response = await client.get(
-      Uri.parse('https://connectx-9agd.onrender.com/api/users/$userId/'),
-      headers: {'Accept': 'application/json', "Authorization": "Bearer $token"},
+      Uri.parse('$baseUrl/users/$userId/'),
+      headers: _headers,
     );
 
     if (response.statusCode != 200) {

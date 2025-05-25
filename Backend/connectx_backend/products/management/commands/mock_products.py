@@ -48,6 +48,15 @@ class Command(BaseCommand):
                 "role": User.OWNER,
             },
         )
+        owner, created = User.objects.get_or_create(
+            email="maajidawol@gmail.com",
+            defaults={
+                "name": "Mock Owner",
+                "password": "password",
+                "tenant": tenant,
+                "role": User.CUSTOMER,
+            },
+        )
         if created:
             self.stdout.write(f"user is not created when tenant created: {owner.password}")
         else:

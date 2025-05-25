@@ -10,9 +10,7 @@ import '../../../../../components/product/product_card.dart';
 import '../../../../../constants.dart';
 
 class FlashSale extends StatelessWidget {
-  const FlashSale({
-    super.key,
-  });
+  const FlashSale({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -39,52 +37,60 @@ class FlashSale extends StatelessWidget {
         SizedBox(
           height: 220,
           child: BlocBuilder<HomeBloc, HomeState>(
-            
             builder: (context, state) {
               if (state is HomeLoading) {
                 return const ProductsSkelton();
               } else if (state is HomeLoaded) {
-                final products = state.products[ProductFilter.countDownProducts] ?? [];
+                final products =
+                    state.products[ProductFilter.countDownProducts] ?? [];
                 if (products.isEmpty) {
                   return const Center(child: Text('No products available'));
                 }
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: state.products.length,
-                  itemBuilder: (context, index) => Padding(
-                    padding: EdgeInsets.only(
-                      left: defaultPadding,
-                      right: index == state.products.length - 1
-                          ? defaultPadding
-                          : 0,
-                    ),
-                    child: ProductCard(
-                        image: products[index].coverUrl,
-                        brandName: products[index].name,
-                      title: products[index].subDescription,
-                      price: products[index].priceSale != null && products[index].priceSale! > products[index].price ? products[index].priceSale! : products[index].price,
-                      priceAfetDiscount: products[index].price,
-                      dicountpercent: products[index].priceSale != null && products[index].priceSale! > products[index].price
-                          ? ((products[index].price -
-                                  products[index].priceSale!) /
-                              products[index].price *
-                              100)
-                              .round()
-                          : null,
-                      press: () {
-
-                        Navigator.pushNamed(
-                          context,
-                          productDetailsScreenRoute,
-                          arguments: {
-                            'isProductAvailable': true,
-                            'productId': products[index].id,
+                  itemBuilder:
+                      (context, index) => Padding(
+                        padding: EdgeInsets.only(
+                          left: defaultPadding,
+                          right:
+                              index == state.products.length - 1
+                                  ? defaultPadding
+                                  : 0,
+                        ),
+                        child: ProductCard(
+                          image: products[index].coverUrl,
+                          brandName: products[index].name,
+                          title: products[index].subDescription,
+                          price:
+                              products[index].priceSale != null &&
+                                      products[index].priceSale! >
+                                          products[index].price
+                                  ? products[index].priceSale!
+                                  : products[index].price,
+                          priceAfetDiscount: products[index].price,
+                          dicountpercent:
+                              products[index].priceSale != null &&
+                                      products[index].priceSale! >
+                                          products[index].price
+                                  ? ((products[index].price -
+                                              products[index].priceSale!) /
+                                          products[index].price *
+                                          100)
+                                      .round()
+                                  : null,
+                          press: () {
+                            Navigator.pushNamed(
+                              context,
+                              productDetailsScreenRoute,
+                              arguments: {
+                                'isProductAvailable': true,
+                                'productId': products[index].id,
+                              },
+                            );
                           },
-                          
-                        );
-                      },
-                    ),
-                  ),
+                        ),
+                      ),
                 );
               } else if (state is HomeError) {
                 return Center(child: Text(state.message));

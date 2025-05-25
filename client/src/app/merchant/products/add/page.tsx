@@ -4,15 +4,16 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Step, StepStatus } from "@/components/ui/step"
-import { ArrowLeft, type File, CheckCircle, Circle, XCircle } from "lucide-react"
+import { ArrowLeft, type File as LucideFile, CheckCircle, Circle, XCircle, Loader2 } from "lucide-react"
 import { ProductBasicInfoTab } from "@/components/products/product-basic-info-tab"
 import { ProductDetailsTab } from "@/components/products/product-details-tab"
 import { ProductImagesTab } from "@/components/products/product-images-tab"
 import { ProductOptionsTab } from "@/components/products/product-options-tab"
 import { FormSuccessAlert } from "@/components/products/form-success-alert"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -20,6 +21,7 @@ import { useRouter } from "next/navigation"
 import useProductStore from "@/store/useProductStore"
 import useCategoryStore from "@/store/useCategoryStore"
 import { toast } from "sonner"
+import { useAuthStore } from "@/store/authStore"
 
 interface FormErrors {
   name?: string
@@ -31,9 +33,40 @@ interface FormErrors {
   cover_url?: string
 }
 
-export default function AddProductPage() {
+interface SubmitData {
+  name: string
+  base_price: string
+  quantity: number
+  category_id: string
+  description: string
+  short_description: string
+  brand: string
+  warranty: string
+  is_public: boolean
+  tag: string[]
+  colors: string[]
+  sizes: string[]
+  additional_info: Record<string, string>
+  cover_image_upload?: File
+  images_upload?: File[]
+}
+
+interface ImageState {
+  file?: File
+  preview: string
+  uploading?: boolean
+  existing?: boolean
+}
+
+export default function ProductPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const productId = searchParams.get('id')
+  const isEditMode = !!productId
+  
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(isEditMode)
   const [successMessage, setSuccessMessage] = useState("")
   const [errors, setErrors] = useState<FormErrors>({})
   const [stepsStatus, setStepsStatus] = useState<StepStatus[]>([
@@ -42,15 +75,14 @@ export default function AddProductPage() {
     "upcoming", // Images
     "upcoming"  // Options
   ])
-  const [coverImage, setCoverImage] = useState<{ file: File; preview: string; uploading?: boolean } | null>(null)
-  const [images, setImages] = useState<Array<{ file: File; preview: string; uploading?: boolean }>>([])
+  const [coverImage, setCoverImage] = useState<ImageState | null>(null)
+  const [images, setImages] = useState<ImageState[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null!)
   const coverImageInputRef = useRef<HTMLInputElement>(null!)
   
   // Form state
   const [formData, setFormData] = useState({
     name: "",
-    sku: "",
     base_price: "",
     quantity: "",
     category_id: "",
@@ -65,14 +97,68 @@ export default function AddProductPage() {
     sizes: [] as string[],
   })
 
-  const router = useRouter()
-  const createProduct = useProductStore((state: any) => state.createProduct)
+  const { createProduct, updateProduct, getProductById } = useProductStore((state: any) => state)
   const { categories, fetchCategories, isLoading: isCategoriesLoading } = useCategoryStore()
+  const { isTenantVerified } = useAuthStore()
+  const isVerified = isTenantVerified()
   
   // Fetch categories when component mounts
   useEffect(() => {
     fetchCategories()
   }, [fetchCategories])
+
+  // Fetch product data if in edit mode
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (isEditMode && productId) {
+        try {
+          setIsLoading(true)
+          const product = await getProductById(productId)
+          
+          // Set form data from product
+          setFormData({
+            name: product.name || "",
+            base_price: product.base_price?.toString() || "",
+            quantity: product.quantity?.toString() || "",
+            category_id: product.category?.id || "",
+            description: product.description || "",
+            short_description: product.short_description || "",
+            tag: product.tag || [],
+            brand: product.brand || "",
+            additional_info: product.additional_info || {},
+            warranty: product.warranty || "",
+            is_public: product.is_public ?? true,
+            colors: product.colors || [],
+            sizes: product.sizes || [],
+          })
+          
+          // Set cover image
+          if (product.cover_url) {
+            setCoverImage({
+              preview: product.cover_url,
+              existing: true
+            })
+          }
+          
+          // Set product images
+          if (product.images && product.images.length > 0) {
+            setImages(product.images.map((imageUrl: string) => ({
+              preview: imageUrl,
+              existing: true
+            })))
+          }
+          
+        } catch (error) {
+          console.error("Error fetching product data:", error)
+          toast.error("Failed to load product data")
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+    
+    fetchProductData()
+  }, [productId, isEditMode, getProductById])
 
   // Define steps
   const steps = [
@@ -100,11 +186,9 @@ export default function AddProductPage() {
       
       if (value === "") {
         // If value is empty, remove the key
-        // console.log(`Removing key "${key}" from additional_info`);
         delete newAdditionalInfo[key];
       } else {
         // Otherwise, update or add the key-value pair
-        // console.log(`Setting additional_info["${key}"] = "${value}"`);
         newAdditionalInfo[key] = value;
       }
       
@@ -142,6 +226,7 @@ export default function AddProductPage() {
         file,
         preview: URL.createObjectURL(file),
         uploading: true,
+        existing: false
       })
 
       // Simulate upload completion after a delay
@@ -159,7 +244,9 @@ export default function AddProductPage() {
   // Remove cover image
   const removeCoverImage = () => {
     if (coverImage) {
-      URL.revokeObjectURL(coverImage.preview)
+      if (!coverImage.existing && coverImage.preview) {
+        URL.revokeObjectURL(coverImage.preview)
+      }
       setCoverImage(null)
     }
   }
@@ -171,6 +258,7 @@ export default function AddProductPage() {
         file,
         preview: URL.createObjectURL(file),
         uploading: true,
+        existing: false
       }))
 
       setImages((prevImages) => [...prevImages, ...newImages])
@@ -197,7 +285,9 @@ export default function AddProductPage() {
     setImages((prevImages) => {
       const updatedImages = [...prevImages]
       // Revoke the object URL to prevent memory leaks
-      URL.revokeObjectURL(updatedImages[index].preview)
+      if (!updatedImages[index].existing && updatedImages[index].preview) {
+        URL.revokeObjectURL(updatedImages[index].preview)
+      }
       updatedImages.splice(index, 1)
       return updatedImages
     })
@@ -205,50 +295,37 @@ export default function AddProductPage() {
 
   // Validate current step
   const validateStep = (step: number): boolean => {
-    // console.log(`Validating step ${step}`);
-    // console.log(`Current additional_info:`, JSON.stringify(formData.additional_info, null, 2));
-    
     const newErrors: FormErrors = {};
     
     // Validation logic for each step
     if (step === 0) { // Basic Info
       if (!formData.name.trim()) newErrors.name = "Product name is required";
-      if (!formData.sku.trim()) newErrors.sku = "SKU is required";
       if (!formData.category_id) newErrors.category_id = "Category is required";
       if (!formData.description.trim()) newErrors.description = "Description is required";
     } 
     else if (step === 1) { // Details
       if (!formData.base_price) newErrors.base_price = "Base price is required";
       if (!formData.quantity) newErrors.quantity = "Quantity is required";
-      
-      // Log additional_info specifically for the Details step
-      // console.log("Validating Details step with additional_info:", JSON.stringify(formData.additional_info, null, 2));
     }
     else if (step === 2) { // Images
       if (!coverImage) newErrors.cover_url = "Cover image is required";
-      // Note: Additional images are optional, so we don't validate them
     }
-    // Step 3 (Options) has no required fields
     
     // Set errors
     setErrors(newErrors);
     
     // Log validation result
     const isValid = Object.keys(newErrors).length === 0;
-    // console.log(`Step ${step} validation result:`, isValid ? "Valid" : "Invalid");
     
     return isValid;
   }
 
   // Move to next step with validation
   const goToNextStep = () => {
-    // console.log("goToNextStep called. Current step:", currentStep);
     console.log("Current form data:", formData);
-    // console.log("Current additional_info:", formData.additional_info);
     
     // First validate current step
     if (validateStep(currentStep)) {
-      // console.log("Current step validated successfully");
       
       // Update current step status to completed
       const newStepsStatus = [...stepsStatus];
@@ -257,17 +334,12 @@ export default function AddProductPage() {
       // Set next step as current
       if (currentStep < steps.length - 1) {
         const nextStep = currentStep + 1;
-        // console.log("Moving to next step:", nextStep);
-        // console.log("Form data being carried to next step:", formData);
-        // console.log("Additional info being carried to next step:", formData.additional_info);
         
         newStepsStatus[nextStep] = "current";
         setStepsStatus(newStepsStatus);
         setCurrentStep(nextStep);
         // Clear any errors
         setErrors({});
-      } else {
-        console.log("Already at last step");
       }
     } else {
       console.log("Validation failed for current step");
@@ -276,41 +348,32 @@ export default function AddProductPage() {
 
   // Go to previous step
   const goToPreviousStep = () => {
-    console.log("goToPreviousStep called. Current step:", currentStep);
     console.log("Current form data:", formData);
     console.log("Current additional_info:", formData.additional_info);
     
     if (currentStep > 0) {
       const prevStep = currentStep - 1;
-      console.log("Moving to previous step:", prevStep);
       
       const newStepsStatus = [...stepsStatus];
       newStepsStatus[currentStep] = "upcoming";
       newStepsStatus[prevStep] = "current";
       setStepsStatus(newStepsStatus);
       setCurrentStep(prevStep);
-      
-      // console.log("Form data being carried to previous step:", formData);
-      // console.log("Additional info being carried to previous step:", formData.additional_info);
     }
   }
 
   // Go to specific step (used in stepper)
   const goToStep = (step: number) => {
-    console.log("goToStep called. Target step:", step);
+    console.log("Target step:", step);
     
     // If trying to go forward, validate all previous steps first
     if (step > currentStep) {
-      console.log("Trying to go forward, validating current step");
       for (let i = 0; i <= currentStep; i++) {
         if (!validateStep(i)) {
-          console.log("Step", i, "validation failed, stopping navigation");
           return // Stop if current step is invalid
         }
       }
     }
-    
-    console.log("Validation passed or going backwards, proceeding with navigation");
     
     // Update step statuses
     const newStepsStatus = [...stepsStatus]
@@ -336,13 +399,11 @@ export default function AddProductPage() {
   const validateAllSteps = (): boolean => {
     console.log("=== VALIDATING ALL STEPS ===");
     console.log("Current form data:", JSON.stringify(formData, null, 2));
-    console.log("Current additional_info:", JSON.stringify(formData.additional_info, null, 2));
     
     const newErrors: FormErrors = {};
     
     // Validate step 0 (Basic Info)
     if (!formData.name.trim()) newErrors.name = "Product name is required";
-    if (!formData.sku.trim()) newErrors.sku = "SKU is required";
     if (!formData.category_id) newErrors.category_id = "Category is required";
     if (!formData.description.trim()) newErrors.description = "Description is required";
     
@@ -360,17 +421,14 @@ export default function AddProductPage() {
     if (Object.keys(newErrors).length > 0) {
       console.log("Validation errors found:", newErrors);
       
-      if (newErrors.name || newErrors.sku || newErrors.category_id || newErrors.description) {
+      if (newErrors.name || newErrors.category_id || newErrors.description) {
         if (currentStep !== 0) setCurrentStep(0); // Only change if not already there
-        console.log("Navigating to step 0 (Basic Info) due to validation errors");
         return false;
       } else if (newErrors.base_price || newErrors.quantity) {
         if (currentStep !== 1) setCurrentStep(1);
-        console.log("Navigating to step 1 (Details) due to validation errors");
         return false;
       } else if (newErrors.cover_url) {
         if (currentStep !== 2) setCurrentStep(2);
-        console.log("Navigating to step 2 (Images) due to validation errors");
         return false;
       }
     }
@@ -407,56 +465,50 @@ export default function AddProductPage() {
       const additionalInfoCopy = { ...formData.additional_info };
       
       // Prepare the data for submission
-      const submitData = {
+      const submitData: SubmitData = {
         ...formData,
-        // cover_url: coverImage?.preview || "",
-        // images: images.map(img => img.preview),
-        cover_url: "https://example.com/image.jpg",
-        images: [
-          "https://example.com/image1.jpg",
-          "https://example.com/image2.jpg"
-        ],
         base_price: formData.base_price,
         quantity: parseInt(formData.quantity),
         tag: [...formData.tag], // Create a new array to prevent reference issues
         colors: [...formData.colors],
         sizes: [...formData.sizes],
-        additional_info: additionalInfoCopy
+        additional_info: additionalInfoCopy,
       };
+
+      // Add file uploads only if they exist
+      if (coverImage?.file) {
+        submitData.cover_image_upload = coverImage.file;
+      }
+      
+      // Only add non-existing images (new uploads)
+      const newImageUploads = images
+        .filter((img): img is { file: File; preview: string; uploading?: boolean; existing?: boolean } => 
+          !img.existing && img.file !== undefined)
+        .map(img => img.file);
+      
+      if (newImageUploads.length > 0) {
+        submitData.images_upload = newImageUploads;
+      }
 
       // Console log the data
       console.log("=== FINAL SUBMISSION DATA ===");
       console.log(JSON.stringify(submitData, null, 2));
 
-      // Create the product using the store
-      const newProduct = await createProduct(submitData);
-
-      // Show success message
-      toast.success("Product successfully added!", {
-        className: "bg-green-500 text-white",
-      });
-
-      // Clear form after successful submission
-      setFormData({
-        name: "",
-        sku: "",
-        base_price: "",
-        quantity: "",
-        category_id: "",
-        description: "",
-        short_description: "",
-        tag: [],
-        brand: "",
-        additional_info: {},
-        warranty: "",
-        is_public: true,
-        colors: [],
-        sizes: [],
-      });
-      setCoverImage(null);
-      setImages([]);
-      setCurrentStep(0);
-      setStepsStatus(["current", "upcoming", "upcoming", "upcoming"]);
+      let result;
+      
+      if (isEditMode && productId) {
+        // Update existing product
+        result = await updateProduct(productId, submitData);
+        toast.success("Product successfully updated!", {
+          className: "bg-green-500 text-white",
+        });
+      } else {
+        // Create new product
+        result = await createProduct(submitData);
+        toast.success("Product successfully added!", {
+          className: "bg-green-500 text-white",
+        });
+      }
 
       // Redirect to products page after 2 seconds
       setTimeout(() => {
@@ -464,27 +516,13 @@ export default function AddProductPage() {
       }, 2000);
 
     } catch (error) {
-      console.error('Error adding product:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to add product. Please try again.", {
+      console.error('Error saving product:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to save product. Please try again.", {
         className: "bg-red-500 text-white",
-      });
-      setErrors({
-        name: "Failed to add product. Please try again."
       });
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  // Generate a random SKU
-  const generateSKU = () => {
-    const timestamp = Date.now().toString().slice(-6)
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    const sku = `SKU-${timestamp}-${random}`
-    setFormData(prev => ({
-      ...prev,
-      sku
-    }))
   }
 
   // Render current step content
@@ -496,7 +534,6 @@ export default function AddProductPage() {
             formData={formData}
             handleInputChange={handleInputChange}
             handleArrayFieldChange={handleArrayFieldChange}
-            generateSKU={generateSKU}
             errors={errors}
             categories={categories}
             isCategoriesLoading={isCategoriesLoading}
@@ -540,10 +577,42 @@ export default function AddProductPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="mt-4 text-muted-foreground">Loading product data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isVerified) {
+    return (
+      <div className="container mx-auto py-8">
+        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Verification Required</AlertTitle>
+          <AlertDescription>
+            Your business is not verified yet. You need to verify your business before adding products.
+            <div className="mt-2">
+              <Link href="/merchant/profile/verify">
+                <Button variant="outline" className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100">
+                  Verify Your Business
+                </Button>
+              </Link>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Add New Product</h1>
+        <h1 className="text-2xl font-bold">{isEditMode ? "Edit Product" : "Add New Product"}</h1>
         <Button variant="outline" onClick={() => window.history.back()} size="sm">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
@@ -632,7 +701,7 @@ export default function AddProductPage() {
                 onClick={handleSubmit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save Product"}
+                {isSubmitting ? (isEditMode ? "Updating..." : "Saving...") : (isEditMode ? "Update Product" : "Save Product")}
               </Button>
             )}
           </CardFooter>

@@ -7,18 +7,21 @@ sealed class OrderEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class CreateChapaOrder extends OrderEvent {
+final class CreateChapaOrderEvent extends OrderEvent {
   final ChapaOrderModel order;
-
-  const CreateChapaOrder(this.order);
+  const CreateChapaOrderEvent(this.order);
 }
 
-class CreateCashOnDeliveryOrder extends OrderEvent {
+final class CreateCashOnDeliveryOrderEvent extends OrderEvent {
   final CashOnDeliveryOrder order;
-
-  const CreateCashOnDeliveryOrder(this.order);
+  const CreateCashOnDeliveryOrderEvent(this.order);
 }
 
-class LoadOrders extends OrderEvent {
+final class LoadOrders extends OrderEvent {
   const LoadOrders();
+}
+
+final class LoadOrderDetails extends OrderEvent {
+  final String orderId;
+  const LoadOrderDetails(this.orderId);
 }

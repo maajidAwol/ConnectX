@@ -8,9 +8,7 @@ class Tenant(models.Model):
     name = models.CharField(max_length=255, unique=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)  # Store hashed passwords
-    logo = models.ImageField(
-        upload_to="tenant_logos/", null=True, blank=True, max_length=500
-    )
+    logo = models.URLField(max_length=500, null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     address = models.TextField(null=True, blank=True)
     website_url = models.URLField(max_length=500, null=True, blank=True)
@@ -30,33 +28,26 @@ class Tenant(models.Model):
     tenant_verification_status = models.CharField(
         max_length=50,
         choices=[
+            ("unverified", "Unverified"),
             ("pending", "Pending"),
-            ("under_reviw","Under  Reviw"),
+            ("under_review", "Under Review"),
             ("approved", "Approved"),
             ("rejected", "Rejected"),
         ],
-        default="pending",
+        default="unverified",
     )
     tenant_verification_date = models.DateField(null=True, blank=True)
-    business_registration_certificate = models.FileField(
-        upload_to="business_registration_certificates/",
-        null=True,
-        blank=True,
-        max_length=500,
+    business_registration_certificate = models.URLField(
+        max_length=500, null=True, blank=True
     )
-    business_license = models.FileField(
-        upload_to="business_licenses/", null=True, blank=True, max_length=500
-    )
+    business_license = models.URLField(max_length=500, null=True, blank=True)
 
     # Tax Information
     tin_number = models.CharField(max_length=255, null=True, blank=True)
     vat_number = models.CharField(max_length=255, null=True, blank=True)
     tax_office_address = models.CharField(max_length=255, null=True, blank=True)
-    tax_registration_certificate = models.FileField(
-        upload_to="tax_registration_certificates/",
-        null=True,
-        blank=True,
-        max_length=500,
+    tax_registration_certificate = models.URLField(
+        max_length=500, null=True, blank=True
     )
 
     # Banking Information
@@ -64,21 +55,16 @@ class Tenant(models.Model):
     bank_account_number = models.CharField(max_length=255, null=True, blank=True)
     bank_account_name = models.CharField(max_length=255, null=True, blank=True)
     bank_branch = models.CharField(max_length=255, null=True, blank=True)
-    bank_statement = models.FileField(
-        upload_to="bank_statements/", null=True, blank=True, max_length=500
-    )
+    bank_statement = models.URLField(max_length=500, null=True, blank=True)
 
     # Mobile App Information
     mobileapp_url = models.URLField(max_length=500, null=True, blank=True)
     mobileapp_name = models.CharField(max_length=255, null=True, blank=True)
 
     # Identification Documents
-    id_card = models.FileField(
-        upload_to="id_cards/", null=True, blank=True, max_length=500
-    )
+    id_card = models.URLField(max_length=500, null=True, blank=True)
 
-    # API Key
-    api_key = models.CharField(max_length=100, unique=True, null=True, blank=True)
+ 
 
     def save(self, *args, **kwargs):
         """Ensure password is always hashed before saving."""
@@ -91,3 +77,4 @@ class Tenant(models.Model):
 
     class Meta:
         db_table = "tenants"
+        ordering = ["-created_at", "name"]

@@ -1,25 +1,38 @@
-import { ApiKeyDisplay } from "@/components/developer/api-key-display"
-import { PageHeader } from "@/components/ui/page-header"
+"use client"
 
-// This would typically come from your backend/API
-const mockApiKey = {
-  key: "pk_live_51NzQweSH7SWVfKdUeOA6rJYEt4lkuM9qIRLzwOYWZOK",
-  createdAt: "April 15, 2023",
-  lastUsed: "2 hours ago"
-}
+import { useEffect } from "react"
+import { PageHeader } from "@/components/ui/page-header"
+import { ApiKeyList } from "@/components/developer/api-key-list"
+import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog"
+import useApiKeyStore from "@/store/useApiKeyStore"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export default function ApiKeyPage() {
+  const { apiKeys, isLoading, error, fetchApiKeys } = useApiKeyStore()
+
+  useEffect(() => {
+    fetchApiKeys()
+  }, [fetchApiKeys])
+
   return (
     <div className="container mx-auto py-6 space-y-8">
-      <PageHeader 
-        title="API Key" 
-        description="Your API key for accessing the ConnectX API. This key was generated when you registered." 
-      />
-      <ApiKeyDisplay 
-        apiKey={mockApiKey.key}
-        createdAt={mockApiKey.createdAt}
-        lastUsed={mockApiKey.lastUsed}
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader 
+          title="API Keys" 
+          description="Manage your API keys for accessing the ConnectX API. Generate new keys, revoke existing ones, or delete them when no longer needed." 
+        />
+        <CreateApiKeyDialog />
+      </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+        <ApiKeyList />
     </div>
   )
 }

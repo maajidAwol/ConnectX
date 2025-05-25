@@ -345,10 +345,16 @@ class Payment {
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
-        amount: json['amount'],
-        txRef: json['tx_ref'],
-        transactionId: json['transaction_id'],
-      );
+    amount: json['amount'],
+    txRef: json['tx_ref'],
+    transactionId: json['transaction_id'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'amount': amount,
+    'tx_ref': txRef,
+    'transaction_id': transactionId,
+  };
 }
 
 class Item {
@@ -367,12 +373,20 @@ class Item {
   });
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
-        id: json['id'],
-        quantity: json['quantity'],
-        price: json['price'],
-        name: json['name'],
-        coverUrl: json['coverUrl'],
-      );
+    id: json['id'],
+    quantity: json['quantity'],
+    price: json['price'],
+    name: json['name'],
+    coverUrl: json['coverUrl'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'quantity': quantity,
+    'price': price,
+    'name': name,
+    'coverUrl': coverUrl,
+  };
 }
 
 class Billing {
@@ -393,13 +407,22 @@ class Billing {
   });
 
   factory Billing.fromJson(Map<String, dynamic> json) => Billing(
-        name: json['name'],
-        email: json['email'],
-        phoneNumber: json['phoneNumber'],
-        fullAddress: json['fullAddress'],
-        company: json['company'],
-        addressType: json['addressType'],
-      );
+    name: json['name'],
+    email: json['email'],
+    phoneNumber: json['phoneNumber'],
+    fullAddress: json['fullAddress'],
+    company: json['company'],
+    addressType: json['addressType'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'email': email,
+    'phoneNumber': phoneNumber,
+    'fullAddress': fullAddress,
+    'company': company,
+    'addressType': addressType,
+  };
 }
 
 class ShippingMethod {
@@ -414,10 +437,16 @@ class ShippingMethod {
   });
 
   factory ShippingMethod.fromJson(Map<String, dynamic> json) => ShippingMethod(
-        label: json['label'],
-        description: json['description'],
-        value: json['value'],
-      );
+    label: json['label'],
+    description: json['description'],
+    value: json['value'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'label': label,
+    'description': description,
+    'value': value,
+  };
 }
 
 class Shipping {
@@ -432,25 +461,28 @@ class Shipping {
   });
 
   factory Shipping.fromJson(Map<String, dynamic> json) => Shipping(
-        address: json['address'],
-        phoneNumber: json['phoneNumber'],
-        method: ShippingMethod.fromJson(json['method']),
-      );
+    address: json['address'],
+    phoneNumber: json['phoneNumber'],
+    method: ShippingMethod.fromJson(json['method']),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'address': address,
+    'phoneNumber': phoneNumber,
+    'method': method.toJson(),
+  };
 }
 
 class Delivery {
   final String method;
   final double fee;
 
-  Delivery({
-    required this.method,
-    required this.fee,
-  });
+  Delivery({required this.method, required this.fee});
 
-  factory Delivery.fromJson(Map<String, dynamic> json) => Delivery(
-        method: json['method'],
-        fee: json['fee'],
-      );
+  factory Delivery.fromJson(Map<String, dynamic> json) =>
+      Delivery(method: json['method'], fee: json['fee']);
+
+  Map<String, dynamic> toJson() => {'method': method, 'fee': fee};
 }
 
 class ChapaOrderModel {
@@ -480,12 +512,14 @@ class ChapaOrderModel {
     required this.subtotal,
   });
 
-  factory ChapaOrderModel.fromJson(Map<String, dynamic> json) => ChapaOrderModel(
+  factory ChapaOrderModel.fromJson(Map<String, dynamic> json) =>
+      ChapaOrderModel(
         payment: Payment.fromJson(json['payment']),
         status: json['status'],
         amount: json['amount'],
         currency: json['currency'],
-        items: (json['items'] as List).map((item) => Item.fromJson(item)).toList(),
+        items:
+            (json['items'] as List).map((item) => Item.fromJson(item)).toList(),
         billing: Billing.fromJson(json['billing']),
         shipping: Shipping.fromJson(json['shipping']),
         delivery: Delivery.fromJson(json['delivery']),
@@ -493,4 +527,18 @@ class ChapaOrderModel {
         total: json['total'],
         subtotal: json['subtotal'],
       );
+
+  Map<String, dynamic> toJson() => {
+    'payment': payment.toJson(),
+    'status': status,
+    'amount': amount,
+    'currency': currency,
+    'items': items.map((item) => item.toJson()).toList(),
+    'billing': billing.toJson(),
+    'shipping': shipping.toJson(),
+    'delivery': delivery.toJson(),
+    'discount': discount,
+    'total': total,
+    'subtotal': subtotal,
+  };
 }

@@ -7,15 +7,11 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       items: [
         {
           title: "Introduction",
-          href: "/docs",
+          href: "/docs/quickstart/introduction",
         },
         {
           title: "Installation",
-          href: "/docs/installation",
-        },
-        {
-          title: "Quickstart",
-          href: "/docs/quickstart",
+          href: "/docs/quickstart/installation",
         },
       ],
     },
@@ -27,13 +23,23 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
           href: "/docs/authentication/overview",
         },
         {
-          title: "API Keys",
-          href: "/docs/authentication/api-keys",
+          title: "Login",
+          href: "/docs/authentication/login",
         },
         {
-          title: "OAuth",
-          href: "/docs/authentication/oauth",
+          title: "Register",
+          href: "/docs/authentication/register",
         },
+      ],
+    },
+    {
+      title: "User Management",
+      items: [
+        {
+          title: "Overview",
+          href: "/docs/users/overview",
+        },
+      
       ],
     },
     {
@@ -43,22 +49,17 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
           title: "Overview",
           href: "/docs/products/overview",
         },
+       
+      ],
+    },
+    {
+      title: "Categories",
+      items: [
         {
-          title: "Create Products",
-          href: "/docs/products/create",
+          title: "Overview",
+          href: "/docs/categories/overview",
         },
-        {
-          title: "Retrieve Products",
-          href: "/docs/products/retrieve",
-        },
-        {
-          title: "Update Products",
-          href: "/docs/products/update",
-        },
-        {
-          title: "Delete Products",
-          href: "/docs/products/delete",
-        },
+       
       ],
     },
     {
@@ -68,18 +69,7 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
           title: "Overview",
           href: "/docs/orders/overview",
         },
-        {
-          title: "Create Orders",
-          href: "/docs/orders/create",
-        },
-        {
-          title: "Retrieve Orders",
-          href: "/docs/orders/retrieve",
-        },
-        {
-          title: "Update Orders",
-          href: "/docs/orders/update",
-        },
+       
       ],
     },
     {
@@ -90,17 +80,43 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
           href: "/docs/payments/overview",
         },
         {
-          title: "Stripe",
-          href: "/docs/payments/stripe",
-        },
-        {
-          title: "PayPal",
-          href: "/docs/payments/paypal",
-        },
-        {
-          title: "Chapa",
+          title: "Chapa Integration",
           href: "/docs/payments/chapa",
         },
+        {
+          title: "Cash on Delivery",
+          href: "/docs/payments/cod",
+        },
+      ],
+    },
+    {
+      title: "Shipping Management",
+      items: [
+        {
+          title: "Overview",
+          href: "/docs/shipping/overview",
+        },
+       
+      ],
+    },
+    {
+      title: "Reviews",
+      items: [
+        {
+          title: "Overview",
+          href: "/docs/reviews/overview",
+        },
+       
+      ],
+    },
+    {
+      title: "Tenant Management",
+      items: [
+        {
+          title: "Overview",
+          href: "/docs/tenants/overview",
+        },
+       
       ],
     },
     {
@@ -108,15 +124,7 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       items: [
         {
           title: "Overview",
-          href: "/docs/errors/overview",
-        },
-        {
-          title: "Common Errors",
-          href: "/docs/errors/common-errors",
-        },
-        {
-          title: "Best Practices",
-          href: "/docs/errors/best-practices",
+          href: "/docs/api/errors",
         },
       ],
     },

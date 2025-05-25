@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -9,21 +11,41 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ChevronLeft, ChevronRight, Edit, Filter, Info, MoreHorizontal, Package, Plus, Search, Trash, Loader2 } from "lucide-react"
-import useProductStore, { FilterType } from "@/store/useProductStore"
+import { AlertCircle, Edit, Info, Package, Plus, Search, Trash, Loader2 } from "lucide-react"
+import useProductStore, { type FilterType } from "@/store/useProductStore"
 import { useAuthStore } from "@/store/authStore"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import { toast } from "sonner"
+import { ListProductModal } from "@/components/modals/ListProductModal"
+import type { Product } from "@/store/useProductStore"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function ProductManagement() {
-  const { 
-    products, 
-    isLoading, 
-    error, 
-    searchQuery, 
-    fetchProducts, 
-    setSearchQuery, 
+  const {
+    products,
+    isLoading,
+    error,
+    searchQuery,
+    fetchProducts,
+    setSearchQuery,
     setFilterType,
     setCategory,
     setCurrentPage,
@@ -32,7 +54,7 @@ export default function ProductManagement() {
     filterType,
     listProduct,
     unlistProduct,
-    deleteProduct
+    deleteProduct,
   } = useProductStore()
   const { isAuthenticated, user, isTenantVerified } = useAuthStore()
   const isVerified = isTenantVerified()
@@ -40,11 +62,11 @@ export default function ProductManagement() {
 
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
-    if (!category) return "Uncategorized";
-    if (typeof category === "string") return category;
-    if (typeof category === "object" && category.name) return category.name;
-    return "Uncategorized";
-  };
+    if (!category) return "Uncategorized"
+    if (typeof category === "string") return category
+    if (typeof category === "object" && category.name) return category.name
+    return "Uncategorized"
+  }
 
   // Fetch products on component mount
   useEffect(() => {
@@ -59,60 +81,60 @@ export default function ProductManagement() {
 
   // Helper function to get user ID
   function getUserId(): string {
-    return user?.id || ''
+    return user?.id || ""
   }
 
   // Helper function to get user tenant ID
   function getUserTenantId(): string {
-    return user?.tenant || ''
+    return user?.tenant || ""
   }
 
   // Generate pagination range with ellipsis for larger page sets
   const getPaginationRange = () => {
-    if (totalPages <= 1) return [];
+    if (totalPages <= 1) return []
 
     // Maximum number of page links to show (excluding ellipsis)
-    const maxVisiblePages = 5;
-    const range = [];
-    
+    const maxVisiblePages = 5
+    const range = []
+
     // Always show first page
-    range.push(1);
-    
+    range.push(1)
+
     if (totalPages <= maxVisiblePages) {
       // If we have fewer pages than our max, show all of them
       for (let i = 2; i <= totalPages; i++) {
-        range.push(i);
+        range.push(i)
       }
     } else {
       // We have more pages than we can display, need to use ellipsis
       // Always try to show current page with neighbors
-      
-      const leftBound = Math.max(2, currentPage - 1);
-      const rightBound = Math.min(totalPages - 1, currentPage + 1);
-      
+
+      const leftBound = Math.max(2, currentPage - 1)
+      const rightBound = Math.min(totalPages - 1, currentPage + 1)
+
       // Add ellipsis marker if needed on left side
       if (leftBound > 2) {
-        range.push('...');
+        range.push("...")
       }
-      
+
       // Add visible page numbers around current page
       for (let i = leftBound; i <= rightBound; i++) {
-        range.push(i);
+        range.push(i)
       }
-      
+
       // Add ellipsis marker if needed on right side
       if (rightBound < totalPages - 1) {
-        range.push('...');
+        range.push("...")
       }
-      
+
       // Always show last page if we have more than 1 page
       if (totalPages > 1) {
-        range.push(totalPages);
+        range.push(totalPages)
       }
     }
-    
-    return range;
-  };
+
+    return range
+  }
 
   // Generate a debounced search handler
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +145,7 @@ export default function ProductManagement() {
   // Handle category change
   const handleCategoryChange = (value: string) => {
     // If "all" is selected, pass an empty string to reset the category filter
-    setCategory(value === 'all' ? '' : value);
+    setCategory(value === "all" ? "" : value)
   }
 
   // if (!isAuthenticated) {
@@ -155,10 +177,12 @@ export default function ProductManagement() {
           <p className="text-muted-foreground">Manage your product catalog and inventory</p>
         </div>
         {isVerified ? (
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            <span>Add New Product</span>
-          </Button>
+          <Link href="/merchant/products/add">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              <span>Add New Product</span>
+            </Button>
+          </Link>
         ) : (
           <Button disabled className="gap-2">
             <Plus className="h-4 w-4" />
@@ -231,8 +255,8 @@ export default function ProductManagement() {
         </TabsList>
 
         <TabsContent value="all">
-          <ProductListCard 
-            title="All Products" 
+          <ProductListCard
+            title="All Products"
             description="View and manage all available products"
             isLoading={isLoading}
             products={products}
@@ -243,8 +267,8 @@ export default function ProductManagement() {
         </TabsContent>
 
         <TabsContent value="public">
-          <ProductListCard 
-            title="Public Products" 
+          <ProductListCard
+            title="Public Products"
             description="Products available from the ConnectX marketplace"
             isLoading={isLoading}
             products={products}
@@ -256,8 +280,8 @@ export default function ProductManagement() {
         </TabsContent>
 
         <TabsContent value="owned">
-          <ProductListCard 
-            title="Owned Products" 
+          <ProductListCard
+            title="Owned Products"
             description="Products you've created"
             isLoading={isLoading}
             products={products}
@@ -270,8 +294,8 @@ export default function ProductManagement() {
         </TabsContent>
 
         <TabsContent value="listed">
-          <ProductListCard 
-            title="Listed Products" 
+          <ProductListCard
+            title="Listed Products"
             description="Products available in your store"
             isLoading={isLoading}
             products={products}
@@ -297,48 +321,104 @@ export default function ProductManagement() {
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="p-8 flex justify-center">
-                    <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
-                  </div>
-                ) : products.length > 0 ? (
                   <div className="rounded-md border">
                     <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
-                      <div className="col-span-5">Product</div>
+                      <div className="col-span-4">Product</div>
                       <div className="col-span-2">Category</div>
                       <div className="col-span-1">Price</div>
                       <div className="col-span-1">Stock</div>
                       <div className="col-span-2">Revenue</div>
-                      <div className="col-span-1 text-right">Actions</div>
+                      <div className="col-span-2">Actions</div>
+                    </div>
+                    <div className="divide-y">
+                      {[1, 2, 3, 4].map((item) => (
+                        <div key={item} className="grid grid-cols-12 items-center p-3">
+                          <div className="col-span-4 flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-md" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-3 w-24" />
+                            </div>
+                          </div>
+                          <div className="col-span-2">
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                          <div className="col-span-1">
+                            <Skeleton className="h-4 w-12" />
+                          </div>
+                          <div className="col-span-1">
+                            <Skeleton className="h-4 w-8" />
+                          </div>
+                          <div className="col-span-2">
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                          <div className="col-span-2 flex justify-end">
+                            <div className="flex items-center gap-2">
+                              <Skeleton className="h-8 w-8 rounded-full" />
+                              <Skeleton className="h-8 w-8 rounded-full" />
+                              <Skeleton className="h-8 w-8 rounded-full" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : products.length > 0 ? (
+                  <div className="rounded-md border">
+                    <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                      <div className="col-span-4">Product</div>
+                      <div className="col-span-2">Category</div>
+                      <div className="col-span-1">Price</div>
+                      <div className="col-span-1">Stock</div>
+                      <div className="col-span-2">Revenue</div>
+                      <div className="col-span-2">Actions</div>
                     </div>
                     <div className="divide-y">
                       {products.map((product) => (
                         <div key={product.id} className="grid grid-cols-12 items-center p-3">
-                          <div className="col-span-5 flex items-center gap-3">
+                          <div className="col-span-4 flex items-center gap-3">
                             <div className="h-10 w-10 rounded-md bg-muted overflow-hidden">
                               <Image
                                 src={product.cover_url || "/placeholder.svg"}
-                                alt={product.name}
+                                alt={product.name || "Product image"}
                                 width={40}
                                 height={40}
                                 className="h-full w-full object-cover"
                               />
                             </div>
                             <div>
-                              <div className="font-medium">{product.name}</div>
-                              <div className="text-sm text-muted-foreground">{product.sku}</div>
+                              <Link href={`/merchant/products/${product.id}`} className="hover:underline">
+                                <div className="font-medium">{product.name || "Unnamed Product"}</div>
+                              </Link>
+                              <div className="text-sm text-muted-foreground">{product.sku || "No SKU"}</div>
                             </div>
                           </div>
                           <div className="col-span-2">{getCategoryName(product.category)}</div>
                           <div className="col-span-1">${product.selling_price}</div>
                           <div className="col-span-1">{product.quantity}</div>
-                          <div className="col-span-2">${(parseFloat(product.selling_price) * product.total_sold).toFixed(2)}</div>
-                          <div className="col-span-1 flex justify-end">
+                          <div className="col-span-2">
+                            ${(Number.parseFloat(product.selling_price) * product.total_sold).toFixed(2)}
+                          </div>
+                          <div className="col-span-2 flex justify-end">
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="icon">
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
-                              </Button>
-                              <Button variant="ghost" size="icon">
+                              <Link href={`/merchant/products/${product.id}`}>
+                                <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-800">
+                                  <Info className="h-4 w-4" />
+                                  <span className="sr-only">View</span>
+                                </Button>
+                              </Link>
+                              <Link href={`/merchant/products/add?id=${product.id}`}>
+                                <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-800">
+                                  <Edit className="h-4 w-4" />
+                                  <span className="sr-only">Edit</span>
+                                </Button>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteProduct(product.id)}
+                                className="text-red-600 hover:text-red-800"
+                              >
                                 <Trash className="h-4 w-4" />
                                 <span className="sr-only">Delete</span>
                               </Button>
@@ -375,26 +455,26 @@ export default function ProductManagement() {
         <Pagination className="mt-6">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                href="#" 
+              <PaginationPrevious
+                href="#"
                 onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage > 1) setCurrentPage(currentPage - 1);
+                  e.preventDefault()
+                  if (currentPage > 1) setCurrentPage(currentPage - 1)
                 }}
                 className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
-            
+
             {getPaginationRange().map((page, index) => (
               <PaginationItem key={index}>
-                {page === '...' ? (
+                {page === "..." ? (
                   <span className="px-3 py-2">...</span>
                 ) : (
-                  <PaginationLink 
-                    href="#" 
+                  <PaginationLink
+                    href="#"
                     onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentPage(Number(page));
+                      e.preventDefault()
+                      setCurrentPage(Number(page))
                     }}
                     isActive={page === currentPage}
                   >
@@ -403,13 +483,13 @@ export default function ProductManagement() {
                 )}
               </PaginationItem>
             ))}
-            
+
             <PaginationItem>
-              <PaginationNext 
-                href="#" 
+              <PaginationNext
+                href="#"
                 onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                  e.preventDefault()
+                  if (currentPage < totalPages) setCurrentPage(currentPage + 1)
                 }}
                 className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
               />
@@ -423,15 +503,15 @@ export default function ProductManagement() {
 
 // Reusable card component for product lists
 interface ProductListCardProps {
-  title: string;
-  description: string;
-  isLoading: boolean;
-  products: any[];
-  isVerified: boolean;
-  getUserId: () => string;
-  showStatus?: boolean;
-  showSales?: boolean;
-  showActions?: boolean;
+  title: string
+  description: string
+  isLoading: boolean
+  products: any[]
+  isVerified: boolean
+  getUserId: () => string
+  showStatus?: boolean
+  showSales?: boolean
+  showActions?: boolean
 }
 
 function ProductListCard({
@@ -443,195 +523,295 @@ function ProductListCard({
   getUserId,
   showStatus = false,
   showSales = false,
-  showActions = false
+  showActions = false,
 }: ProductListCardProps) {
-  const [loadingProducts, setLoadingProducts] = useState<Record<string, boolean>>({});
-  const { user } = useAuthStore();
-  const currentTenantId = user?.tenant;
-  const { listProduct, unlistProduct, deleteProduct } = useProductStore();
+  const [loadingProducts, setLoadingProducts] = useState<Record<string, boolean>>({})
+  const [deletingProducts, setDeletingProducts] = useState<Record<string, boolean>>({})
+  const [unlistingProducts, setUnlistingProducts] = useState<Record<string, boolean>>({})
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const { user } = useAuthStore()
+  const currentTenantId = user?.tenant
+  const { listProduct, unlistProduct, deleteProduct } = useProductStore()
 
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
-    if (!category) return "Uncategorized";
-    if (typeof category === "string") return category;
-    if (typeof category === "object" && category.name) return category.name;
-    return "Uncategorized";
-  };
+    if (!category) return "Uncategorized"
+    if (typeof category === "string") return category
+    if (typeof category === "object" && category.name) return category.name
+    return "Uncategorized"
+  }
 
-  const handleListProduct = async (product: any) => {
+  const handleListProduct = async (productId: string, profitPercentage: number) => {
     try {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
-      const data = await listProduct(product.id);
-      toast.success(data.detail || 'Product listed successfully', { className: 'bg-[#02569B] text-white' });
+      setLoadingProducts((prev) => ({ ...prev, [productId]: true }))
+      await listProduct(productId, profitPercentage)
     } catch (error) {
-      console.error('Error listing product:', error);
-      toast.error('Failed to list product. Please try again.', { className: 'bg-red-500 text-white' });
+      console.error("Error listing product:", error)
+      throw error
     } finally {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
+      setLoadingProducts((prev) => ({ ...prev, [productId]: false }))
     }
-  };
+  }
 
   const handleUnlistProduct = async (product: any) => {
     try {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
-      const data = await unlistProduct(product.id);
-      toast.success(data.detail || 'Product unlisted successfully', { className: 'bg-[#02569B] text-white' });
+      setUnlistingProducts((prev) => ({ ...prev, [product.id]: true }))
+      const data = await unlistProduct(product.id)
+      toast.success(data.detail || "Product unlisted successfully", { className: "bg-[#02569B] text-white" })
     } catch (error) {
-      console.error('Error unlisting product:', error);
-      toast.error('Failed to unlist product. Please try again.', { className: 'bg-red-500 text-white' });
+      console.error("Error unlisting product:", error)
+      toast.error("Failed to unlist product. Please try again.", { className: "bg-red-500 text-white" })
     } finally {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
+      setUnlistingProducts((prev) => ({ ...prev, [product.id]: false }))
     }
-  };
+  }
 
   const handleDeleteProduct = async (product: any) => {
     try {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: true }));
-      const data = await deleteProduct(product.id);
-      toast.success(data.detail || 'Product deleted successfully', { className: 'bg-[#02569B] text-white' });
+      setDeletingProducts((prev) => ({ ...prev, [product.id]: true }))
+      const data = await deleteProduct(product.id)
+      toast.success(data.detail || "Product deleted successfully", { className: "bg-[#02569B] text-white" })
+      setProductToDelete(null)
     } catch (error) {
-      console.error('Error deleting product:', error);
-      toast.error('Failed to delete product. Please try again.', { className: 'bg-red-500 text-white' });
+      console.error("Error deleting product:", error)
+      toast.error("Failed to delete product. Please try again.", { className: "bg-red-500 text-white" })
     } finally {
-      setLoadingProducts(prev => ({ ...prev, [product.id]: false }));
+      setDeletingProducts((prev) => ({ ...prev, [product.id]: false }))
     }
-  };
+  }
 
   const isProductListed = (product: any) => {
-    return product.tenant?.includes(currentTenantId);
-  };
+    return product.tenant?.includes(currentTenantId)
+  }
 
   const isProductOwned = (product: any) => {
-    return product.owner === user?.tenant;
-  };
+    return product.owner === user?.tenant
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="p-8 flex justify-center">
-            <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
-          </div>
-        ) : (
-          <div className="rounded-md border">
-            <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
-              <div className="col-span-5">Product</div>
-              <div className="col-span-2">Category</div>
-              <div className="col-span-1">Price</div>
-              <div className="col-span-1">Stock</div>
-              <div className="col-span-2">{showSales ? "Sales" : (showStatus ? "Status" : "Sales")}</div>
-              <div className="col-span-1 text-right">Actions</div>
-            </div>
-            <div className="divide-y">
-              {products.length > 0 ? (
-                products.map((product) => {
-                  if (!product || typeof product !== 'object') {
-                    return null;
-                  }
-
-                  const isListed = isProductListed(product);
-                  const isLoading = loadingProducts[product.id];
-                  const isOwned = isProductOwned(product);
-
-                  return (
-                    <div key={product.id} className="grid grid-cols-12 items-center p-3">
-                      <div className="col-span-5 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-md bg-muted overflow-hidden">
-                          <Image
-                            src={product.cover_url || "/placeholder.svg"}
-                            alt={product.name || "Product image"}
-                            width={40}
-                            height={40}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <div className="font-medium">{product.name || "Unnamed Product"}</div>
-                          <div className="text-sm text-muted-foreground">{product.sku || "No SKU"}</div>
-                        </div>
-                      </div>
-                      <div className="col-span-2">{getCategoryName(product.category)}</div>
-                      <div className="col-span-1">{product.base_price || "0.00"} ETB</div>
-                      <div className="col-span-1">{product.quantity || 0}</div>
-                      <div className="col-span-2">
-                        {showStatus ? (
-                          product.is_public ? (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Public
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Private
-                            </Badge>
-                          )
-                        ) : (
-                          <span>{product.total_sold || 0} units</span>
-                        )}
-                      </div>
-                      <div className="col-span-1 flex justify-between gap-2">
-                        {isOwned && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleDeleteProduct(product)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        )}
-                        {isListed ? (
-                          <Button 
-                            variant="ghost" 
-                            size="lg"
-                            onClick={() => handleUnlistProduct(product)}
-                            className="text-red-600 hover:text-red-800"
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Unlisting...
-                              </>
-                            ) : (
-                              'Unlist'
-                            )}
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="ghost" 
-                            size="lg"
-                            onClick={() => handleListProduct(product)}
-                            className="text-blue-600 hover:text-blue-800"
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Listing...
-                              </>
-                            ) : (
-                              'List'
-                            )}
-                          </Button>
-                        )}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="rounded-md border">
+              <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                <div className="col-span-4">Product</div>
+                <div className="col-span-2">Category</div>
+                <div className="col-span-1">Price</div>
+                <div className="col-span-1">Stock</div>
+                <div className="col-span-2">{showSales ? "Sales" : showStatus ? "Status" : "Sales"}</div>
+                <div className="col-span-2">Actions</div>
+              </div>
+              <div className="divide-y">
+                {Array.from({ length: 10 }, (_, index) => (
+                  <div key={index + 1} className="grid grid-cols-12 items-center p-3">
+                    <div className="col-span-4 flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-md" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
                       </div>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="p-4 text-center text-muted-foreground">
-                  No products found matching your search.
-                </div>
-              )}
+                    <div className="col-span-2">
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <div className="col-span-1">
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                    <div className="col-span-1">
+                      <Skeleton className="h-4 w-8" />
+                    </div>
+                    <div className="col-span-2">
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <div className="col-span-2 flex items-center gap-2">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-8 w-16 ml-2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          ) : (
+            <div className="rounded-md border">
+              <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                <div className="col-span-4">Product</div>
+                <div className="col-span-2">Category</div>
+                <div className="col-span-1">Price</div>
+                <div className="col-span-1">Stock</div>
+                <div className="col-span-2">{showSales ? "Sales" : showStatus ? "Status" : "Sales"}</div>
+                <div className="col-span-2">Actions</div>
+              </div>
+              <div className="divide-y">
+                {products.length > 0 ? (
+                  products.map((product) => {
+                    if (!product || typeof product !== "object") {
+                      return null
+                    }
+
+                    const isListed = isProductListed(product)
+                    const isLoading = loadingProducts[product.id]
+                    const isOwned = isProductOwned(product)
+
+                    return (
+                      <div key={product.id} className="grid grid-cols-12 items-center p-3">
+                        <div className="col-span-4 flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-md bg-muted overflow-hidden">
+                            <Image
+                              src={product.cover_url || "/placeholder.svg"}
+                              alt={product.name || "Product image"}
+                              width={40}
+                              height={40}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <Link href={`/merchant/products/${product.id}`} className="hover:underline">
+                              <div className="font-medium">{product.name || "Unnamed Product"}</div>
+                            </Link>
+                            <div className="text-sm text-muted-foreground">{product.sku || "No SKU"}</div>
+                          </div>
+                        </div>
+                        <div className="col-span-2">{getCategoryName(product.category)}</div>
+                        <div className="col-span-1">{product.base_price || "0.00"} ETB</div>
+                        <div className="col-span-1">{product.quantity || 0}</div>
+                        <div className="col-span-2">
+                          {showStatus ? (
+                            product.is_public ? (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                Public
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                Private
+                              </Badge>
+                            )
+                          ) : (
+                            <span>{product.total_sold || 0} units</span>
+                          )}
+                        </div>
+                        <div className="col-span-2 flex items-center justify-start gap-2">
+                          {isOwned && (
+                            <>
+                              <div className="flex gap-1">
+                                <Link href={`/merchant/products/${product.id}`}>
+                                  <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-800">
+                                    <Info className="h-4 w-4" />
+                                    <span className="sr-only">View</span>
+                                  </Button>
+                                </Link>
+                                <Link href={`/merchant/products/add?id=${product.id}`}>
+                                  <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-800">
+                                    <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit</span>
+                                  </Button>
+                                </Link>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setProductToDelete(product)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  {isLoading ? (
+                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ):
+                                  (<Trash className="h-4 w-4" />)
+                                  }
+                                  <span className="sr-only">Delete</span>
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                          {!isOwned && (
+                            
+                            <Link href={`/merchant/products/${product.id}`}>
+                              <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-800">
+                                <Info className="h-4 w-4" />
+                                <span className="sr-only">View</span>
+                              </Button>
+                            </Link>
+                          )}
+                          {isListed ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUnlistProduct(product)}
+                              className="text-red-600 hover:text-red-800 ml-2"
+                              disabled={unlistingProducts[product.id]}
+                            >
+                              {unlistingProducts[product.id] ? (
+                                <>
+                                  {/* <Loader2 className="mr-2 h-4 w-4 animate-spin" /> */}
+                                  Unlisting...
+                                </>
+                              ) : (
+                                "Unlist"
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedProduct(product)}
+                              className="text-blue-600 hover:text-blue-800 ml-2"
+                              disabled={loadingProducts[product.id]}
+                            >
+                              List
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground">No products found matching your search.</div>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <ListProductModal
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        product={selectedProduct}
+        onList={handleListProduct}
+      />
+
+      <AlertDialog open={!!productToDelete} onOpenChange={() => setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product
+              {productToDelete?.name ? ` "${productToDelete.name}"` : ""} and remove it from your store.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingProducts[productToDelete?.id || '']}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => productToDelete && handleDeleteProduct(productToDelete)}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deletingProducts[productToDelete?.id || '']}
+            >
+              {deletingProducts[productToDelete?.id || ''] ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Deleting...</span>
+                </div>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

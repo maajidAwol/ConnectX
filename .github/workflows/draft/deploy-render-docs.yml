@@ -1,0 +1,57 @@
+name: Deploy Render Docs on Push
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - connectX.backend.refactor_the_model.adane
+  pull_request:
+    branches:
+      - main
+      - master
+      - connectX.backend.refactor_the_model.adane
+
+jobs:
+  deploy-render-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=django-insecure-knk_\$kus_#roeezooizs-r)i_j0y-fy^%*liz^xfo%@02yg*k(" > Backend/.env
+          echo "DJANGO_DEBUG=True" >> Backend/.env
+          echo "ALLOWED_HOSTS=localhost,127.0.0.1,*" >> Backend/.env
+          echo "DB_NAME=ConnectX" >> Backend/.env
+          echo "DB_USER=avnadmin" >> Backend/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> Backend/.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> Backend/.env
+          echo "DB_PORT=15106" >> Backend/.env
+          echo "DB_SSLMODE=require" >> Backend/.env
+          echo "JWT_ACCESS_TOKEN_LIFETIME_HOURS=24" >> Backend/.env
+          echo "JWT_REFRESH_TOKEN_LIFETIME_DAYS=7" >> Backend/.env
+          echo "CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://connect-x-peach.vercel.app" >> Backend/.env
+          echo "CLOUDINARY_CLOUD_NAME=denhfpk51" >> Backend/.env
+          echo "CLOUDINARY_API_KEY=979288512746237" >> Backend/.env
+          cat Backend/.env
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        working-directory: Backend
+
+      - name: Run Pytest
+        run: pytest -v --disable-warnings
+        working-directory: Backend/connectx_backend
+
+      - name: Trigger Render Deploy Hook
+        run: |
+          curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}"

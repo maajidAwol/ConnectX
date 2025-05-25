@@ -6,7 +6,6 @@ import 'package:korecha/components/custom_modal_bottom_sheet.dart';
 import 'package:korecha/components/network_image_with_loader.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/cart/presentation/state/cart/bloc/cart_bloc.dart';
-import 'package:korecha/features/product/data/models/product_model.dart';
 import 'package:korecha/features/product/domain/entities/product.dart';
 // import 'package:shop/screens/product/views/added_to_cart_message_screen.dart';
 import 'package:korecha/screens/product/views/components/product_quantity.dart';
@@ -32,6 +31,44 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
   int selectedColorIndex = 0;
   int selectedSizeIndex = 0;
 
+  Color _getColorFromName(String colorName) {
+    // Adding a print statement for debugging
+    // print('Attempting to get color from name: "$colorName"');
+    switch (colorName.toLowerCase()) {
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'black':
+        return Colors.black;
+      case 'white':
+        // print('Matched "white", returning Colors.white');
+        return Colors.white;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'purple':
+        return Colors.purple;
+      case 'pink':
+        return Colors.pink;
+      case 'orange':
+        return Colors.orange;
+      case 'brown':
+        return Colors.brown;
+      case 'cyan':
+        return Colors.cyan;
+      case 'teal':
+        return Colors.teal;
+      default:
+        // print('Unrecognized color name: "$colorName", returning transparent');
+        return Colors.transparent;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,8 +89,9 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
     List<Color> colors =
         widget.product.colors.isEmpty
             ? []
-            : widget.product.colors.map((colorStr) {
-              return ProductModel.parseColor(colorStr);
+            : widget.product.colors.map((name) {
+              // print('Mapping color name: "$name"'); // Debugging
+              return _getColorFromName(name);
             }).toList();
 
     return Scaffold(
@@ -186,62 +224,60 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                       },
                     ),
                   ),
-                if (widget.product.additionalInfo != null &&
-                    widget.product.additionalInfo is Map)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(defaultPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Additional Information",
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: defaultPadding),
-                          ...List.generate(
-                            (widget.product.additionalInfo as Map)
-                                .entries
-                                .length,
-                            (index) {
-                              final entry = (widget.product.additionalInfo
-                                      as Map)
-                                  .entries
-                                  .elementAt(index);
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "${entry.key}: ",
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        entry.value.toString(),
-                                        style:
-                                            Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                if (widget.product.sizes.isNotEmpty)
+                  // SliverPadding(
+                  //   padding:
+                  //       const EdgeInsets.symmetric(vertical: defaultPadding),
+                  //   sliver: ProductListTile(
+                  //     title: "Size guide",
+                  //     svgSrc: "assets/icons/Sizeguid.svg",
+                  //     isShowBottomBorder: true,
+                  //     press: () {
+                  //       customModalBottomSheet(
+                  //         context,
+                  //         height: MediaQuery.of(context).size.height * 0.9,
+                  //         child: const SizeGuideScreen(),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
+                  // SliverPadding(
+                  //   padding:
+                  //       const EdgeInsets.symmetric(horizontal: defaultPadding),
+                  //   sliver: SliverToBoxAdapter(
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         const SizedBox(height: defaultPadding / 2),
+                  //         Text(
+                  //           "Store pickup availability",
+                  //           style: Theme.of(context).textTheme.titleSmall,
+                  //         ),
+                  //         const SizedBox(height: defaultPadding / 2),
+                  //         const Text(
+                  //             "Select a size to check store availability and In-Store pickup options.")
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+                  // SliverPadding(
+                  //   padding: const EdgeInsets.symmetric(vertical: defaultPadding),
+                  //   sliver: ProductListTile(
+                  //     title: "Check stores",
+                  //     svgSrc: "assets/icons/Stores.svg",
+                  //     isShowBottomBorder: true,
+                  //     press: () {
+                  //       customModalBottomSheet(
+                  //         context,
+                  //         height: MediaQuery.of(context).size.height * 0.92,
+                  //         child: const LocationPermissonStoreAvailabilityScreen(),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: defaultPadding),
                   ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: defaultPadding),
-                ),
               ],
             ),
           ),

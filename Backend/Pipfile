@@ -17,6 +17,10 @@ djangorestframework-simplejwt = "*"
 cloudinary = "*"
 django-cloudinary-storage = "*"
 python-dotenv = "*"
+django-filter = "*"
+pytest = "*"
+whitenoise = "*"
+python-dateutil = "*"
 
 [dev-packages]
 
