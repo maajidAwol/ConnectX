@@ -1,8 +1,20 @@
+from django.forms import DecimalField
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, AllowAny
-from django.db.models import Sum, Count, Q, F, Avg, Case, When, Value
+from django.db.models import (
+    Sum,
+    Count,
+    Q,
+    F,
+    Avg,
+    Case,
+    When,
+    Value,
+    IntegerField,
+    DecimalField as DBDecimalField,
+)
 from django.db.models.functions import (
     TruncDate,
     TruncWeek,
@@ -49,6 +61,7 @@ from products.models import Product
 from dateutil.relativedelta import relativedelta
 
 from users.permissions import IsTenantMember
+from django.db.models.functions import Coalesce
 
 
 class CustomPagination(PageNumberPagination):
@@ -602,7 +615,13 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
         }
 
         # Build a map from weekday number to (count, revenue)
-        weekday_map = {item["weekday"]: {"count": item["count"], "revenue": float(item["revenue"] or 0)} for item in weekday_transactions}
+        weekday_map = {
+            item["weekday"]: {
+                "count": item["count"],
+                "revenue": float(item["revenue"] or 0),
+            }
+            for item in weekday_transactions
+        }
         labels = [weekday_names[i] for i in range(1, 8)]
         counts = [weekday_map.get(i, {"count": 0})["count"] for i in range(1, 8)]
         revenue = [weekday_map.get(i, {"revenue": 0.0})["revenue"] for i in range(1, 8)]
@@ -1195,10 +1214,21 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         if end_date:
             products = products.filter(created_at__lte=end_date)
 
-        # Annotate with sales data
+        # Annotate with proper output fields
         products = products.annotate(
-            total_sales=Sum("order_items__quantity"),
-            total_revenue=Sum(F("order_items__quantity") * F("order_items__price")),
+            total_sales=Coalesce(
+                Count("order_items", distinct=True),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            total_revenue=Coalesce(
+                Sum(
+                    F("order_items__quantity") * F("order_items__price"),
+                    output_field=DBDecimalField(max_digits=15, decimal_places=2),
+                ),
+                Value(0),
+                output_field=DBDecimalField(max_digits=15, decimal_places=2),
+            ),
         ).order_by(order_by_str)
 
         # Apply pagination
@@ -1211,7 +1241,7 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
                 "id": product.id,
                 "name": product.name,
                 "total_sales": product.total_sales or 0,
-                "total_revenue": product.total_revenue or 0,
+                "total_revenue": float(product.total_revenue or 0),
                 "quantity": product.quantity,
             }
             for product in paginated_products

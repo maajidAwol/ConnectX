@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Order, OrderProductItem, OrderHistory
+from .models import Order, OrderProductItem, OrderHistory, RefundRequest, Refund
 from products.serializers import ProductSerializer
 from tenants.serializers import TenantSerializer
 from users.serializers import UserSerializer
@@ -418,3 +418,17 @@ class WriteOrderSerializer(serializers.ModelSerializer):
                 )
                 
         return instance
+
+
+class RefundRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RefundRequest
+        fields = ['id', 'order', 'reason', 'status', 'created_at', 'updated_at', 'admin_notes']
+        read_only_fields = ['status', 'admin_notes']
+
+
+class RefundSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Refund
+        fields = ['id', 'refund_request', 'amount', 'transaction_id', 'refunded_at', 'payment_method', 'status']
+        read_only_fields = ['transaction_id', 'refunded_at', 'status']
