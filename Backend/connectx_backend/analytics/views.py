@@ -1,8 +1,20 @@
+from django.forms import DecimalField
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, AllowAny
-from django.db.models import Sum, Count, Q, F, Avg, Case, When, Value
+from django.db.models import (
+    Sum,
+    Count,
+    Q,
+    F,
+    Avg,
+    Case,
+    When,
+    Value,
+    IntegerField,
+    DecimalField as DBDecimalField,
+)
 from django.db.models.functions import (
     TruncDate,
     TruncWeek,
@@ -49,6 +61,7 @@ from products.models import Product
 from dateutil.relativedelta import relativedelta
 
 from users.permissions import IsTenantMember
+from django.db.models.functions import Coalesce
 
 
 class CustomPagination(PageNumberPagination):
@@ -602,7 +615,13 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
         }
 
         # Build a map from weekday number to (count, revenue)
-        weekday_map = {item["weekday"]: {"count": item["count"], "revenue": float(item["revenue"] or 0)} for item in weekday_transactions}
+        weekday_map = {
+            item["weekday"]: {
+                "count": item["count"],
+                "revenue": float(item["revenue"] or 0),
+            }
+            for item in weekday_transactions
+        }
         labels = [weekday_names[i] for i in range(1, 8)]
         counts = [weekday_map.get(i, {"count": 0})["count"] for i in range(1, 8)]
         revenue = [weekday_map.get(i, {"revenue": 0.0})["revenue"] for i in range(1, 8)]
@@ -1195,10 +1214,21 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         if end_date:
             products = products.filter(created_at__lte=end_date)
 
-        # Annotate with sales data
+        # Annotate with proper output fields
         products = products.annotate(
-            total_sales=Sum("order_items__quantity"),
-            total_revenue=Sum(F("order_items__quantity") * F("order_items__price")),
+            total_sales=Coalesce(
+                Count("order_items", distinct=True),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            total_revenue=Coalesce(
+                Sum(
+                    F("order_items__quantity") * F("order_items__price"),
+                    output_field=DBDecimalField(max_digits=15, decimal_places=2),
+                ),
+                Value(0),
+                output_field=DBDecimalField(max_digits=15, decimal_places=2),
+            ),
         ).order_by(order_by_str)
 
         # Apply pagination
@@ -1211,7 +1241,7 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
                 "id": product.id,
                 "name": product.name,
                 "total_sales": product.total_sales or 0,
-                "total_revenue": product.total_revenue or 0,
+                "total_revenue": float(product.total_revenue or 0),
                 "quantity": product.quantity,
             }
             for product in paginated_products
@@ -1269,6 +1299,143 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         paginated_activities = paginator.paginate_queryset(activities, request)
         serializer = RecentActivitySerializer(paginated_activities, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get revenue overview for the past 30 days",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD). Defaults to 30 days ago",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD). Defaults to today",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Revenue overview data",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "labels": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(type=openapi.TYPE_STRING),
+                            description="Dates in YYYY-MM-DD format",
+                        ),
+                        "revenue": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(type=openapi.TYPE_NUMBER),
+                            description="Daily revenue amounts",
+                        ),
+                        "total_revenue": openapi.Schema(
+                            type=openapi.TYPE_NUMBER,
+                            description="Total revenue for the period",
+                        ),
+                        "average_daily_revenue": openapi.Schema(
+                            type=openapi.TYPE_NUMBER,
+                            description="Average daily revenue",
+                        ),
+                        "highest_revenue_day": openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                "date": openapi.Schema(type=openapi.TYPE_STRING),
+                                "amount": openapi.Schema(type=openapi.TYPE_NUMBER),
+                            },
+                        ),
+                        "lowest_revenue_day": openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                "date": openapi.Schema(type=openapi.TYPE_STRING),
+                                "amount": openapi.Schema(type=openapi.TYPE_NUMBER),
+                            },
+                        ),
+                    },
+                ),
+            ),
+        },
+    )
+    @action(detail=False, methods=["get"])
+    def revenue_overview(self, request):
+        """Get revenue overview data for the past 30 days."""
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        end_date = request.query_params.get("end_date")
+        if end_date:
+            end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
+        else:
+            end_date = timezone.now().date()
+
+        start_date = request.query_params.get("start_date")
+        if start_date:
+            start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date()
+        else:
+            start_date = end_date - timedelta(days=30)
+
+        # Get daily revenue data
+        daily_revenue = (
+            Order.objects.filter(
+                tenant=tenant,
+                status__in=["confirmed", "shipped", "delivered"],
+                created_at__date__range=[start_date, end_date],
+            )
+            .annotate(date=TruncDate("created_at"))
+            .values("date")
+            .annotate(revenue=Sum("total_amount"))
+            .order_by("date")
+        )
+
+        # Create a map of all dates in the range
+        date_revenue_map = {
+            (start_date + timedelta(days=x)).strftime("%Y-%m-%d"): 0
+            for x in range((end_date - start_date).days + 1)
+        }
+
+        # Fill in the actual revenue data
+        for entry in daily_revenue:
+            date_str = entry["date"].strftime("%Y-%m-%d")
+            date_revenue_map[date_str] = float(entry["revenue"] or 0)
+
+        # Calculate statistics
+        revenue_values = list(date_revenue_map.values())
+        total_revenue = sum(revenue_values)
+        average_daily_revenue = (
+            total_revenue / len(revenue_values) if revenue_values else 0
+        )
+
+        # Find highest and lowest revenue days
+        highest_revenue_day = max(
+            [(date, amount) for date, amount in date_revenue_map.items()],
+            key=lambda x: x[1],
+        )
+        lowest_revenue_day = min(
+            [(date, amount) for date, amount in date_revenue_map.items()],
+            key=lambda x: x[1],
+        )
+
+        data = {
+            "labels": list(date_revenue_map.keys()),
+            "revenue": revenue_values,
+            "total_revenue": total_revenue,
+            "average_daily_revenue": average_daily_revenue,
+            "highest_revenue_day": {
+                "date": highest_revenue_day[0],
+                "amount": highest_revenue_day[1],
+            },
+            "lowest_revenue_day": {
+                "date": lowest_revenue_day[0],
+                "amount": lowest_revenue_day[1],
+            },
+        }
+
+        return Response(data)
 
 
 class APIUsageLogViewSet(viewsets.ViewSet):

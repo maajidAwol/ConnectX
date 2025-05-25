@@ -190,7 +190,7 @@ class UserViewSet(viewsets.ModelViewSet):
             else:
                 # No valid API key or tenant not set, disallow creation
                 return Response(
-                    {"error": "API key required to create a user anonymously."},
+                    {"error": "API key required to create a user."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 

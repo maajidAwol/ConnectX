@@ -7,18 +7,22 @@ from django.utils import timezone
 import datetime
 import uuid
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.exceptions import ValidationError
 
 # Import for custom filter set
 from django_filters import FilterSet, CharFilter, ModelChoiceFilter
 
-from .models import Order, OrderHistory, OrderProductItem
+from .models import Order, OrderHistory, OrderProductItem, RefundRequest, Refund
 from .serializers import (
     OrderSerializer,
-    OrderHistorySerializer,
     OrderListSerializer,
     WriteOrderSerializer,
+    RefundRequestSerializer,
+    RefundSerializer,
 )
-from users.permissions import IsTenantOwner, IsTenantMember
+from users.permissions import IsTenantMember
+from rest_framework.permissions import IsAuthenticated
+
 from core.pagination import CustomPagination
 from users.models import User
 
@@ -925,3 +929,215 @@ class OrderViewSet(viewsets.ModelViewSet):
         }
 
         return Response(statistics)
+
+
+class RefundRequestViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        """List refund requests based on user role."""
+        user = request.user
+        if user.is_staff or IsTenantMember().has_permission(request, self):
+            queryset = RefundRequest.objects.all()
+        else:
+            queryset = RefundRequest.objects.filter(user=user)
+
+        serializer = RefundRequestSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """Get details of a specific refund request."""
+        try:
+            refund_request = RefundRequest.objects.get(pk=pk)
+            # Check if user has permission to view this request
+            if not (
+                request.user.is_staff
+                or IsTenantMember().has_permission(request, self)
+                or refund_request.user == request.user
+            ):
+                return Response(
+                    {"error": "You don't have permission to view this refund request"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            serializer = RefundRequestSerializer(refund_request)
+            return Response(serializer.data)
+        except RefundRequest.DoesNotExist:
+            return Response(
+                {"error": "Refund request not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    def create(self, request):
+        """Create a new refund request."""
+        serializer = RefundRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            order_id = serializer.validated_data.get("order")
+            order = Order.objects.get(id=order_id)
+
+            # Check if order is eligible for refund
+            if order.status not in ["delivered", "completed"]:
+                raise ValidationError(
+                    "Only delivered or completed orders can be refunded"
+                )
+
+            # Check if refund request already exists
+            if RefundRequest.objects.filter(
+                order=order, status__in=["pending", "approved"]
+            ).exists():
+                raise ValidationError("A refund request already exists for this order")
+
+            # Check if payment exists and is completed
+            payment = order.payments.filter(status="completed").first()
+            if not payment:
+                raise ValidationError("No completed payment found for this order")
+
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        """Approve a refund request (tenant members only)."""
+        if not IsTenantMember().has_permission(request, self):
+            return Response(
+                {"error": "Only tenant members can approve refund requests"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            refund_request = RefundRequest.objects.get(pk=pk)
+
+            # Check if refund request is in pending state
+            if refund_request.status != "pending":
+                return Response(
+                    {
+                        "error": f"Cannot approve refund request in '{refund_request.status}' status"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the payment
+            payment = refund_request.order.payments.filter(status="completed").first()
+            if not payment:
+                return Response(
+                    {"error": "No completed payment found for this order"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Update refund request status
+            refund_request.status = "approved"
+            refund_request.admin_notes = request.data.get("admin_notes", "")
+            refund_request.save()
+
+            # Update payment status
+            payment.status = "refunded"
+            payment.save()
+
+            # Update order status
+            refund_request.order.status = "refunded"
+            refund_request.order.save()
+
+            serializer = RefundRequestSerializer(refund_request)
+            return Response(serializer.data)
+
+        except RefundRequest.DoesNotExist:
+            return Response(
+                {"error": "Refund request not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        """Reject a refund request (tenant members only)."""
+        if not IsTenantMember().has_permission(request, self):
+            return Response(
+                {"error": "Only tenant members can reject refund requests"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            refund_request = RefundRequest.objects.get(pk=pk)
+
+            # Check if refund request is in pending state
+            if refund_request.status != "pending":
+                return Response(
+                    {
+                        "error": f"Cannot reject refund request in '{refund_request.status}' status"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Update refund request status
+            refund_request.status = "rejected"
+            refund_request.admin_notes = request.data.get("admin_notes", "")
+            refund_request.save()
+
+            serializer = RefundRequestSerializer(refund_request)
+            return Response(serializer.data)
+
+        except RefundRequest.DoesNotExist:
+            return Response(
+                {"error": "Refund request not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class RefundViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsTenantMember]
+
+    def list(self, request):
+        """List all refunds (tenant members only)."""
+        queryset = Refund.objects.all()
+        serializer = RefundSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """Get details of a specific refund."""
+        try:
+            refund = Refund.objects.get(pk=pk)
+            serializer = RefundSerializer(refund)
+            return Response(serializer.data)
+        except Refund.DoesNotExist:
+            return Response(
+                {"error": "Refund not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    def create(self, request):
+        """Process a refund for an approved refund request."""
+        serializer = RefundSerializer(data=request.data)
+        if serializer.is_valid():
+            refund_request = serializer.validated_data["refund_request"]
+
+            # Check if refund request is approved
+            if refund_request.status != "approved":
+                raise ValidationError(
+                    "Can only process refunds for approved refund requests"
+                )
+
+            # Get the payment
+            payment = refund_request.order.payments.filter(status="refunded").first()
+            if not payment:
+                raise ValidationError("No refunded payment found for this order")
+
+            try:
+                # Here you would integrate with your payment gateway (e.g., Chapa)
+                # For example:
+                # payment_result = process_refund(refund_request.order, serializer.validated_data['amount'])
+                # serializer.save(transaction_id=payment_result.transaction_id, status='completed')
+
+                # For now, we'll just save it
+                refund = serializer.save(
+                    status="completed",
+                    transaction_id=f"REF-{uuid.uuid4().hex[:16].upper()}",
+                )
+
+                # Update refund request status
+                refund_request.status = "completed"
+                refund_request.save()
+
+                return Response(
+                    RefundSerializer(refund).data, status=status.HTTP_201_CREATED
+                )
+
+            except Exception as e:
+                raise ValidationError(f"Failed to process refund: {str(e)}")
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -55,6 +55,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
+    age = models.PositiveIntegerField(null=True, blank=True)
+    GENDER_CHOICES = [
+        ("male", "Male"),
+        ("female", "Female"),
+        ("none", "None"),
+    ]
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default="none", null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=CUSTOMER)
     bio = models.TextField(null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
