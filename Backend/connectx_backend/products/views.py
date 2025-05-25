@@ -44,7 +44,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated(), IsTenantMember()]
         elif self.action == "destroy":
             # Only admins can delete products
-            return [IsTenantMember]
+            return [IsTenantMember()]
         return [permissions.IsAuthenticated()]
 
     @swagger_auto_schema(
