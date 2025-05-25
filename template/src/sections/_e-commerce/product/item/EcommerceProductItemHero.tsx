@@ -59,7 +59,7 @@ export default function EcommerceProductItemHero({ product }: Props) {
 
           <Button
             component={NextLink}
-            href={paths.eCommerce.product}
+            href={paths.eCommerce.products}
             size="large"
             color="inherit"
             variant="contained"

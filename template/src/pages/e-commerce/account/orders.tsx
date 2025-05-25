@@ -4,6 +4,7 @@ import Head from 'next/head';
 import MainLayout from 'src/layouts/main';
 // sections
 import { EcommerceAccountOrdersView } from 'src/sections/_e-commerce/view';
+import EcommerceAccountLayout from 'src/sections/_e-commerce/layout/account/EcommerceAccountLayout';
 
 // ----------------------------------------------------------------------
 
@@ -17,10 +18,12 @@ export default function EcommerceAccountOrdersPage() {
   return (
     <>
       <Head>
-        <title>Account: Orders | ZONE UI</title>
+        <title>Account: Orders | ConnectX</title>
       </Head>
 
-      <EcommerceAccountOrdersView />
+      <EcommerceAccountLayout>
+        <EcommerceAccountOrdersView />
+      </EcommerceAccountLayout>
     </>
   );
 }

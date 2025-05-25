@@ -8,16 +8,30 @@ import { paths } from 'src/routes/paths';
 import { _products } from 'src/_mock';
 // components
 import Iconify from 'src/components/iconify';
+// types
+import { IProductItemProps } from 'src/types/product';
 //
-import { EcommerceHeader } from '../layout';
-import { EcommerceCartList, EcommerceCartSummary } from '../cart';
+import { EcommerceCartList, EcommerceCartSummary, EcommerceCartItem } from '../cart';
+import { CartItem } from 'src/store/cart';
+import { useCartStore } from 'src/store/cart';
 
 // ----------------------------------------------------------------------
 
-export default function EcommerceCartView() {
+type Props = {
+  products: CartItem[];
+};
+
+export default function EcommerceCartView({ products }: Props) {
+  const { getTotalPrice } = useCartStore();
+  const subtotal = getTotalPrice();
+  const shipping = 50;
+  const tax = 0;
+  const discount = 0;
+  const total = subtotal + shipping + tax - discount;
+
   return (
     <>
-      <EcommerceHeader />
+      {/* <EcommerceHeader /> */}
 
       <Container
         sx={{
@@ -32,16 +46,16 @@ export default function EcommerceCartView() {
 
         <Grid container spacing={{ xs: 5, md: 8 }}>
           <Grid xs={12} md={8}>
-            <EcommerceCartList products={_products.slice(0, 4)} />
+            <EcommerceCartList products={products} />
           </Grid>
 
           <Grid xs={12} md={4}>
             <EcommerceCartSummary
-              tax={7}
-              total={357.09}
-              subtotal={89.09}
-              shipping={55.47}
-              discount={16.17}
+              tax={tax}
+              total={total}
+              subtotal={subtotal}
+              shipping={shipping}
+              discount={discount}
             />
           </Grid>
         </Grid>

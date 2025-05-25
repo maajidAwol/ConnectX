@@ -13,8 +13,11 @@ import { paths } from 'src/routes/paths';
 // components
 import Iconify from 'src/components/iconify';
 import { MegaMenuDesktopHorizon, MegaMenuMobile } from 'src/components/mega-menu';
+// store
+import { useCartStore } from 'src/store/cart';
 //
 import { data } from './config-navigation';
+import { EcommerceCartPopover } from '../../cart';
 
 // ----------------------------------------------------------------------
 
@@ -29,7 +32,7 @@ const StyledRoot = styled('div')(({ theme }) => ({
 
 export default function EcommerceHeader() {
   const isMdUp = useResponsive('up', 'md');
-
+  const { getTotalItems } = useCartStore();
   const [openMenuMobile, setOpenMenuMobile] = useState(false);
 
   return (
@@ -87,17 +90,7 @@ export default function EcommerceHeader() {
             </IconButton>
           </Badge>
 
-          <Badge badgeContent={4} color="error">
-            <IconButton
-              component={NextLink}
-              href={paths.eCommerce.cart}
-              size="small"
-              color="inherit"
-              sx={{ p: 0 }}
-            >
-              <Iconify icon="carbon:shopping-cart" width={24} />
-            </IconButton>
-          </Badge>
+          <EcommerceCartPopover />
 
           <IconButton
             component={NextLink}

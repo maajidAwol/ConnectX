@@ -7,8 +7,9 @@ import useResponsive from 'src/hooks/useResponsive';
 import { NAV } from 'src/config-global';
 // components
 import Iconify from 'src/components/iconify';
+// store
+import { useAuthStore } from 'src/store/auth';
 //
-import EcommerceHeader from '../header';
 import EcommerceAccountMenu from './EcommerceAccountMenu';
 
 // ----------------------------------------------------------------------
@@ -19,7 +20,7 @@ type Props = {
 
 export default function EcommerceAccountLayout({ children }: Props) {
   const isMdUp = useResponsive('up', 'md');
-
+  const { user } = useAuthStore();
   const [menuOpen, setMemuOpen] = useState(false);
 
   const handleMenuOpen = () => {
@@ -30,13 +31,20 @@ export default function EcommerceAccountLayout({ children }: Props) {
     setMemuOpen(false);
   };
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <>
-      <EcommerceHeader />
+      {/* <EcommerceHeader /> */}
 
       {isMdUp ? (
         <Container sx={{ my: 5 }}>
-          <Typography variant="h3">Account</Typography>
+          <Typography variant="h3">Profile</Typography>
+          <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+            Welcome back, {user.name}
+          </Typography>
         </Container>
       ) : (
         <Box sx={{ py: 2, mb: 5, borderBottom: (theme) => `solid 1px ${theme.palette.divider}` }}>
@@ -47,7 +55,7 @@ export default function EcommerceAccountLayout({ children }: Props) {
               startIcon={<Iconify icon="carbon:menu" />}
               onClick={handleMenuOpen}
             >
-              Account
+              Profile
             </Button>
           </Container>
         </Box>

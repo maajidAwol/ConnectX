@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { add } from 'date-fns';
 // @mui
 import {
@@ -10,42 +11,81 @@ import {
   Container,
   Typography,
   StackProps,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 // components
 import Image from 'src/components/image';
+// store
+import { useAuthStore } from 'src/store/auth';
+// api
+import { apiRequest } from 'src/lib/api-config';
 //
-import { ProductColorPicker, ProductOptionPicker, ProductCountdownBlock } from '../components';
+import { ProductCountdownBlock } from '../components';
 
 // ----------------------------------------------------------------------
 
-const COLOR_OPTIONS = [
-  { label: '#FA541C', value: 'red' },
-  { label: '#754FFE', value: 'violet' },
-  { label: '#00B8D9', value: 'cyan' },
-  { label: '#36B37E', value: 'green' },
-];
+interface ProductResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Product[];
+}
 
-const MEMORY_OPTIONS = [
-  { label: '128GB', value: '128gb' },
-  { label: '256GB', value: '256gb' },
-  { label: '512GB', value: '512gb' },
-  { label: '1TB', value: '1tb' },
-];
-
-// ----------------------------------------------------------------------
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  base_price: string;
+  cover_url: string;
+  selling_price: string;
+  colors?: string[];
+  sizes?: string[];
+  category: {
+    name: string;
+  };
+}
 
 export default function EcommerceLandingSpecialOffer() {
-  const [color, setColor] = useState('red');
+  const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [showAuthAlert, setShowAuthAlert] = useState(false);
 
-  const [memory, setMemory] = useState('128gb');
+  useEffect(() => {
+    const fetchRandomProduct = async () => {
+      try {
+        const response = await apiRequest<ProductResponse>('/products/', {
+          method: 'GET',
+        });
+        
+        if (response?.results?.length > 0) {
+          // Get a random product from the results
+          const randomIndex = Math.floor(Math.random() * response.results.length);
+          setProduct(response.results[randomIndex]);
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      }
+    };
 
-  const handleChangeColor = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setColor((event.target as HTMLInputElement).value);
+    fetchRandomProduct();
+  }, []);
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      setShowAuthAlert(true);
+      setTimeout(() => {
+        router.push('/auth/login-illustration');
+      }, 2000);
+      return;
+    }
+    router.push('/e-commerce/checkout');
   };
 
-  const handleChangeMemory = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMemory((event.target as HTMLInputElement).value);
-  };
+  if (!product) {
+    return null;
+  }
 
   return (
     <Container
@@ -69,23 +109,32 @@ export default function EcommerceLandingSpecialOffer() {
         gridTemplateColumns={{ xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' }}
       >
         <SpecialOfferCountdown
-          label="New 2022"
-          name="Apple iPhone 14"
-          price="From $999"
+          label={product.category.name}
+          name={product.name}
+          price={`From $${product.base_price}`}
           expired={add(new Date(), { days: 1, hours: 8 })}
         />
 
         <Box sx={{ borderRadius: 1.5, bgcolor: 'background.neutral' }}>
-          <Image src="/assets/images/product/product_5.png" />
+          <Image src={product.cover_url} alt={product.name} />
         </Box>
 
         <SpecialOfferBuyNow
-          color={color}
-          memory={memory}
-          onChangeColor={handleChangeColor}
-          onChangeMemory={handleChangeMemory}
+          product={product}
+          onBuyNow={handleBuyNow}
         />
       </Box>
+
+      <Snackbar 
+        open={showAuthAlert} 
+        autoHideDuration={2000} 
+        onClose={() => setShowAuthAlert(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="info" sx={{ width: '100%' }}>
+          Please sign in to continue with your purchase
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
@@ -165,42 +214,45 @@ function SpecialOfferCountdown({
 // ----------------------------------------------------------------------
 
 interface SpecialOfferBuyNowProps extends StackProps {
-  color: string;
-  memory: string;
-  onChangeColor: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onChangeMemory: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  product: Product;
+  onBuyNow: () => void;
 }
 
 function SpecialOfferBuyNow({
-  color,
-  memory,
-  onChangeColor,
-  onChangeMemory,
+  product,
+  onBuyNow,
   sx,
   ...other
 }: SpecialOfferBuyNowProps) {
   return (
     <Stack spacing={3} alignItems="flex-start" {...other}>
       <Stack spacing={1}>
-        <Typography variant="h4">Apple iPhone 14</Typography>
+        <Typography variant="h4">{product.name}</Typography>
 
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          While most people enjoy casino gambling, sports betting, lottery and bingo playing for the
-          fun.
+          {product.description}
         </Typography>
       </Stack>
 
-      <Stack spacing={2}>
-        <Typography variant="subtitle2">Color</Typography>
-        <ProductColorPicker value={color} onChange={onChangeColor} options={COLOR_OPTIONS} />
-      </Stack>
+      {product.colors && product.colors.length > 0 && (
+        <Stack spacing={2}>
+          <Typography variant="subtitle2">Available Colors</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {product.colors.join(', ')}
+          </Typography>
+        </Stack>
+      )}
 
-      <Stack spacing={2}>
-        <Typography variant="subtitle2">Memory</Typography>
-        <ProductOptionPicker value={memory} onChange={onChangeMemory} options={MEMORY_OPTIONS} />
-      </Stack>
+      {product.sizes && product.sizes.length > 0 && (
+        <Stack spacing={2}>
+          <Typography variant="subtitle2">Available Sizes</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {product.sizes.join(', ')}
+          </Typography>
+        </Stack>
+      )}
 
-      <Button size="large" color="inherit" variant="contained">
+      <Button size="large" color="inherit" variant="contained" onClick={onBuyNow}>
         Buy Now
       </Button>
     </Stack>

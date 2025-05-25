@@ -3,35 +3,36 @@ import { alpha } from '@mui/material/styles';
 import {
   Box,
   Stack,
-  Button,
   Divider,
-  TextField,
   Typography,
   StackProps,
   IconButton,
-  InputAdornment,
+  Card,
+  Button,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // utils
-import { fCurrency, fPercent } from 'src/utils/formatNumber';
-// types
-import { IProductItemProps } from 'src/types/product';
+import { fCurrency } from 'src/utils/formatNumber';
 // components
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import TextMaxLine from 'src/components/text-max-line';
+// store
+import { useCartStore } from 'src/store/cart';
+import { useAuthStore } from 'src/store/auth';
 
 // ----------------------------------------------------------------------
 
-type Props = {
+interface EcommerceCheckoutOrderSummaryProps {
   tax: number;
   total: number;
   subtotal: number;
   shipping: number;
   discount: number;
-  products?: IProductItemProps[];
+  products: CartItem[];
   loading?: boolean;
-};
+  onPlaceOrder?: () => void;
+}
 
 export default function EcommerceCheckoutOrderSummary({
   tax,
@@ -41,85 +42,81 @@ export default function EcommerceCheckoutOrderSummary({
   discount,
   products,
   loading,
-}: Props) {
+  onPlaceOrder,
+}: EcommerceCheckoutOrderSummaryProps) {
+  const { removeItem } = useCartStore();
+  const { user } = useAuthStore();
+
   return (
-    <Stack
-      spacing={3}
-      sx={{
-        p: 5,
-        borderRadius: 2,
-        border: (theme) => `solid 1px ${alpha(theme.palette.grey[500], 0.24)}`,
-      }}
-    >
-      <Typography variant="h6"> Order Summary </Typography>
-
-      {!!products?.length && (
-        <>
-          {products.map((product) => (
-            <ProductItem key={product.id} product={product} />
-          ))}
-
-          <Divider sx={{ borderStyle: 'dashed' }} />
-        </>
-      )}
+    <Card sx={{ p: 3 }}>
+      <Typography variant="h6" sx={{ mb: 3 }}>
+        Order Summary
+      </Typography>
 
       <Stack spacing={2}>
-        <Row label="Subtotal" value={fCurrency(subtotal)} />
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Subtotal
+          </Typography>
+          <Typography variant="subtitle2">${subtotal}</Typography>
+        </Stack>
 
-        <Row label="Shipping" value={fCurrency(shipping)} />
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Shipping
+          </Typography>
+          <Typography variant="subtitle2">${shipping}</Typography>
+        </Stack>
 
-        <Row label="Discount (15%)" value={`-${fCurrency(discount)}`} />
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Tax
+          </Typography>
+          <Typography variant="subtitle2">${tax}</Typography>
+        </Stack>
 
-        <Row label="Tax" value={fPercent(tax)} />
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Discount
+          </Typography>
+          <Typography variant="subtitle2">-${discount}</Typography>
+        </Stack>
+
+        <Divider sx={{ borderStyle: 'dashed' }} />
+
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="subtitle1">Total</Typography>
+          <Typography variant="subtitle1" sx={{ color: 'error.main' }}>
+            ${total}
+          </Typography>
+        </Stack>
+
+        <Button
+          size="large"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          onClick={onPlaceOrder}
+        >
+          Place Order
+        </Button>
       </Stack>
-
-      <TextField
-        hiddenLabel
-        placeholder="Discount Code"
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <Button>Apply</Button>
-            </InputAdornment>
-          ),
-        }}
-      />
-
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      <Row
-        label="Total"
-        value={fCurrency(total)}
-        sx={{
-          typography: 'h6',
-          '& span': { typography: 'h6' },
-        }}
-      />
-
-      <LoadingButton
-        size="large"
-        variant="contained"
-        color="inherit"
-        type="submit"
-        loading={loading}
-      >
-        Order Now
-      </LoadingButton>
-    </Stack>
+    </Card>
   );
 }
 
 // ----------------------------------------------------------------------
 
 type ProductItemProps = StackProps & {
-  product: IProductItemProps;
+  product: any;
+  onRemove: () => void;
 };
 
-function ProductItem({ product, ...other }: ProductItemProps) {
+function ProductItem({ product, onRemove, ...other }: ProductItemProps) {
   return (
     <Stack direction="row" alignItems="flex-start" {...other}>
       <Image
-        src={product.coverImg}
+        src={product.cover_url}
         sx={{
           mr: 2,
           width: 64,
@@ -139,24 +136,12 @@ function ProductItem({ product, ...other }: ProductItemProps) {
           {fCurrency(product.price)}
         </Typography>
 
-        <TextField
-          select
-          size="small"
-          variant="outlined"
-          SelectProps={{
-            native: true,
-          }}
-          sx={{ width: 80 }}
-        >
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </TextField>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Qty: {product.quantity}
+        </Typography>
       </Stack>
 
-      <IconButton>
+      <IconButton onClick={onRemove}>
         <Iconify icon="carbon:trash-can" />
       </IconButton>
     </Stack>

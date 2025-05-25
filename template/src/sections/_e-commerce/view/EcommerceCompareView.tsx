@@ -3,7 +3,7 @@ import { Stack, Switch, Container, Typography, FormControlLabel } from '@mui/mat
 // _mock
 import { _productsCompare } from 'src/_mock';
 //
-import { EcommerceHeader } from '../layout';
+// import { EcommerceHeader } from '../layout';
 import { EcommerceCompareList } from '../compare';
 
 // ----------------------------------------------------------------------
@@ -11,7 +11,7 @@ import { EcommerceCompareList } from '../compare';
 export default function EcommerceCompareView() {
   return (
     <>
-      <EcommerceHeader />
+      {/* <EcommerceHeader /> */}
 
       <Container
         sx={{

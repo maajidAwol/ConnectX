@@ -1,7 +1,7 @@
-// next
-import NextLink from 'next/link';
 // @mui
 import { Stack, StackProps, Link } from '@mui/material';
+// next
+import NextLink from 'next/link';
 // routes
 import { paths } from 'src/routes/paths';
 // types
@@ -10,7 +10,7 @@ import { IProductItemProps } from 'src/types/product';
 import Image from 'src/components/image';
 import TextMaxLine from 'src/components/text-max-line';
 //
-import { ProductPrice, ProductRating } from '../../components';
+import { ProductPrice } from '../../components';
 
 // ----------------------------------------------------------------------
 
@@ -18,43 +18,51 @@ interface Props extends StackProps {
   product: IProductItemProps;
 }
 
-export default function EcommerceProductItemBestSellers({ product, ...other }: Props) {
+export default function EcommerceProductItemBestSellers({ product, sx, ...other }: Props) {
   return (
-    <Link component={NextLink} href={paths.eCommerce.product} color="inherit" underline="none">
-      <Stack
-        spacing={2}
-        direction="row"
+    <Stack
+      direction="row"
+      spacing={2}
+      sx={{
+        '&:hover': {
+          '& .cover': {
+            opacity: 0.8,
+          },
+        },
+        ...sx,
+      }}
+      {...other}
+    >
+      <Image
+        alt={product.name}
+        src={product.cover_url}
         sx={{
-          transition: (theme) =>
-            theme.transitions.create('opacity', {
-              easing: theme.transitions.easing.easeIn,
-              duration: theme.transitions.duration.shortest,
-            }),
-          '&:hover': { opacity: 0.72 },
+          width: 80,
+          height: 80,
+          flexShrink: 0,
+          borderRadius: 1,
+          cursor: 'pointer',
+          transition: (theme) => theme.transitions.create('opacity'),
         }}
-        {...other}
-      >
-        <Image
-          src={product.coverImg}
-          sx={{
-            width: 80,
-            height: 80,
-            flexShrink: 0,
-            borderRadius: 1.5,
-            bgcolor: 'background.neutral',
-          }}
-        />
+        className="cover"
+      />
 
-        <Stack spacing={0.5}>
-          <TextMaxLine variant="body2" line={1} sx={{ fontWeight: 'fontWeightMedium' }}>
+      <Stack spacing={0.5} flexGrow={1}>
+        <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
+          <TextMaxLine variant="subtitle2" line={1}>
             {product.name}
           </TextMaxLine>
+        </Link>
 
-          <ProductRating rating={product.rating} label={`${product.sold} sold`} />
+        <TextMaxLine variant="caption" line={1} sx={{ color: 'text.disabled' }}>
+          {product.category.name}
+        </TextMaxLine>
 
-          <ProductPrice price={product.price} priceSale={product.priceSale} />
-        </Stack>
+        <ProductPrice 
+          price={Number(product.base_price)} 
+          priceSale={product.selling_price ? Number(product.selling_price) : undefined} 
+        />
       </Stack>
-    </Link>
+    </Stack>
   );
 }

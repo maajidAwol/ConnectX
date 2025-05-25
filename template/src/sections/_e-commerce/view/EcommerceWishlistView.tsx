@@ -8,16 +8,22 @@ import { paths } from 'src/routes/paths';
 import { _products } from 'src/_mock';
 // components
 import Iconify from 'src/components/iconify';
+// types
+import { IProductItemProps } from 'src/types/product';
 //
-import { EcommerceHeader } from '../layout';
-import { EcommerceCartList } from '../cart';
+import { EcommerceCartList, EcommerceCartItem } from '../cart';
 
 // ----------------------------------------------------------------------
 
-export default function EcommerceWishlistView() {
+type Props = {
+  products: IProductItemProps[];
+  onDelete?: (id: string) => void;
+};
+
+export default function EcommerceWishlistView({ products, onDelete }: Props) {
   return (
     <>
-      <EcommerceHeader />
+      {/* <EcommerceHeader /> */}
 
       <Container
         sx={{
@@ -30,7 +36,14 @@ export default function EcommerceWishlistView() {
           Wishlist
         </Typography>
 
-        <EcommerceCartList wishlist products={_products.slice(0, 4)} />
+        {products.map((product) => (
+          <EcommerceCartItem
+            key={product.id}
+            product={product}
+            wishlist
+            onDelete={() => onDelete?.(product.id)}
+          />
+        ))}
 
         <Stack
           direction={{ xs: 'column-reverse', sm: 'row' }}
