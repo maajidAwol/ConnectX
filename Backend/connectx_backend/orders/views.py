@@ -77,27 +77,40 @@ class OrderViewSet(viewsets.ModelViewSet):
         user_email = self.request.query_params.get("user_email")
         user_name = self.request.query_params.get("user_name")
 
-        # Base queryset
         queryset = Order.objects.all()
 
-        # Apply date filters if provided
+        # Robust date filtering
         if start_date:
             try:
-                start_datetime = datetime.datetime.strptime(
-                    start_date, "%Y-%m-%d"
-                ).replace(tzinfo=timezone.utc)
+                start_datetime = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+                if timezone.is_naive(start_datetime):
+                    start_datetime = timezone.make_aware(
+                        start_datetime, timezone.get_default_timezone()
+                    )
                 queryset = queryset.filter(created_at__gte=start_datetime)
             except ValueError:
-                pass
+                from rest_framework.exceptions import ValidationError
+
+                raise ValidationError(
+                    {"start_date": "Invalid date format. Use YYYY-MM-DD."}
+                )
 
         if end_date:
             try:
                 end_datetime = datetime.datetime.strptime(end_date, "%Y-%m-%d").replace(
-                    hour=23, minute=59, second=59, tzinfo=timezone.utc
+                    hour=23, minute=59, second=59
                 )
+                if timezone.is_naive(end_datetime):
+                    end_datetime = timezone.make_aware(
+                        end_datetime, timezone.get_default_timezone()
+                    )
                 queryset = queryset.filter(created_at__lte=end_datetime)
             except ValueError:
-                pass
+                from rest_framework.exceptions import ValidationError
+
+                raise ValidationError(
+                    {"end_date": "Invalid date format. Use YYYY-MM-DD."}
+                )
 
         if status_param:
             queryset = queryset.filter(status=status_param)
@@ -108,19 +121,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         if user_name:
             queryset = queryset.filter(user__name__icontains=user_name)
 
-        # Filter based on user role and tenant
         tenant_owner_permission = IsTenantMember()
         if tenant_owner_permission.has_permission(self.request, self):
-            # Allow tenant owners to see all orders related to their tenant
-            # (as selling tenant or with products owned by this tenant)
             return queryset.filter(
-                Q(tenant=tenant)  # Orders where this tenant is the selling tenant
-                | Q(
-                    items__product_owner=tenant
-                )  # Orders with products owned by this tenant
+                Q(tenant=tenant) | Q(items__product_owner=tenant)
             ).distinct()
-
-        # Regular users can only see their own orders
         return queryset.filter(user=user)
 
     @swagger_auto_schema(

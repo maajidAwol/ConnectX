@@ -3,7 +3,10 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from .models import Category
 from .serializers import CategorySerializer
-from users.permissions import IsTenantOwner,IsTenantMember  # Ensure only admins can modify categories
+from users.permissions import (
+    IsTenantOwner,
+    IsTenantMember,
+)  # Ensure only admins can modify categories
 from django.db.models import Q
 
 
