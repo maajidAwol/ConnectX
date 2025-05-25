@@ -43,7 +43,7 @@ class ProductSerializer(serializers.ModelSerializer):
     )
 
     # Add review summary fields
-    review_summary = serializers.SerializerMethodField()
+    review = serializers.SerializerMethodField()
 
     filter_backends = [filters.SearchFilter]
     search_fields = [
@@ -83,7 +83,7 @@ class ProductSerializer(serializers.ModelSerializer):
         ).first()
         return listing.selling_price if listing else None
 
-    def get_review_summary(self, obj):
+    def get_review(self, obj):
         """Get review summary for the product."""
         from django.db.models import Avg
         from reviews.models import Review
@@ -253,9 +253,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "colors",
             "sizes",
             "total_sold",
-            "total_ratings",
-            "total_reviews",
-            "review_summary",  # Add review summary field
+            "review",  # Add review summary field
             "created_at",
             "updated_at",
             "cover_image_upload",  # Add upload fields for input
@@ -267,9 +265,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "owner",
             "category",
             "total_sold",
-            "total_ratings",
-            "total_reviews",
-            "review_summary",  # Review summary is read-only
+            "review",  # Review summary is read-only
             "created_at",
             "updated_at",
             "profit_percentage",
