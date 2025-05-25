@@ -251,7 +251,7 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 if (state.items.length > 1)
                   Container(
-                    margin: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                     child: Row(
                       children: [
                         Radio<bool>(
@@ -296,12 +296,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      
-                      bottom: 16,
-                    ),
+                    padding: const EdgeInsets.all(16),
                     itemCount: state.items.length,
                     itemBuilder: (context, index) {
                       final item = state.items[index];

@@ -9,7 +9,6 @@ import 'package:korecha/features/product/presentation/state/discover/bloc/discov
 import 'package:korecha/features/product/presentation/state/home/bloc/home_bloc.dart';
 import 'package:korecha/features/product/presentation/state/product/bloc/product_bloc.dart';
 import 'package:korecha/route/router.dart' as router;
-import 'package:korecha/route/route_constants.dart';
 import 'package:korecha/theme/app_theme.dart';
 import 'package:korecha/features/authentication/presentation/state/auth/bloc/auth_bloc.dart';
 import 'package:korecha/features/authentication/presentation/pages/auth/login_page.dart';
@@ -50,7 +49,10 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme(context),
         themeMode: ThemeMode.light,
         onGenerateRoute: router.generateRoute,
-        initialRoute: splashScreenRoute,
+        home:
+            di.sl<StorageService>().hasSeenOnboarding()
+                ? const LoginScreen()
+                : const OnBordingScreen(),
       ),
     );
   }
