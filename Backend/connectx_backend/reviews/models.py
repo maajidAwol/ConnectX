@@ -14,6 +14,7 @@ class Review(models.Model):
         Product, on_delete=models.CASCADE, related_name="reviews"
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
+    title = models.CharField(max_length=200, blank=True, default="")  # Optional title for the review
     rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
@@ -45,4 +46,5 @@ class Review(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Review by {self.user.email} for {self.product.name} ({self.rating}/5)"
+        title_part = f"'{self.title}' " if self.title else ""
+        return f"Review {title_part}by {self.user.email} for {self.product.name} ({self.rating}/5)"
