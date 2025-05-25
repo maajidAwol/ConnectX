@@ -36,7 +36,7 @@ interface PendingVerificationsState {
   fetchPendingVerifications: () => Promise<void>
 }
 
-const API_URL = 'https://connectx-9agd.onrender.com/api'
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`
 
 const usePendingVerificationsStore = create<PendingVerificationsState>((set) => ({
   pendingVerifications: [],

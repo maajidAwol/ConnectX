@@ -70,7 +70,7 @@ interface MerchantDashboardState {
   fetchTopProducts: () => Promise<void>
 }
 
-const API_URL = 'https://connectx-backend-295168525338.europe-west1.run.app/api'
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`
 
 const useMerchantDashboardStore = create<MerchantDashboardState>((set) => ({
   overview: null,

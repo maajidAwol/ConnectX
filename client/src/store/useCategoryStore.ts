@@ -40,7 +40,7 @@ interface CategoryState {
 }
 
 // In a production environment, this would be loaded from environment variables
-const API_URL = 'https://connectx-9agd.onrender.com/api'
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`
 
 const useCategoryStore = create<CategoryState>((set, get) => ({
   categories: [],

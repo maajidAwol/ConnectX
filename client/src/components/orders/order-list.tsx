@@ -88,12 +88,12 @@ export function OrderList({
                   <Button variant="outline" size="sm" asChild className="h-8 px-2 sm:px-3">
                     <Link href={`/merchant/orders/${order.id}`}>View</Link>
                   </Button>
-                  {order.status === "processing" && (
+                  {/* {order.status === "processing" && (
                     <Button variant="outline" size="sm" className="h-8 px-2 sm:px-3">
                       <Truck className="h-4 w-4 sm:mr-1" />
                       <span className="hidden sm:inline">Ship</span>
                     </Button>
-                  )}
+                  )} */}
                 </div>
               </TableCell>
             </TableRow>

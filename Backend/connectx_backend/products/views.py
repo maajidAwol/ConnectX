@@ -177,7 +177,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         else:
             # Unauthenticated (API key access)
             # Only show products that are listed under the tenant
-            print("tenant", tenant)
             listings = ProductListing.objects.filter(tenant=tenant)
             product_ids = listings.values_list("product_id", flat=True)
             queryset = Product.objects.filter(id__in=product_ids)
@@ -192,17 +191,21 @@ class ProductViewSet(viewsets.ModelViewSet):
         elif filter_type == "public":
             queryset = queryset.filter(is_public=True)
 
-        # Filter by price and category
+        # Filter by price
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
-        category = self.request.query_params.get("category")
-
         if min_price:
             queryset = queryset.filter(base_price__gte=min_price)
         if max_price:
             queryset = queryset.filter(base_price__lte=max_price)
-        if category:
-            queryset = queryset.filter(category__name__icontains=category)
+
+        # Filter by category_id or category name
+        category_id = self.request.query_params.get("category_id")
+        category_name = self.request.query_params.get("category")
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        elif category_name:
+            queryset = queryset.filter(category__name__icontains=category_name)
 
         return queryset.distinct()
 
@@ -303,6 +306,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         products = self.get_queryset().filter(category=category)
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
+
     @swagger_auto_schema(
         operation_description="Get categories of listed products",
         operation_summary="List categories of listed products",
@@ -314,12 +318,12 @@ class ProductViewSet(viewsets.ModelViewSet):
             500: "Server error",
         },
     )
-    @action(
-        detail=False, methods=["GET"], url_path="listed-categories"
-    )
+    @action(detail=False, methods=["GET"], url_path="listed-categories")
     def listed_categories(self, request):
         """Get categories of listed products without duplicates."""
-        categories = Category.objects.filter(products__in=self.get_queryset()).distinct()
+        categories = Category.objects.filter(
+            products__in=self.get_queryset()
+        ).distinct()
         page = self.paginate_queryset(categories)
         if page is not None:
             serializer = CategorySerializer(page, many=True)

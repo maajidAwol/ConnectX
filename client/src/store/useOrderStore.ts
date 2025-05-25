@@ -40,10 +40,16 @@ interface OrderStore {
   totalPages: number
   pageSize: number
   totalCount: number
+  status: string
+  search: string
+  dateFilter: string
   fetchOrders: (page?: number, size?: number) => Promise<void>
   fetchRecentOrders: () => Promise<void>
   setCurrentPage: (page: number) => void
   setPageSize: (size: number) => void
+  setStatus: (status: string) => void
+  setSearch: (search: string) => void
+  setDateFilter: (dateFilter: string) => void
 }
 
 const useOrderStore = create<OrderStore>((set, get) => ({
@@ -56,14 +62,64 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   totalPages: 1,
   pageSize: 10,
   totalCount: 0,
+  status: 'all',
+  search: '',
+  dateFilter: 'all',
 
   fetchOrders: async (page = 1, size = 10) => {
     try {
       set({ isLoading: true, error: null })
       const { accessToken } = useAuthStore.getState()
+      const { status, search, dateFilter } = get()
       
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+      })
+
+      if (status !== 'all') {
+        params.append('status', status)
+      }
+
+      if (search) {
+        params.append('search', search)
+      }
+
+      if (dateFilter !== 'all') {
+        const today = new Date()
+        let startDate: string
+
+        switch (dateFilter) {
+          case 'today':
+            startDate = today.toISOString().split('T')[0]
+            break
+          case 'yesterday':
+            const yesterday = new Date(today)
+            yesterday.setDate(yesterday.getDate() - 1)
+            startDate = yesterday.toISOString().split('T')[0]
+            break
+          case 'week':
+            const weekAgo = new Date(today)
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            startDate = weekAgo.toISOString().split('T')[0]
+            break
+          case 'month':
+            const monthAgo = new Date(today)
+            monthAgo.setDate(monthAgo.getDate() - 30)
+            startDate = monthAgo.toISOString().split('T')[0]
+            break
+          default:
+            startDate = ''
+        }
+
+        if (startDate) {
+          params.append('start_date', startDate)
+        }
+      }
+
       const response = await axios.get<OrderResponse>(
-        `https://connectx-9agd.onrender.com/api/orders/?page=${page}&size=${size}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -96,7 +152,7 @@ const useOrderStore = create<OrderStore>((set, get) => ({
       const { accessToken } = useAuthStore.getState()
       
       const response = await axios.get<OrderResponse>(
-        'https://connectx-9agd.onrender.com/api/orders/?page=1&size=5',
+        'https://connectx-backend-295168525338.europe-west1.run.app/api/orders/?page=1&size=5',
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -124,6 +180,21 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   setPageSize: (size: number) => {
     set({ pageSize: size, currentPage: 1 })
     get().fetchOrders(1, size)
+  },
+
+  setStatus: (status: string) => {
+    set({ status, currentPage: 1 })
+    get().fetchOrders(1, get().pageSize)
+  },
+
+  setSearch: (search: string) => {
+    set({ search, currentPage: 1 })
+    get().fetchOrders(1, get().pageSize)
+  },
+
+  setDateFilter: (dateFilter: string) => {
+    set({ dateFilter, currentPage: 1 })
+    get().fetchOrders(1, get().pageSize)
   },
 }))
 

@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useRef, useEffect } from "react"
 import { motion, useInView, useAnimation } from "framer-motion"
-import { CheckCircle, Code, Rocket } from "lucide-react"
+import { CheckCircle, Code, Rocket, Key } from "lucide-react"
 
 interface Step {
   id: number
@@ -22,12 +22,18 @@ const steps: Step[] = [
   },
   {
     id: 2,
+    title: "Generate API Key",
+    description: "Create and securely store your unique API key. This key will only be shown once at creation, so make sure to save it safely.",
+    icon: <Key className="h-8 w-8" />,
+  },
+  {
+    id: 3,
     title: "Configure Your Store",
     description: "Set up your products, pricing, and payment methods using our intuitive dashboard or API.",
     icon: <Code className="h-8 w-8" />,
   },
   {
-    id: 3,
+    id: 4,
     title: "Launch Your Business",
     description: "Connect your frontend to our API and start selling. We handle the backend complexity.",
     icon: <Rocket className="h-8 w-8" />,
@@ -37,7 +43,7 @@ const steps: Step[] = [
 export function ProcessSteps() {
   const controls = useAnimation()
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, threshold: 0.2 })
+  const inView = useInView(ref, { once: true, amount: 0.2 })
 
   useEffect(() => {
     if (inView) {

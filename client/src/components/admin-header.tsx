@@ -12,12 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, Settings, User } from "lucide-react"
+import { Bell, Settings, User, LogOut } from "lucide-react"
 import { useAuthStore } from "@/store/authStore"
 
 export function AdminHeader() {
   const pathname = usePathname()
   const { user } = useAuthStore()
+  const logout = useAuthStore((state) => state.logout)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -70,10 +71,9 @@ export function AdminHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() => {
-                    // Add logout functionality here
-                  }}
+                  onClick={logout}
                 >
+                  <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

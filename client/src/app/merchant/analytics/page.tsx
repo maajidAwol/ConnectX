@@ -18,10 +18,57 @@ import {
   Users,
   DollarSign,
 } from "lucide-react"
-import { salesData, products } from "@/lib/data"
+import { products } from "@/lib/data"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+} from "recharts"
 
 export default function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState("30d")
+
+  // Dummy chart data
+  const revenueData = [
+    { date: "Jan", revenue: 12000, orders: 145 },
+    { date: "Feb", revenue: 15000, orders: 178 },
+    { date: "Mar", revenue: 18000, orders: 210 },
+    { date: "Apr", revenue: 22000, orders: 245 },
+    { date: "May", revenue: 25000, orders: 289 },
+    { date: "Jun", revenue: 28000, orders: 312 },
+    { date: "Jul", revenue: 32000, orders: 356 },
+    { date: "Aug", revenue: 29000, orders: 334 },
+    { date: "Sep", revenue: 35000, orders: 398 },
+    { date: "Oct", revenue: 38000, orders: 425 },
+    { date: "Nov", revenue: 42000, orders: 467 },
+    { date: "Dec", revenue: 45000, orders: 512 },
+  ]
+
+  const channelData = [
+    { name: "Direct Sales", value: 65, color: "#3b82f6" },
+    { name: "Marketplace", value: 35, color: "#10b981" },
+    { name: "Affiliate", value: 25, color: "#f59e0b" },
+  ]
+
+  const demographicsData = [
+    { name: "Male 18-24", value: 8, color: "#3b82f6" },
+    { name: "Female 18-24", value: 7, color: "#93c5fd" },
+    { name: "Male 25-34", value: 18, color: "#10b981" },
+    { name: "Female 25-34", value: 17, color: "#6ee7b7" },
+    { name: "Male 35-44", value: 14, color: "#f59e0b" },
+    { name: "Female 35-44", value: 14, color: "#fbbf24" },
+    { name: "Male 45-54", value: 8, color: "#ef4444" },
+    { name: "Female 45-54", value: 7, color: "#fca5a5" },
+    { name: "Male 55+", value: 4, color: "#8b5cf6" },
+    { name: "Female 55+", value: 3, color: "#c4b5fd" },
+  ]
 
   // Calculate total sales and revenue
   const totalSales = products.reduce((sum, product) => sum + product.sales, 0)
@@ -45,7 +92,7 @@ export default function AnalyticsDashboard() {
           <h2 className="text-2xl font-bold tracking-tight">Analytics Dashboard</h2>
           <p className="text-muted-foreground">Track your e-commerce performance and insights</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* <div className="flex flex-wrap gap-2">
           <div className="flex items-center rounded-md border bg-background p-1 text-sm">
             <button
               className={`px-3 py-1 rounded-sm ${
@@ -88,7 +135,7 @@ export default function AnalyticsDashboard() {
             <Download className="h-4 w-4" />
             <span>Export</span>
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -165,7 +212,7 @@ export default function AnalyticsDashboard() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="products">Product Performance</TabsTrigger>
-          <TabsTrigger value="channels">Channel Insights</TabsTrigger>
+          {/* <TabsTrigger value="channels">Channel Insights</TabsTrigger> */}
           <TabsTrigger value="customers">Customer Behavior</TabsTrigger>
         </TabsList>
 
@@ -186,24 +233,57 @@ export default function AnalyticsDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <div className="h-full w-full rounded-md border p-4">
-                  <div className="flex h-full w-full items-center justify-center">
-                    <div className="text-center">
-                      <LineChart className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-2 text-sm font-medium">Revenue Chart</p>
-                      <p className="text-xs text-muted-foreground">
-                        Showing data for{" "}
-                        {dateRange === "7d"
-                          ? "last 7 days"
-                          : dateRange === "30d"
-                            ? "last 30 days"
-                            : dateRange === "90d"
-                              ? "last 90 days"
-                              : "last year"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <ChartContainer
+                  config={{
+                    revenue: {
+                      label: "Revenue",
+                      color: "#6366f1",
+                    },
+                    orders: {
+                      label: "Orders",
+                      color: "#10b981",
+                    },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={revenueData}>
+                      <defs>
+                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis
+                        stroke="#64748b"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `$${value.toLocaleString()}`}
+                      />
+                      <ChartTooltip
+                        content={<ChartTooltipContent />}
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#6366f1"
+                        strokeWidth={3}
+                        fill="url(#revenueGradient)"
+                        dot={{ fill: "#6366f1", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "white" }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
@@ -213,45 +293,42 @@ export default function AnalyticsDashboard() {
                 <CardDescription>Revenue by sales channel</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <div className="h-full w-full rounded-md border p-4">
-                  <div className="flex h-full flex-col justify-between">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Direct Sales</span>
-                          <span className="font-medium">${salesData.direct.toLocaleString()}</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-gray-100">
-                          <div className="h-full w-[65%] rounded-full bg-blue-500"></div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Marketplace</span>
-                          <span className="font-medium">${salesData.marketplace.toLocaleString()}</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-gray-100">
-                          <div className="h-full w-[35%] rounded-full bg-green-500"></div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Affiliate</span>
-                          <span className="font-medium">${salesData.affiliate.toLocaleString()}</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-gray-100">
-                          <div className="h-full w-[25%] rounded-full bg-yellow-500"></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-center">
-                      <PieChart className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                  </div>
-                </div>
+                <ChartContainer
+                  config={{
+                    direct: {
+                      label: "Direct Sales",
+                      color: "#3b82f6",
+                    },
+                    marketplace: {
+                      label: "Marketplace",
+                      color: "#10b981",
+                    },
+                    affiliate: {
+                      label: "Affiliate",
+                      color: "#f59e0b",
+                    },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={channelData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {channelData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
           </div>
@@ -316,7 +393,7 @@ export default function AnalyticsDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="channels">
+        {/* <TabsContent value="channels">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -423,29 +500,51 @@ export default function AnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="customers">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Customer Demographics</CardTitle>
                 <CardDescription>Age and gender distribution</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <div className="h-full w-full rounded-md border p-4">
-                  <div className="flex h-full w-full items-center justify-center">
-                    <div className="text-center">
-                      <PieChart className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-2 text-sm font-medium">Demographics Chart</p>
-                      <p className="text-xs text-muted-foreground">Age and gender distribution</p>
-                    </div>
-                  </div>
-                </div>
+                <ChartContainer
+                  config={{
+                    demographics: {
+                      label: "Demographics",
+                      color: "hsl(var(--chart-1))",
+                    },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={demographicsData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}%`}
+                        labelLine={false}
+                      >
+                        {demographicsData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip
+                        content={<ChartTooltipContent />}
+                        formatter={(value, name) => [`${value}%`, name]}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Customer Retention</CardTitle>
                 <CardDescription>New vs returning customers</CardDescription>
@@ -494,7 +593,7 @@ export default function AnalyticsDashboard() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
             <Card>
               <CardHeader>

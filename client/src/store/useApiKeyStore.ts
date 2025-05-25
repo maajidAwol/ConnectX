@@ -39,7 +39,7 @@ const useApiKeyStore = create<ApiKeyStore>((set, get) => ({
       const { accessToken } = useAuthStore.getState()
 
       const response = await axios.get<ApiKeyResponse>(
-        'https://connectx-9agd.onrender.com/api/api-keys/',
+        `${process.env.NEXT_PUBLIC_API_URL}/api-keys/`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -65,7 +65,7 @@ const useApiKeyStore = create<ApiKeyStore>((set, get) => ({
       const { accessToken } = useAuthStore.getState()
 
       const response = await axios.post<ApiKey>(
-        'https://connectx-9agd.onrender.com/api/api-keys/',
+        `${process.env.NEXT_PUBLIC_API_URL}/api-keys/`,
         {
           name,
           is_active: true
@@ -100,7 +100,7 @@ const useApiKeyStore = create<ApiKeyStore>((set, get) => ({
       const apiKey = get().apiKeys.find(key => key.id === id)
 
       await axios.post(
-        `https://connectx-9agd.onrender.com/api/api-keys/${id}/revoke/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api-keys/${id}/revoke/`,
         {
           name: apiKey?.name,
           is_active: false
@@ -134,7 +134,7 @@ const useApiKeyStore = create<ApiKeyStore>((set, get) => ({
       const { accessToken } = useAuthStore.getState()
 
       await axios.delete(
-        `https://connectx-9agd.onrender.com/api/api-keys/${id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api-keys/${id}/`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
