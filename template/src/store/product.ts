@@ -55,7 +55,7 @@ interface ProductState {
   totalCount: number;
   currentPage: number;
   featuredProducts: Product[];
-  fetchProducts: (page?: number, status?: string, categoryId?: string | null, sortBy?: string) => Promise<void>;
+  fetchProducts: (page?: number, status?: string, categoryId?: string | null, sortBy?: string, searchQuery?: string) => Promise<ProductResponse | undefined>;
   fetchProductById: (id: string) => Promise<void>;
   fetchListedCategories: () => Promise<void>;
   fetchFeaturedProducts: () => Promise<void>;
@@ -71,7 +71,7 @@ export const useProductStore = create<ProductState>((set) => ({
   currentPage: 1,
   featuredProducts: [],
 
-  fetchProducts: async (page = 1, status = 'listed', categoryId = null, sortBy = 'latest') => {
+  fetchProducts: async (page = 1, status = 'listed', categoryId = null, sortBy = 'latest', searchQuery = '') => {
     try {
       set({ loading: true, error: null });
       
@@ -79,10 +79,13 @@ export const useProductStore = create<ProductState>((set) => ({
       if (categoryId) {
         url += `&category=${categoryId}`;
       }
+      if (searchQuery) {
+        url += `&search=${encodeURIComponent(searchQuery)}`;
+      }
 
       const response = await apiRequest<ProductResponse>(url, {
         method: 'GET',
-      });
+      }, true, undefined, true);
 
       set({
         products: response.results || [],
@@ -90,11 +93,14 @@ export const useProductStore = create<ProductState>((set) => ({
         currentPage: page,
         loading: false,
       });
+
+      return response;
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch products',
         loading: false,
       });
+      return undefined;
     }
   },
 
@@ -103,7 +109,7 @@ export const useProductStore = create<ProductState>((set) => ({
       set({ loading: true, error: null });
       const product = await apiRequest<Product>(`/products/${id}/`, {
         method: 'GET',
-      });
+      }, true, undefined, true);
       set({ currentProduct: product, loading: false });
     } catch (error) {
       set({
@@ -117,7 +123,7 @@ export const useProductStore = create<ProductState>((set) => ({
     try {
       const response = await apiRequest<PaginatedResponse<Category>>('/products/listed-categories/', {
         method: 'GET',
-      });
+      }, true, undefined, true);
       
       // Extract unique categories by name to avoid duplicates
       const uniqueCategories = response.results.reduce((acc: Category[], current) => {
@@ -140,7 +146,7 @@ export const useProductStore = create<ProductState>((set) => ({
       set({ loading: true, error: null });
       const response = await apiRequest<ProductResponse>('/products/?featured=true', {
         method: 'GET',
-      });
+      }, true, undefined, true);
       set({
         featuredProducts: response.results || [],
         loading: false,

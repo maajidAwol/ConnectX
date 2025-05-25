@@ -35,6 +35,43 @@ export interface User {
   groups: string[];
 }
 
+// Cache configuration
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const cache = new Map<string, { data: any; timestamp: number }>();
+
+// Helper function to generate cache key
+const generateCacheKey = (endpoint: string, options: RequestInit = {}) => {
+  const queryParams = new URLSearchParams(options.body as string || '').toString();
+  return `${endpoint}${queryParams ? `?${queryParams}` : ''}`;
+};
+
+// Helper function to check if cache is valid
+const isCacheValid = (timestamp: number) => {
+  return Date.now() - timestamp < CACHE_DURATION;
+};
+
+// Helper function to get cached data
+const getCachedData = (key: string) => {
+  const cached = cache.get(key);
+  if (cached && isCacheValid(cached.timestamp)) {
+    return cached.data;
+  }
+  return null;
+};
+
+// Helper function to set cache data
+const setCachedData = (key: string, data: any) => {
+  cache.set(key, {
+    data,
+    timestamp: Date.now(),
+  });
+};
+
+// Helper function to clear cache
+export const clearCache = () => {
+  cache.clear();
+};
+
 // Helper function to get API headers
 export const getApiHeaders = (includeAuth = false, accessToken?: string) => {
   const headers: Record<string, string> = {
@@ -78,13 +115,14 @@ export const handleApiError = async (response: Response) => {
   return response;
 };
 
-// Helper function to make API requests
-export async function apiRequest<T>(
+// Helper function to make API requests with caching
+export const apiRequest = async <T>(
   endpoint: string,
   options: RequestInit = {},
   includeAuth = false,
-  accessToken?: string
-): Promise<T> {
+  accessToken?: string | null,
+  useCache = true
+): Promise<T> => {
   try {
     // Remove leading slash if present and clean the endpoint
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
@@ -92,7 +130,18 @@ export async function apiRequest<T>(
     // Use the proxy endpoint - don't add /api since it's already in the endpoint
     const url = `/api/proxy/${cleanEndpoint}`;
 
-    const headers = getApiHeaders(includeAuth, accessToken);
+    // Generate cache key for GET requests
+    const cacheKey = options.method === 'GET' ? generateCacheKey(url, options) : null;
+    
+    // Check cache for GET requests
+    if (useCache && cacheKey && options.method === 'GET') {
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        return cachedData as T;
+      }
+    }
+
+    const headers = getApiHeaders(includeAuth, accessToken || undefined);
     
     const response = await fetch(url, {
       ...options,
@@ -111,14 +160,21 @@ export async function apiRequest<T>(
       }));
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // Cache successful GET responses
+    if (useCache && cacheKey && options.method === 'GET') {
+      setCachedData(cacheKey, data);
+    }
+
+    return data;
   } catch (error) {
     if (error instanceof Error) {
-    throw error;
+      throw error;
     }
     throw new Error('An unexpected error occurred');
   }
-}
+};
 
 // Helper function to sanitize sensitive data
 const sanitizeResponseData = (data: any): any => {

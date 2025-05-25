@@ -18,7 +18,7 @@ export default function LoginIllustrationView() {
 
   const handleRegisterClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.location.href = paths.registerIllustration;
+    window.location.href = paths.auth.registerIllustration;
   };
 
   return (
@@ -59,19 +59,10 @@ export default function LoginIllustrationView() {
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {`Don't have an account? `}
                 <Link
-                  component="button"
-                  onClick={handleRegisterClick}
+                  component={NextLink}
+                  href={paths.auth.registerIllustration}
                   variant="subtitle2"
                   color="primary"
-                  sx={{ 
-                    border: 'none', 
-                    background: 'none', 
-                    cursor: 'pointer', 
-                    p: 0,
-                    '&:hover': {
-                      textDecoration: 'underline'
-                    }
-                  }}
                 >
                   Get started
                 </Link>

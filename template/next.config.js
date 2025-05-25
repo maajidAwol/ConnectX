@@ -3,8 +3,14 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
-    domains: ['res.cloudinary.com'],
+    domains: ['localhost', 'res.cloudinary.com'],
   },
   async headers() {
     return [

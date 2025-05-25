@@ -40,6 +40,7 @@ import {
 } from '../checkout';
 // types
 import { CartItem } from 'src/store/cart';
+import { fCurrency } from 'src/utils/format-number';
 
 // ----------------------------------------------------------------------
 
@@ -317,12 +318,12 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
     const orderResponse = await apiRequest<OrderResponse>('/orders/', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken || ''}`,
         'Content-Type': 'application/json',
         'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
       },
       body: JSON.stringify(orderData),
-    });
+    }, true, accessToken as string | undefined);
 
     return orderResponse;
   };
@@ -342,7 +343,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       const paymentResponse = await apiRequest<PaymentResponse>('/payments/', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken || ''}`,
           'Content-Type': 'application/json',
           'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
         },
@@ -372,7 +373,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       await apiRequest(`/payments/${paymentId}/confirm_cod_payment/`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken || ''}`,
         },
         body: JSON.stringify({
           confirmation_note: 'Order confirmed for Cash on Delivery',
@@ -387,20 +388,152 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
   const onSubmit = async (data: typeof defaultValues) => {
     try {
       setSubmitting(true);
-      
-      // Create new shipping address
+
+      // Create shipping address
       const newAddress = await createShippingAddress(data);
       if (!newAddress) {
         throw new Error('Failed to create shipping address');
       }
-      
-      // Set the new address as selected
-      setSelectedAddress(newAddress);
-      
-      // Proceed with order creation
-      await handlePlaceOrder(newAddress);
+
+      // Calculate total amount
+      const totalAmount = getTotalPrice().toString();
+
+      // Create order
+      const orderData = {
+        shipping_address: newAddress.id,
+        items: items.map(item => ({
+          product: item.id,
+          quantity: item.quantity,
+          price: item.price.toString(),
+          custom_profit_percentage: 0,
+          custom_selling_price: item.price.toString()
+        })),
+        total_amount: totalAmount,
+        payment_method: paymentMethod
+      };
+
+      const orderResponse = await apiRequest<OrderResponse>('/orders/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          'Authorization': `Bearer ${accessToken || ''}`
+        },
+        body: JSON.stringify(orderData),
+      }, true, accessToken as string | undefined);
+
+      if (!orderResponse) {
+        throw new Error('Failed to create order');
+      }
+
+      if (paymentMethod === 'chapa') {
+        const formattedPhone = formatPhoneNumber(newAddress.phone_number);
+
+        const chapaResponse = await apiRequest<ChapaPaymentResponse>('/payments/initialize_chapa_payment/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+            'Authorization': `Bearer ${accessToken || ''}`
+          },
+          body: JSON.stringify({
+            order_id: orderResponse.id,
+            phone_number: formattedPhone,
+            return_url: `${window.location.origin}/payment/success`
+          }),
+        }, true, accessToken as string | undefined);
+
+        if (!chapaResponse || chapaResponse.status !== 'success' || !chapaResponse.data?.checkout_url) {
+          throw new Error('Failed to initialize Chapa payment');
+        }
+
+        // Store order data and transaction reference in session storage
+        const pendingOrder = {
+          orderId: orderResponse.id,
+          addressId: newAddress.id,
+          items: items.map(item => ({
+            product: item.id,
+            quantity: item.quantity,
+            price: item.price.toString(),
+            custom_profit_percentage: 0,
+            custom_selling_price: item.price.toString()
+          })),
+          totalAmount: totalAmount,
+          paymentMethod: 'chapa',
+          tx_ref: chapaResponse.data.tx_ref
+        };
+        sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
+
+        // Show receipt before redirecting
+        const receiptWindow = window.open('', '_blank');
+        if (receiptWindow) {
+          receiptWindow.document.write(`
+            <html>
+              <head>
+                <title>Payment Receipt</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; }
+                  .receipt { max-width: 600px; margin: 0 auto; }
+                  .header { text-align: center; margin-bottom: 20px; }
+                  .details { margin-bottom: 20px; }
+                  .item { margin-bottom: 10px; }
+                  .total { font-weight: bold; margin-top: 20px; }
+                  .button { 
+                    display: block;
+                    width: 200px;
+                    margin: 20px auto;
+                    padding: 10px;
+                    background-color: #1976d2;
+                    color: white;
+                    text-align: center;
+                    text-decoration: none;
+                    border-radius: 4px;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="receipt">
+                  <div class="header">
+                    <h2>Payment Receipt</h2>
+                    <p>Order #${orderResponse.order_number}</p>
+                  </div>
+                  <div class="details">
+                    <h3>Order Details</h3>
+                    ${items.map(item => `
+                      <div class="item">
+                        <p>${item.name} x ${item.quantity}</p>
+                        <p>Price: ${fCurrency(item.price)}</p>
+                      </div>
+                    `).join('')}
+                    <div class="total">
+                      <p>Total Amount: ${fCurrency(parseFloat(totalAmount))}</p>
+                    </div>
+                  </div>
+                  <a href="${chapaResponse.data.checkout_url}" class="button" onclick="window.close()">
+                    Proceed to Payment
+                  </a>
+                </div>
+              </body>
+            </html>
+          `);
+          receiptWindow.document.close();
+        }
+
+        // Redirect to Chapa checkout after a short delay
+        setTimeout(() => {
+          window.location.href = chapaResponse.data.checkout_url;
+        }, 5000); // 5 seconds delay
+      } else if (paymentMethod === 'cod') {
+        const paymentResponse = await createPayment(orderResponse.id, totalAmount);
+        if (paymentResponse) {
+          await confirmCodPayment(paymentResponse.id);
+          clearCart();
+          reset();
+          replace('/payment/success');
+        }
+      }
     } catch (error) {
-      console.error('Error in form submission:', error);
+      console.error('Error in checkout:', error);
       if (error instanceof Error) {
         alert(error.message);
       }
@@ -409,21 +542,23 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
     }
   };
 
-  const handlePlaceOrder = async (address?: ShippingAddress) => {
+  const handlePlaceOrder = async () => {
     try {
       if (!accessToken) {
         throw new Error('Authentication required. Please log in again.');
       }
 
-      setSubmitting(true);
-
-      // Use provided address or selected address
-      const shippingAddress = address || selectedAddress;
-
-      if (!shippingAddress) {
+      if (!selectedAddress) {
+        // If no address is selected, trigger form submission
+        const formData = methods.getValues();
+        if (formData.streetAddress && formData.city && formData.country) {
+          await onSubmit(formData);
+          return;
+        }
         throw new Error('Please select or add a shipping address');
       }
 
+      setSubmitting(true);
       const totalAmount = (getTotalPrice() + 50).toString();
 
       // Create order with selected address
@@ -435,8 +570,8 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         discount: '0.00',
         notes: 'Order placed through web application',
         email: user?.email || '',
-        phone: shippingAddress.phone_number,
-        shipping_address: shippingAddress.id,
+        phone: selectedAddress.phone_number,
+        shipping_address: selectedAddress.id,
         items: items.map(item => ({
           product: item.id,
           quantity: item.quantity,
@@ -455,31 +590,31 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         headers: {
           'Content-Type': 'application/json',
           'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${accessToken || ''}`
         },
         body: JSON.stringify(orderData),
-      }, true, accessToken);
+      }, true, accessToken as string | undefined);
 
       if (!orderResponse) {
         throw new Error('Failed to create order');
       }
 
       if (paymentMethod === 'chapa') {
-        const formattedPhone = formatPhoneNumber(shippingAddress.phone_number);
+        const formattedPhone = formatPhoneNumber(selectedAddress.phone_number);
 
         const chapaResponse = await apiRequest<ChapaPaymentResponse>('/payments/initialize_chapa_payment/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken || ''}`
           },
           body: JSON.stringify({
             order_id: orderResponse.id,
             phone_number: formattedPhone,
             return_url: `${window.location.origin}/payment/success`
           }),
-        }, true, accessToken);
+        }, true, accessToken as string | undefined);
 
         if (!chapaResponse || chapaResponse.status !== 'success' || !chapaResponse.data?.checkout_url) {
           throw new Error('Failed to initialize Chapa payment');
@@ -488,7 +623,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         // Store order data and transaction reference in session storage
         const pendingOrder = {
           orderId: orderResponse.id,
-          addressId: shippingAddress.id,
+          addressId: selectedAddress.id,
           items: items.map(item => ({
             product: item.id,
             quantity: item.quantity,
@@ -502,15 +637,72 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         };
         sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
 
-        // Redirect to Chapa checkout
-        window.location.href = chapaResponse.data.checkout_url;
+        // Show receipt before redirecting
+        const receiptWindow = window.open('', '_blank');
+        if (receiptWindow) {
+          receiptWindow.document.write(`
+            <html>
+              <head>
+                <title>Payment Receipt</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; }
+                  .receipt { max-width: 600px; margin: 0 auto; }
+                  .header { text-align: center; margin-bottom: 20px; }
+                  .details { margin-bottom: 20px; }
+                  .item { margin-bottom: 10px; }
+                  .total { font-weight: bold; margin-top: 20px; }
+                  .button { 
+                    display: block;
+                    width: 200px;
+                    margin: 20px auto;
+                    padding: 10px;
+                    background-color: #1976d2;
+                    color: white;
+                    text-align: center;
+                    text-decoration: none;
+                    border-radius: 4px;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="receipt">
+                  <div class="header">
+                    <h2>Payment Receipt</h2>
+                    <p>Order #${orderResponse.order_number}</p>
+                  </div>
+                  <div class="details">
+                    <h3>Order Details</h3>
+                    ${items.map(item => `
+                      <div class="item">
+                        <p>${item.name} x ${item.quantity}</p>
+                        <p>Price: ${fCurrency(item.price)}</p>
+                      </div>
+                    `).join('')}
+                    <div class="total">
+                      <p>Total Amount: ${fCurrency(parseFloat(totalAmount))}</p>
+                    </div>
+                  </div>
+                  <a href="${chapaResponse.data.checkout_url}" class="button" onclick="window.close()">
+                    Proceed to Payment
+                  </a>
+                </div>
+              </body>
+            </html>
+          `);
+          receiptWindow.document.close();
+        }
+
+        // Redirect to Chapa checkout after a short delay
+        setTimeout(() => {
+          window.location.href = chapaResponse.data.checkout_url;
+        }, 5000); // 5 seconds delay
       } else if (paymentMethod === 'cod') {
         const paymentResponse = await createPayment(orderResponse.id, totalAmount);
         if (paymentResponse) {
           await confirmCodPayment(paymentResponse.id);
           clearCart();
           reset();
-          replace(paths.eCommerce.orderCompleted);
+          replace('/payment/success');
         }
       }
     } catch (error) {

@@ -1,35 +1,36 @@
 // ----------------------------------------------------------------------
 
 export const paths = {
+  // Auth
+  auth: {
+    loginCover: '/auth/login-cover',
+    loginBackground: '/auth/login-background',
+    loginIllustration: '/auth/login-illustration',
+    registerCover: '/auth/register-cover',
+    registerBackground: '/auth/register-background',
+    registerIllustration: '/auth/register-illustration',
+    resetPassword: '/auth/reset-password',
+    verifyCode: '/auth/verify-code',
+  },
   
   // E-commerce
   eCommerce: {
     landing: '/e-commerce/landing',
     products: '/e-commerce/products',
-    product: `/e-commerce/product`,
+    product: '/e-commerce/product',
     cart: '/e-commerce/cart',
-    checkout: `/e-commerce/checkout`,
-    orderCompleted: '/e-commerce/order-completed',
-    wishlist: `/e-commerce/wishlist`,
-    compare: `/e-commerce/compare`,
+    checkout: '/e-commerce/checkout',
+    wishlist: '/e-commerce/wishlist',
+    compare: '/e-commerce/compare',
     account: {
-      root: `/e-commerce/account`,
-      personal: `/e-commerce/account/personal`,
-      wishlist: `/e-commerce/account/wishlist`,
-      vouchers: `/e-commerce/account/vouchers`,
-      orders: `/e-commerce/account/orders`,
-      payment: `/e-commerce/account/payment`,
+      root: '/e-commerce/account',
+      personal: '/e-commerce/account/personal',
+      wishlist: '/e-commerce/account/wishlist',
+      vouchers: '/e-commerce/account/vouchers',
+      orders: '/e-commerce/account/orders',
+      payment: '/e-commerce/account/payment',
     },
   },
-  // Auth
-  loginCover: '/auth/login-cover',
-  loginBackground: '/auth/login-background',
-  loginIllustration: '/auth/login-illustration',
-  registerCover: '/auth/register-cover',
-  registerBackground: '/auth/register-background',
-  registerIllustration: '/auth/register-illustration',
-  resetPassword: '/auth/reset-password',
-  verifyCode: '/auth/verify-code',
   
   // Components
   components: {
@@ -49,6 +50,5 @@ export const paths = {
     player: '/components/player',
     textMaxLine: '/components/text-max-line',
   },
-  products:`/e-commerce/products`,
-  
+  products: `/e-commerce/products`,
 };

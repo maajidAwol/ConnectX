@@ -94,10 +94,10 @@ export default function EcommerceProductView() {
           <Grid xs={12} md={6} lg={5}>
             <EcommerceProductDetailsInfo
               name={currentProduct.name}
-              price={parseFloat(currentProduct.base_price)}
+              price={Number(currentProduct.base_price)}
               rating={currentProduct.total_ratings}
               review={currentProduct.total_reviews}
-              priceSale={currentProduct.selling_price || 0}
+              priceSale={Number(currentProduct.selling_price) || 0}
               caption={currentProduct.short_description}
               inStock={currentProduct.quantity}
               colors={currentProduct.colors}

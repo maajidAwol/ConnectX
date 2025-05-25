@@ -62,12 +62,15 @@ export default function EcommerceProductDetailsInfo({
 
   const handleAddToCart = () => {
     addItem({
-      id: name, // You might want to pass the actual product ID here
+      id: name,
       name,
       price,
       quantity,
-      cover_url: '', // You might want to pass the actual cover URL here
+      cover_url: '',
       color,
+      colors: [],
+      sizes: [],
+      category: '',
     });
   };
 

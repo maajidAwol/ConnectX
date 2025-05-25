@@ -42,16 +42,51 @@ interface AuthState {
   fetchTenantDetails: () => Promise<void>;
 }
 
+// Create a safe storage object that only works on the client side
+const storage = {
+  getItem: (name: string) => {
+    try {
+      if (typeof window === 'undefined') return null;
+      const value = localStorage.getItem(name);
+      return value ? JSON.parse(value) : null;
+    } catch (error) {
+      console.warn('Error reading from localStorage:', error);
+      return null;
+    }
+  },
+  setItem: (name: string, value: string) => {
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.setItem(name, value);
+    } catch (error) {
+      console.warn('Error writing to localStorage:', error);
+    }
+  },
+  removeItem: (name: string) => {
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.removeItem(name);
+    } catch (error) {
+      console.warn('Error removing from localStorage:', error);
+    }
+  },
+};
+
+// Create the store with initial state
+const initialState = {
+  user: null,
+  tenant: null,
+  accessToken: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isLoading: false,
+  error: null,
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user: null,
-      tenant: null,
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
+      ...initialState,
 
       register: async (name: string, email: string, password: string) => {
         try {
@@ -131,6 +166,7 @@ export const useAuthStore = create<AuthState>()(
           set({ tenant: tenantData });
         } catch (error) {
           // Silent fail for tenant details
+          console.warn('Failed to fetch tenant details:', error);
         }
       },
 
@@ -144,14 +180,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        set({
-          user: null,
-          tenant: null,
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-          error: null,
-        });
+        set(initialState);
       },
 
       clearError: () => {
@@ -160,7 +189,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => storage),
       partialize: (state) => ({
         user: state.user,
         tenant: state.tenant,
@@ -168,6 +197,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      skipHydration: true, // Skip hydration on initial load
     }
   )
 ); 

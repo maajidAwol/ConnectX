@@ -1,26 +1,27 @@
+import React from 'react';
 // next
 import Head from 'next/head';
 // layouts
 import MainLayout from 'src/layouts/main';
 // sections
-import { EcommerceOrderCompletedView } from 'src/sections/_e-commerce/view';
+import { EcommerceProductView } from 'src/sections/_e-commerce/view';
 
 // ----------------------------------------------------------------------
 
-EcommerceOrderCompletedPage.getLayout = (page: React.ReactElement) => (
+EcommerceProductPage.getLayout = (page: React.ReactElement) => (
   <MainLayout>{page}</MainLayout>
 );
 
 // ----------------------------------------------------------------------
 
-export default function EcommerceOrderCompletedPage() {
+export default function EcommerceProductPage() {
   return (
     <>
       <Head>
-        <title>Order Completed | ConnectX</title>
+        <title>Product | ConnectX</title>
       </Head>
 
-      <EcommerceOrderCompletedView />
+      <EcommerceProductView />
     </>
   );
-}
+} 
