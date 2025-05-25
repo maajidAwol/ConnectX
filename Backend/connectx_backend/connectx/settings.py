@@ -60,7 +60,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = os.environ.get(
@@ -107,6 +107,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "analytics.middleware.APIUsageLoggingMiddleware",
 ]
 
 ROOT_URLCONF = "connectx.urls"
@@ -261,3 +262,23 @@ LOGGING = {
 CHAPA_API_KEY = os.environ.get("CHAPA_API_KEY", "YOUR_TEST_API_KEY_HERE")
 CHAPA_API_URL = "https://api.chapa.co/v1/transaction/initialize"
 CHAPA_VERIFY_URL = "https://api.chapa.co/v1/transaction/verify/"
+
+
+
+# Trust the X-Forwarded-Proto header from GCP Load Balancer or reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Let Django trust forwarded host (e.g., for correct redirect and URL generation)
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = True
+
+
+IS_PRODUCTION = os.getenv('DJANGO_ENV') == 'production'
+
+if IS_PRODUCTION:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    SECURE_SSL_REDIRECT = True
+else:
+    # Disable HTTPS redirection in development
+    SECURE_SSL_REDIRECT = False

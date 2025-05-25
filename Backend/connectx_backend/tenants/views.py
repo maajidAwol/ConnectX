@@ -353,6 +353,7 @@ class TenantViewSet(viewsets.ModelViewSet):
             200: openapi.Response(description="List of tenants under review."),
             403: openapi.Response(description="Permission denied."),
         },
+        manual_parameters=[],  # <-- Remove filters from Swagger for this action
     )
     @action(detail=False, methods=["get"], url_path="pending-verifications")
     def pending_verifications(self, request):
@@ -365,9 +366,7 @@ class TenantViewSet(viewsets.ModelViewSet):
                 {"detail": "You do not have permission to perform this action."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        pending_tenants = Tenant.objects.filter(
-            tenant_verification_status="pending"
-        )
+        pending_tenants = Tenant.objects.filter(tenant_verification_status="pending")
         paginator = CustomPagination()
         paginated_tenants = paginator.paginate_queryset(pending_tenants, request)
         serializer = self.get_serializer(paginated_tenants, many=True)

@@ -18,6 +18,17 @@ class SignUpRedirectToLogin extends AuthState {
   SignUpRedirectToLogin({required this.email, required this.password});
 }
 
+class SignUpVerificationNeeded extends AuthState {
+  final String email;
+  final String message;
+
+  SignUpVerificationNeeded({
+    required this.email,
+    this.message =
+        'Please verify your email to continue. A verification link has been sent to your email.',
+  });
+}
+
 class AuthVerificationRequired extends AuthState {
   final String email;
   final String message;

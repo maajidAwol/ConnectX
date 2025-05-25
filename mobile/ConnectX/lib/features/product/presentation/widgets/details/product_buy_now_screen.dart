@@ -31,6 +31,44 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
   int selectedColorIndex = 0;
   int selectedSizeIndex = 0;
 
+  Color _getColorFromName(String colorName) {
+    // Adding a print statement for debugging
+    // print('Attempting to get color from name: "$colorName"');
+    switch (colorName.toLowerCase()) {
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'black':
+        return Colors.black;
+      case 'white':
+        // print('Matched "white", returning Colors.white');
+        return Colors.white;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'purple':
+        return Colors.purple;
+      case 'pink':
+        return Colors.pink;
+      case 'orange':
+        return Colors.orange;
+      case 'brown':
+        return Colors.brown;
+      case 'cyan':
+        return Colors.cyan;
+      case 'teal':
+        return Colors.teal;
+      default:
+        // print('Unrecognized color name: "$colorName", returning transparent');
+        return Colors.transparent;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -48,11 +86,13 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
   @override
   Widget build(BuildContext context) {
     List<String> sizes = widget.product.sizes;
-    List<Color> colors = widget.product.colors.isEmpty
-        ? []
-        : widget.product.colors
-            .map((e) => Color(int.parse(e.replaceAll('#', '0xff'))))
-            .toList();
+    List<Color> colors =
+        widget.product.colors.isEmpty
+            ? []
+            : widget.product.colors.map((name) {
+              // print('Mapping color name: "$name"'); // Debugging
+              return _getColorFromName(name);
+            }).toList();
 
     return Scaffold(
       bottomNavigationBar: CartButton(
@@ -64,7 +104,9 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
           print('Selected color: $selectedColor');
           print('Selected size: $selectedSize');
 
-          context.read<CartBloc>().add(AddToCart(CartItem(
+          context.read<CartBloc>().add(
+            AddToCart(
+              CartItem(
                 id: widget.product.id,
                 productId: widget.product.id,
                 name: widget.product.name,
@@ -74,7 +116,9 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                 color: selectedColor,
                 size: selectedSize,
                 address: '', // Default empty address for cart items
-              )));
+              ),
+            ),
+          );
           customModalBottomSheet(
             context,
             isDismissible: false,
@@ -86,7 +130,9 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: defaultPadding / 2, vertical: defaultPadding),
+              horizontal: defaultPadding / 2,
+              vertical: defaultPadding,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -113,7 +159,9 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: defaultPadding,
+                    ),
                     child: AspectRatio(
                       aspectRatio: 1.05,
                       child: NetworkImageWithLoader(widget.product.coverUrl),
@@ -228,10 +276,11 @@ class ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                   //   ),
                   // ),
                   const SliverToBoxAdapter(
-                      child: SizedBox(height: defaultPadding))
+                    child: SizedBox(height: defaultPadding),
+                  ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

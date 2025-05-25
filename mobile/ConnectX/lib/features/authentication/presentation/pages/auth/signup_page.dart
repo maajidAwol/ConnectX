@@ -46,6 +46,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 (route) => false,
               );
             });
+          } else if (state is SignUpVerificationNeeded) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+
+            Future.delayed(const Duration(seconds: 3), () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoginScreen(initialEmail: state.email),
+                ),
+                (route) => false,
+              );
+            });
           } else if (state is AuthError) {
             ScaffoldMessenger.of(
               context,
@@ -68,7 +85,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: SizedBox(
                     width: width * 0.6,
                     height: height * 0.16,
-                      child: Image.asset("assets/connectx/transparent_logo.png"),
+                    child: Image.asset("assets/connectx/transparent_logo.png"),
                   ),
                 ),
                 Padding(

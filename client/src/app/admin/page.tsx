@@ -1,12 +1,49 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowUpRight, BarChart3, CheckCircle, Clock, DollarSign, Users } from "lucide-react"
+import { ArrowUpRight, BarChart3, CheckCircle, Clock, DollarSign, Users, ShoppingCart } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { adminMetrics, systemMetrics, topMerchants, apiUsage, adminActivity } from "@/lib/data"
 import ProtectedRoute from "@/components/protected-route"
+import usePendingVerificationsStore from "@/store/usePendingVerificationsStore"
+import useAdminAnalyticsStore from "@/store/useAdminAnalyticsStore"
+import { useEffect } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
+import Image from "next/image"
 
 export default function AdminPage() {
+  const { pendingVerifications, isLoading: isVerificationsLoading, error, fetchPendingVerifications } = usePendingVerificationsStore()
+  const { 
+    overview,
+    recentActivities, 
+    topTenants, 
+    apiUsage: apiUsageData,
+    isLoading: { 
+      overview: isOverviewLoading,
+      activities: isActivitiesLoading, 
+      tenants: isTenantsLoading, 
+      api: isApiLoading 
+    },
+    error: { 
+      overview: overviewError,
+      activities: activitiesError, 
+      tenants: tenantsError, 
+      api: apiError 
+    },
+    fetchOverview,
+    fetchRecentActivities,
+    fetchTopTenants,
+    fetchApiUsage
+  } = useAdminAnalyticsStore()
+
+  useEffect(() => {
+    fetchPendingVerifications()
+    fetchOverview()
+    fetchRecentActivities()
+    fetchTopTenants()
+    fetchApiUsage()
+  }, [fetchPendingVerifications, fetchOverview, fetchRecentActivities, fetchTopTenants, fetchApiUsage])
+
   return (
     <ProtectedRoute requiredRole="admin">
       <div className="space-y-6">
@@ -22,8 +59,19 @@ export default function AdminPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{adminMetrics.totalMerchants.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+12% from last month</p>
+              {isOverviewLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-[120px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                </div>
+              ) : overviewError ? (
+                <div className="text-red-500">{overviewError}</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{overview?.total_merchants.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">Active merchants on platform</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -33,35 +81,68 @@ export default function AdminPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${adminMetrics.totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+8.2% from last month</p>
+              {isOverviewLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-[120px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                </div>
+              ) : overviewError ? (
+                <div className="text-red-500">{overviewError}</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{Number(overview?.total_revenue).toLocaleString()} ETB</div>
+                  <p className="text-xs text-muted-foreground">Total platform revenue</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Developers</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{adminMetrics.activeDevelopers}</div>
-              <p className="text-xs text-muted-foreground">+18% from last month</p>
+              {isOverviewLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-[120px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                </div>
+              ) : overviewError ? (
+                <div className="text-red-500">{overviewError}</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{overview?.total_orders.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">Total orders processed</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">System Health</CardTitle>
+              <CardTitle className="text-sm font-medium">Active Tenants</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{adminMetrics.systemHealth}%</div>
-              <p className="text-xs text-muted-foreground">Uptime last 30 days</p>
+              {isOverviewLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-[120px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                </div>
+              ) : overviewError ? (
+                <div className="text-red-500">{overviewError}</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{overview?.active_tenants.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">Currently active tenants</p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid gap-4">
           <Card className="lg:col-span-4">
             <CardHeader>
               <CardTitle>Merchant Approval Queue</CardTitle>
@@ -69,56 +150,42 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {/* In a real app, this would be fetched from an API */}
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                    <div className="space-y-1">
-                      <p className="font-medium">Acme E-Commerce {i}</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="mr-1 h-3 w-3" />
-                        <span>
-                          Submitted {i} day{i !== 1 ? "s" : ""} ago
-                        </span>
+                {isVerificationsLoading ? (
+                  // Loading skeleton
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-3 w-[150px]" />
+                      </div>
+                      <Skeleton className="h-8 w-[80px]" />
+                    </div>
+                  ))
+                ) : error ? (
+                  <div className="text-red-500">{error}</div>
+                ) : (
+                  pendingVerifications.map((merchant) => (
+                    <div key={merchant.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-1">
+                        <p className="font-medium">{merchant.name}</p>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Clock className="mr-1 h-3 w-3" />
+                          <span>
+                            Submitted {new Date(merchant.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Link 
+                          href={`/admin/merchants/${merchant.id}`} 
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+                        >
+                          Review
+                        </Link>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Link href="#" className="text-sm font-medium text-blue-600 hover:underline">
-                        Review
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>System Metrics</CardTitle>
-              <CardDescription>Performance and health indicators</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {systemMetrics.map((metric, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{metric.name}</span>
-                      <span className="font-medium">{metric.value}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-100">
-                      <div
-                        className={`h-full rounded-full ${
-                          metric.percentage < 30
-                            ? "bg-green-500"
-                            : metric.percentage < 70
-                              ? "bg-blue-500"
-                              : "bg-yellow-500"
-                        }`}
-                        style={{ width: `${metric.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -137,17 +204,47 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {adminActivity.map((item, i) => (
-                  <div key={i} className="flex items-start gap-4 border-b pb-4 last:border-0 last:pb-0">
-                    <div className="rounded-full bg-blue-100 p-2">
-                      <Clock className="h-4 w-4 text-blue-600" />
+                {isActivitiesLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-start gap-4 border-b pb-4 last:border-0 last:pb-0">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-3 w-[150px]" />
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{item.title}</p>
-                      <p className="text-sm text-muted-foreground">{item.time}</p>
+                  ))
+                ) : activitiesError ? (
+                  <div className="text-red-500">{activitiesError}</div>
+                ) : (
+                  recentActivities.map((activity, i) => (
+                    <div key={i} className="flex items-start gap-4 border-b pb-4 last:border-0 last:pb-0">
+                      <div className="relative h-8 w-8 rounded-full overflow-hidden">
+                        {activity.user ? (
+                          <Image
+                            src={activity.user.avatar_url || "/placeholder.svg"}
+                            alt={activity.user.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{activity.action}</p>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Clock className="mr-1 h-3 w-3" />
+                          <span>
+                            {new Date(activity.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -164,15 +261,31 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topMerchants.map((merchant, i) => (
-                  <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                    <div>
-                      <p className="font-medium">{merchant.name}</p>
-                      <p className="text-sm text-muted-foreground">{merchant.volume}</p>
+                {isTenantsLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[150px]" />
+                        <Skeleton className="h-3 w-[100px]" />
+                      </div>
+                      <Skeleton className="h-4 w-[80px]" />
                     </div>
-                    <span className="text-sm font-medium text-green-600">{merchant.growth}</span>
-                  </div>
-                ))}
+                  ))
+                ) : tenantsError ? (
+                  <div className="text-red-500">{tenantsError}</div>
+                ) : (
+                  topTenants.map((tenant, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div>
+                        <p className="font-medium">{tenant.tenant_name}</p>
+                        <p className="text-sm text-muted-foreground">{tenant.total_orders} orders</p>
+                      </div>
+                      <span className="text-sm font-medium text-green-600">
+                        {Number(tenant.total_revenue).toLocaleString()} ETB
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -189,15 +302,31 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {apiUsage.map((api, i) => (
-                  <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                    <div>
-                      <p className="font-medium">{api.endpoint}</p>
-                      <p className="text-sm text-muted-foreground">{api.requests} requests</p>
+                {isApiLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-3 w-[150px]" />
+                      </div>
+                      <Skeleton className="h-4 w-[80px]" />
                     </div>
-                    <span className="text-sm font-medium text-green-600">{api.change}</span>
-                  </div>
-                ))}
+                  ))
+                ) : apiError ? (
+                  <div className="text-red-500">{apiError}</div>
+                ) : (
+                  apiUsageData.map((api, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div>
+                        <p className="font-medium">{api.endpoint}</p>
+                        <p className="text-sm text-muted-foreground">{api.total_calls} requests</p>
+                      </div>
+                      <span className="text-sm font-medium text-green-600">
+                        {api.success_rate.toFixed(1)}% success
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

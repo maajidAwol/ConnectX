@@ -1,85 +1,174 @@
-
 class MyOrdersModel {
-  final String status;
+  final int count;
+  final String? next;
+  final String? previous;
   final List<OrderItemModel> orders;
-  final PaginationModel pagination;
 
   MyOrdersModel({
-    required this.status,
+    required this.count,
+    this.next,
+    this.previous,
     required this.orders,
-    required this.pagination,
   });
 
   factory MyOrdersModel.fromJson(Map<String, dynamic> json) {
     return MyOrdersModel(
-      status: json['status'],
-      orders: (json['orders'] as List)
-          .map((order) => OrderItemModel.fromJson(order))
-          .toList(),
-      pagination: PaginationModel.fromJson(json['pagination']),
+      count: json['count'] ?? 0,
+      next: json['next'],
+      previous: json['previous'],
+      orders:
+          (json['results'] as List? ?? [])
+              .map((order) => OrderItemModel.fromJson(order))
+              .toList(),
     );
   }
 }
 
 class OrderItemModel {
-  final int id;
-  final double taxes;
+  final String id;
+  final String orderNumber;
+  final String sellerTenantId;
+  final String sellerTenantName;
   final String status;
+  final double totalAmount;
+  final String createdAt;
+  final int itemsCount;
+  final int totalQuantity;
+  final FirstItemModel firstItem;
+  final PaymentStatusModel paymentStatus;
+
+  // We'll keep these for backward compatibility, but they might be populated with dummy data
+  final double taxes;
   final double shipping;
   final double discount;
   final double subtotal;
-  final String orderNumber;
-  final double totalAmount;
-  final int totalQuantity;
-  final String createdAt;
   final CustomerModel customer;
   final List<OrderProductModel> items;
   final ShippingAddressModel shippingAddress;
-  final PaymentModel? payment;
   final DeliveryModel delivery;
   final OrderHistoryModel history;
 
   OrderItemModel({
     required this.id,
-    required this.taxes,
-    required this.status,
-    required this.shipping,
-    required this.discount,
-    required this.subtotal,
     required this.orderNumber,
+    required this.sellerTenantId,
+    required this.sellerTenantName,
+    required this.status,
     required this.totalAmount,
-    required this.totalQuantity,
     required this.createdAt,
+    required this.itemsCount,
+    required this.totalQuantity,
+    required this.firstItem,
+    required this.paymentStatus,
+    // Backward compatibility fields
+    this.taxes = 0.0,
+    this.shipping = 0.0,
+    this.discount = 0.0,
+    this.subtotal = 0.0,
     required this.customer,
     required this.items,
     required this.shippingAddress,
-    this.payment,
     required this.delivery,
     required this.history,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    // Create simple mock data for backward compatibility
+    final mockCustomer = CustomerModel(
+      id: 1,
+      name: "Customer",
+      email: json['email'] ?? 'customer@example.com',
+      ipAddress: '',
+    );
+
+    final mockShippingAddress = ShippingAddressModel(
+      id: 1,
+      fullAddress: "Shipping Address",
+      phoneNumber: "",
+    );
+
+    final mockDelivery = DeliveryModel(
+      shipBy: "",
+      speedy: "",
+      trackingNumber: "",
+    );
+
+    final mockHistory = OrderHistoryModel(
+      id: 1,
+      timeline: [
+        TimelineModel(
+          time: json['created_at'] ?? DateTime.now().toString(),
+          title: "Order Placed",
+        ),
+      ],
+    );
+
+    // Mock items from the first item
+    final firstItemData = json['first_item'] ?? {};
+    final mockItems = [
+      OrderProductModel(
+        id: 1,
+        sku: "",
+        name: firstItemData['product_name'] ?? "Product",
+        price: 0.0,
+        coverUrl: firstItemData['cover_url'] ?? "",
+        quantity: json['total_quantity'] ?? 1,
+      ),
+    ];
+
     return OrderItemModel(
-      id: json['id'],
-      taxes: json['taxes']?.toDouble() ?? 0.0,
-      status: json['status'],
-      shipping: json['shipping']?.toDouble() ?? 0.0,
-      discount: json['discount']?.toDouble() ?? 0.0,
-      subtotal: json['subtotal']?.toDouble() ?? 0.0,
-      orderNumber: json['orderNumber'],
-      totalAmount: json['totalAmount']?.toDouble() ?? 0.0,
-      totalQuantity: json['totalQuantity'],
-      createdAt: json['createdAt'],
-      customer: CustomerModel.fromJson(json['customer']),
-      items: (json['items'] as List)
-          .map((item) => OrderProductModel.fromJson(item))
-          .toList(),
-      shippingAddress: ShippingAddressModel.fromJson(json['shippingAddress']),
-      payment: json['payment'] != null
-          ? PaymentModel.fromJson(json['payment'])
-          : null,
-      delivery: DeliveryModel.fromJson(json['delivery']),
-      history: OrderHistoryModel.fromJson(json['history']),
+      id: json['id'] ?? '',
+      orderNumber: json['order_number'] ?? '',
+      sellerTenantId: json['seller_tenant_id'] ?? '',
+      sellerTenantName: json['seller_tenant_name'] ?? '',
+      status: json['status'] ?? '',
+      totalAmount:
+          double.tryParse(json['total_amount']?.toString() ?? '0.0') ?? 0.0,
+      createdAt: json['created_at'] ?? '',
+      itemsCount: json['items_count'] ?? 0,
+      totalQuantity: json['total_quantity'] ?? 0,
+      firstItem: FirstItemModel.fromJson(json['first_item'] ?? {}),
+      paymentStatus: PaymentStatusModel.fromJson(json['payment_status'] ?? {}),
+      // Backward compatibility fields
+      customer: mockCustomer,
+      items: mockItems,
+      shippingAddress: mockShippingAddress,
+      delivery: mockDelivery,
+      history: mockHistory,
+    );
+  }
+}
+
+class FirstItemModel {
+  final String productName;
+  final String productId;
+  final String coverUrl;
+
+  FirstItemModel({
+    required this.productName,
+    required this.productId,
+    required this.coverUrl,
+  });
+
+  factory FirstItemModel.fromJson(Map<String, dynamic> json) {
+    return FirstItemModel(
+      productName: json['product_name'] ?? '',
+      productId: json['product_id'] ?? '',
+      coverUrl: json['cover_url'] ?? '',
+    );
+  }
+}
+
+class PaymentStatusModel {
+  final String displayStatus;
+  final String? method;
+
+  PaymentStatusModel({required this.displayStatus, this.method});
+
+  factory PaymentStatusModel.fromJson(Map<String, dynamic> json) {
+    return PaymentStatusModel(
+      displayStatus: json['display_status'] ?? 'Unknown',
+      method: json['method'],
     );
   }
 }
@@ -159,15 +248,6 @@ class ShippingAddressModel {
   }
 }
 
-class PaymentModel {
-  // Add payment-related fields when available
-  PaymentModel();
-
-  factory PaymentModel.fromJson(Map<String, dynamic> json) {
-    return PaymentModel();
-  }
-}
-
 class DeliveryModel {
   final String shipBy;
   final String speedy;
@@ -209,9 +289,10 @@ class OrderHistoryModel {
       paymentTime: json['paymentTime'],
       deliveryTime: json['deliveryTime'],
       completionTime: json['completionTime'],
-      timeline: (json['timeline'] as List)
-          .map((item) => TimelineModel.fromJson(item))
-          .toList(),
+      timeline:
+          ((json['timeline'] as List?) ?? [])
+              .map((item) => TimelineModel.fromJson(item))
+              .toList(),
     );
   }
 }
@@ -221,40 +302,13 @@ class TimelineModel {
   final String title;
   final String? endTime;
 
-  TimelineModel({
-    required this.time,
-    required this.title,
-    this.endTime,
-  });
+  TimelineModel({required this.time, required this.title, this.endTime});
 
   factory TimelineModel.fromJson(Map<String, dynamic> json) {
     return TimelineModel(
       time: json['time'],
       title: json['title'],
       endTime: json['end_time'],
-    );
-  }
-}
-
-class PaginationModel {
-  final int total;
-  final int perPage;
-  final int currentPage;
-  final int lastPage;
-
-  PaginationModel({
-    required this.total,
-    required this.perPage,
-    required this.currentPage,
-    required this.lastPage,
-  });
-
-  factory PaginationModel.fromJson(Map<String, dynamic> json) {
-    return PaginationModel(
-      total: json['total'],
-      perPage: json['per_page'],
-      currentPage: json['current_page'],
-      lastPage: json['last_page'],
     );
   }
 }

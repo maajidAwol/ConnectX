@@ -19,7 +19,6 @@ import type { Category } from "@/store/useCategoryStore"
 interface ProductBasicInfoTabProps {
   formData: {
     name: string
-    sku: string
     description: string
     short_description: string
     category_id: string
@@ -28,10 +27,8 @@ interface ProductBasicInfoTabProps {
   }
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
   handleArrayFieldChange: (field: string, value: string) => void
-  generateSKU: () => void
   errors: {
     name?: string
-    sku?: string
     category_id?: string
     description?: string
   }
@@ -66,7 +63,6 @@ export function ProductBasicInfoTab({
   formData, 
   handleInputChange, 
   handleArrayFieldChange, 
-  generateSKU, 
   errors,
   categories,
   isCategoriesLoading 
@@ -109,55 +105,32 @@ export function ProductBasicInfoTab({
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="sku">SKU (Stock Keeping Unit)*</Label>
-            <div className="flex gap-2">
-              <Input
-                id="sku"
-                name="sku"
-                value={formData.sku}
-                onChange={handleInputChange}
-                placeholder="SKU-0000"
-                required
-                data-error={!!errors.sku}
-                className={errors.sku ? "border-red-500" : ""}
-              />
-              <Button type="button" onClick={generateSKU} className="bg-blue-600 hover:bg-blue-700">
-                Generate
-              </Button>
-            </div>
-            {errors.sku && (
-              <p className="text-sm text-red-500">{errors.sku}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="category_id">Category*</Label>
-            <Select
-              name="category_id"
-              value={formData.category_id}
-              onValueChange={(value) => {
-                const e = { target: { name: "category_id", value } } as React.ChangeEvent<HTMLSelectElement>
-                handleInputChange(e)
-              }}
-              required
-              disabled={isCategoriesLoading}
-            >
-              <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
-                <SelectValue placeholder={isCategoriesLoading ? "Loading categories..." : "Select category"} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.category_id && (
-              <p className="text-sm text-red-500">{errors.category_id}</p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="category_id">Category*</Label>
+          <Select
+            name="category_id"
+            value={formData.category_id}
+            onValueChange={(value) => {
+              const e = { target: { name: "category_id", value } } as React.ChangeEvent<HTMLSelectElement>
+              handleInputChange(e)
+            }}
+            required
+            disabled={isCategoriesLoading}
+          >
+            <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
+              <SelectValue placeholder={isCategoriesLoading ? "Loading categories..." : "Select category"} />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.category_id && (
+            <p className="text-sm text-red-500">{errors.category_id}</p>
+          )}
         </div>
 
         <div className="space-y-2">

@@ -27,19 +27,22 @@ class SecondaryProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return OutlinedButton(
       onPressed: () {},
-      style: style ??
+      style:
+          style ??
           OutlinedButton.styleFrom(
-              minimumSize: const Size(256, 114),
-              maximumSize: const Size(256, 114),
-              padding: const EdgeInsets.all(8)),
+            minimumSize: const Size(256, 114),
+            maximumSize: const Size(256, 130),
+            padding: const EdgeInsets.all(6),
+          ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AspectRatio(
             aspectRatio: 1.15,
             child: Stack(
               children: [
                 Container(
-                   decoration: BoxDecoration(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(defaultBorderRadious),
                     boxShadow: [
                       BoxShadow(
@@ -49,8 +52,10 @@ class SecondaryProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: NetworkImageWithLoader(image,
-                      radius: defaultBorderRadious),
+                  child: NetworkImageWithLoader(
+                    image,
+                    radius: defaultBorderRadious,
+                  ),
                 ),
                 if (dicountpercent != null)
                   Positioned(
@@ -58,83 +63,79 @@ class SecondaryProductCard extends StatelessWidget {
                     top: defaultPadding / 2,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: defaultPadding / 2),
+                        horizontal: defaultPadding / 2,
+                      ),
                       height: 16,
                       decoration: const BoxDecoration(
                         color: errorColor,
                         borderRadius: BorderRadius.all(
-                            Radius.circular(defaultBorderRadious)),
+                          Radius.circular(defaultBorderRadious),
+                        ),
                       ),
                       child: Text(
                         "$dicountpercent% off",
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500),
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  )
+                  ),
               ],
             ),
           ),
           const SizedBox(width: defaultPadding / 4),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(defaultPadding / 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     brandName.toUpperCase(),
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium!
-                        .copyWith(fontSize: 10),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium!.copyWith(fontSize: 9),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: defaultPadding / 2),
+                  const SizedBox(height: 3),
                   Text(
                     title,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall!
-                        .copyWith(fontSize: 12),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleSmall!.copyWith(fontSize: 11),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 3),
                   priceAfetDiscount != null
                       ? Row(
-                          children: [
-                            Text(
+                        children: [
+                          Flexible(
+                            child: Text(
                               "$priceAfetDiscount Birr",
                               style: const TextStyle(
                                 color: Color(0xFF31B0D8),
                                 fontWeight: FontWeight.w500,
-                                fontSize: 12,
+                                fontSize: 11,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: defaultPadding / 4),
-                            // Text(
-                            //   "${price} Birr",
-                            //   style: TextStyle(
-                            //     color: Theme.of(context)
-                            //         .textTheme
-                            //         .bodyMedium!
-                            //         .color,
-                            //     fontSize: 10,
-                            //     decoration: TextDecoration.lineThrough,
-                            //   ),
-                            // ),
-                          ],
-                        )
-                      : Text(
-                          "$price Birr",
-                          style: const TextStyle(
-                            color: Color(0xFF31B0D8),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
                           ),
+                        ],
+                      )
+                      : Text(
+                        "$price Birr",
+                        style: const TextStyle(
+                          color: Color(0xFF31B0D8),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                 ],
               ),
             ),
