@@ -21,7 +21,17 @@ type Props = {
   name: string;
   price: number;
   rating: number;
-  review: number;
+  review: {
+    total_reviews: number;
+    average_rating: number;
+    rating_distribution: {
+      '1': number;
+      '2': number;
+      '3': number;
+      '4': number;
+      '5': number;
+    };
+  };
   priceSale: number;
   caption: string;
   inStock: number;
@@ -84,10 +94,10 @@ export default function EcommerceProductDetailsInfo({
         <Typography variant="h4"> {name} </Typography>
 
         <Stack spacing={0.5} direction="row" alignItems="center">
-          <Rating size="small" value={rating} readOnly precision={0.5} />
+          <Rating size="small" value={review.average_rating} readOnly precision={0.5} />
 
           <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-            ({review} reviews)
+            ({review.total_reviews} reviews)
           </Typography>
         </Stack>
       </Stack>

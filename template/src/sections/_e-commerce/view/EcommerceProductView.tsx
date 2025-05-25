@@ -95,8 +95,8 @@ export default function EcommerceProductView() {
             <EcommerceProductDetailsInfo
               name={currentProduct.name}
               price={Number(currentProduct.base_price)}
-              rating={currentProduct.total_ratings}
-              review={currentProduct.total_reviews}
+              rating={currentProduct.review.average_rating}
+              review={currentProduct.review}
               priceSale={Number(currentProduct.selling_price) || 0}
               caption={currentProduct.short_description}
               inStock={currentProduct.quantity}

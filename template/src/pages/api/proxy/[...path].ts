@@ -80,15 +80,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
 
   try {
-    const { path } = req.query;
+    const { path, ...queryParams } = req.query;
     const pathString = Array.isArray(path) ? path.join('/') : path || '';
 
     // Construct the full URL, ensuring we don't have double slashes
     const baseUrl = API_URL_SAFE.endsWith('/') ? API_URL_SAFE.slice(0, -1) : API_URL_SAFE;
     const cleanPath = pathString.startsWith('/') ? pathString : `/${pathString}`;
-    // Ensure the path ends with a trailing slash for Django
-    const pathWithSlash = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
-    const url = `${baseUrl}${pathWithSlash}`;
+    
+    // Convert query parameters to URLSearchParams and clean any trailing slashes
+    const searchParams = new URLSearchParams();
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(v => searchParams.append(key, v.replace(/\/$/, '')));
+      } else if (value) {
+        searchParams.append(key, value.toString().replace(/\/$/, ''));
+      }
+    });
+
+    // Construct URL without adding extra slash
+    const url = `${baseUrl}${cleanPath}?${searchParams.toString()}`;
+
+
 
     // Prepare headers
     const headers: HeadersInit = {

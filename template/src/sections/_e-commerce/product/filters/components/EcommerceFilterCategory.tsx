@@ -5,10 +5,17 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
+interface Category {
+  id: string;
+  name: string;
+  icon: string | null;
+  description: string;
+}
+
 interface Props extends StackProps {
-  options: string[];
+  options: Category[];
   filterCategories: string;
-  onChangeCategories: (name: string) => void;
+  onChangeCategories: (categoryId: string) => void;
 }
 
 export default function EcommerceFilterCategory({
@@ -19,22 +26,25 @@ export default function EcommerceFilterCategory({
 }: Props) {
   return (
     <Stack spacing={1} alignItems="flex-start" {...other}>
-      {options.map((option, index) => (
+      {options.map((category) => (
         <Stack
-          key={`${option}-${index}`}
+          key={category.id}
           direction="row"
           alignItems="center"
-          onClick={() => onChangeCategories(option)}
+          onClick={(e) => {
+            e.preventDefault();
+            onChangeCategories(category.id);
+          }}
           sx={{
             typography: 'body2',
             cursor: 'pointer',
-            ...(filterCategories === option && {
+            ...(filterCategories === category.id && {
               fontWeight: 'fontWeightBold',
             }),
           }}
         >
           <Iconify icon="carbon:chevron-right" width={12} sx={{ mr: 1 }} />
-          {option}
+          {category.name}
         </Stack>
       ))}
     </Stack>

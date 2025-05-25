@@ -46,6 +46,12 @@ const defaultValues = {
 interface Category {
   id: string;
   name: string;
+  icon: string | null;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  tenant: string;
+  parent: string | null;
 }
 
 type Props = {
@@ -66,9 +72,8 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
       ? selectedItems.filter((value) => value !== item)
       : [...selectedItems, item];
 
-  const handleChangeCategories = (name: string) => {
-    const selectedCategory = categories.find(cat => cat.name === name);
-    onSelectCategory(selectedCategory?.id || null);
+  const handleChangeCategories = (categoryId: string) => {
+    onSelectCategory(categoryId);
   };
 
   const handleChangeBrand = (name: string) => {
@@ -143,7 +148,7 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
         <EcommerceFilterCategory
           filterCategories={selectedCategoryId || ''}
           onChangeCategories={handleChangeCategories}
-          options={categories.map(cat => cat.name)}
+          options={categories}
           sx={{ mt: 2 }}
         />
       </Block>
@@ -157,14 +162,14 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
         />
       </Block>
 
-      <Block title="Price">
+      {/* <Block title="Price">
         <EcommerceFilterPrice
           filterPrice={filters.filterPrice}
           onChangeStartPrice={handleChangeStartPrice}
           onChangeEndPrice={handleChangeEndPrice}
           sx={{ mt: 2 }}
         />
-      </Block>
+      </Block> */}
 
       <Block title="Shipping">
         <EcommerceFilterShipping

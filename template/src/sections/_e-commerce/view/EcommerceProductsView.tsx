@@ -59,7 +59,7 @@ export default function EcommerceProductsView() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const router = useRouter();
 
-  const { products, loading, error, fetchProducts } = useProductStore();
+  const { products, loading, error, fetchProducts, categories } = useProductStore();
 
   // Add a separate effect for initial load
   useEffect(() => {
@@ -121,34 +121,9 @@ export default function EcommerceProductsView() {
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{ mb: 5 }}
+          sx={{ mb: 3 }}
         >
-          <Stack direction="row" spacing={1} flexShrink={0}>
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={handleChangeViewMode}
-              aria-label="view mode"
-            >
-              <ToggleButton value="grid" aria-label="grid view">
-                <Iconify icon="carbon:grid-view" />
-              </ToggleButton>
-              <ToggleButton value="list" aria-label="list view">
-                <Iconify icon="carbon:list" />
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Stack>
-
           <Stack direction="row" spacing={2} alignItems="center">
-            <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
-              <Select value={sort} onChange={handleChangeSort}>
-                <MenuItem value="latest">Latest</MenuItem>
-                <MenuItem value="price-asc">Price: Low to High</MenuItem>
-                <MenuItem value="price-desc">Price: High to Low</MenuItem>
-                <MenuItem value="rating">Top Rated</MenuItem>
-              </Select>
-            </FormControl>
-
             <Button
               color="inherit"
               variant="outlined"
@@ -168,6 +143,7 @@ export default function EcommerceProductsView() {
               onMobileClose={handleMobileClose}
               onSelectCategory={handleCategorySelect}
               selectedCategoryId={selectedCategoryId}
+              categories={categories}
             />
           </Grid>
 
@@ -175,7 +151,12 @@ export default function EcommerceProductsView() {
             <EcommerceProductList
               loading={loading}
               viewMode={viewMode}
-              products={products}
+              products={products.map(product => ({
+                ...product,
+                total_ratings: product.review?.total_reviews || 0,
+                total_reviews: product.review?.total_reviews || 0,
+                selling_price: product.selling_price ? parseFloat(product.selling_price) : null
+              }))}
             />
           </Grid>
         </Grid>
