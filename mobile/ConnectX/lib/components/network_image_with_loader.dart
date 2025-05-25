@@ -28,8 +28,8 @@ class NetworkImageWithLoader extends StatelessWidget {
     if (url.startsWith('file:///')) return false;
     if (url.contains('example.com')) return false;
 
-    // Filter potentially problematic URLs (from the error messages)
-    if (url.contains('t4.ftcdn.net')) return false;
+    // Remove the problematic filtering of t4.ftcdn.net - it's a valid image host
+    // if (url.contains('t4.ftcdn.net')) return false;
 
     try {
       final uri = Uri.parse(url);
@@ -46,10 +46,7 @@ class NetworkImageWithLoader extends StatelessWidget {
         borderRadius: BorderRadius.all(Radius.circular(radius)),
       ),
       child: Center(
-        child: Icon(
-          Icons.image_not_supported_outlined,
-          color: Colors.grey[400],
-        ),
+        child: Icon(Icons.category_outlined, color: Colors.grey[400], size: 20),
       ),
     );
   }
@@ -75,7 +72,10 @@ class NetworkImageWithLoader extends StatelessWidget {
                 ),
               ),
           placeholder: (context, url) => const Skeleton(),
-          errorWidget: (context, url, error) => _buildPlaceholder(),
+          errorWidget: (context, url, error) {
+            debugPrint("Failed to load image: $url, Error: $error");
+            return _buildPlaceholder();
+          },
         ),
       );
     } catch (e) {

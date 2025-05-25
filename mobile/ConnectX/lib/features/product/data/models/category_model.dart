@@ -26,7 +26,10 @@ class CategoryModel extends Category {
       description: json['description'] as String? ?? '',
       coverImg: json['icon'] as String?,
       isActive: true, // Default as API doesn't have isActive field
-      children: null, // No children in current API response
+      children:
+          <
+            CategoryModel
+          >[], // Always initialize as empty list since API doesn't provide children
       createdAt:
           json['created_at'] != null
               ? DateTime.parse(json['created_at'].toString())

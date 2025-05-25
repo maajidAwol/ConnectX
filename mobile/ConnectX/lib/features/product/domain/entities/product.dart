@@ -1,4 +1,5 @@
 import 'product_entities.dart';
+import 'review.dart' as review_entities;
 
 class Product {
   final String id;
@@ -31,6 +32,7 @@ class Product {
   final SaleLabel saleLabel;
   final DateTime createdAt;
   final Brand brand;
+  final review_entities.ReviewSummary? reviewSummary;
 
   Product({
     required this.id,
@@ -63,6 +65,7 @@ class Product {
     required this.saleLabel,
     required this.createdAt,
     required this.brand,
+    this.reviewSummary,
   });
 
   bool get isFeatured => true;
