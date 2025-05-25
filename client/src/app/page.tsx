@@ -76,7 +76,7 @@ export default function Home() {
                         <div className="h-3 w-3 rounded-full bg-yellow-500" />
                         <div className="h-3 w-3 rounded-full bg-green-500" />
                       </div>
-                      <div className="text-xs text-muted-foreground">dashboard.connectx.com</div>
+                      <div className="text-xs text-muted-foreground">https://connect-x-peach.vercel.app/merchant</div>
                     </div>
                     <div className="space-y-4">
                       <div className="rounded-lg bg-muted p-4">
@@ -171,9 +171,9 @@ export default function Home() {
                 <div className="mb-4 text-[#02569B]">
                   <Package className="h-10 w-10" />
                 </div>
-                <h3 className="mb-2 text-xl font-bold">Inventory Management</h3>
+                <h3 className="mb-2 text-xl font-bold">Stock Management</h3>
                 <p className="text-sm text-muted-foreground">
-                  Efficiently track and manage your product inventory with real-time updates and alerts.
+                  Efficiently track and manage your product stock with real-time updates and alerts.
                 </p>
                 <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-emerald-400 to-green-500 transition-all duration-300 group-hover:w-full"></div>
               </div>
@@ -207,9 +207,9 @@ export default function Home() {
                 <div className="mb-4 text-[#02569B]">
                   <Users className="h-10 w-10" />
                 </div>
-                <h3 className="mb-2 text-xl font-bold">Dual Product Listings</h3>
+                <h3 className="mb-2 text-xl font-bold">Dual Product Addition</h3>
                 <p className="text-sm text-muted-foreground">
-                  List products as private or public, fostering a collaborative marketplace ecosystem.
+                  Add products as private or public, fostering a collaborative marketplace ecosystem and list them on your storefront.
                 </p>
                 <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-emerald-400 to-green-500 transition-all duration-300 group-hover:w-full"></div>
               </div>
@@ -256,7 +256,7 @@ export default function Home() {
                 </div>
                 <pre className="overflow-x-auto text-sm text-zinc-300">
                   <code>{`// Example: Creating a new product
-fetch('https://api.connectx.com/products', {
+fetch('https://connectx-backend-295168525338.europe-west1.run.app/api/products', {
 method: 'POST',
 headers: {
   'Content-Type': 'application/json',
@@ -272,7 +272,8 @@ body: JSON.stringify({
 })
 .then(response => response.json())
 .then(data => console.log(data))
-.catch(error => console.error('Error:', error));`}</code>
+.catch(error => console.error('Error:', error));`}
+                  </code>
                 </pre>
               </div>
             </div>
