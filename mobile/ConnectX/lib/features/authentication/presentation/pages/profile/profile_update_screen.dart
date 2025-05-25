@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/authentication/presentation/state/profile/bloc/profile_bloc.dart';
+import 'package:korecha/components/custom_modal_bottom_sheet.dart';
 
 class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});
@@ -49,25 +51,9 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   }
 
   Future<bool> _requestStoragePermission() async {
-    Permission permission;
-    if (Platform.isAndroid) {
-      // For Android 13+ (API 33+), use photos permission
-      if (await Permission.photos.isGranted) {
-        return true;
-      }
-      permission = Permission.photos;
-      final status = await permission.request();
-      if (status.isGranted) return true;
-
-      // Fallback to storage permission for older Android versions
-      permission = Permission.storage;
-    } else {
-      // For iOS, use photos permission
-      permission = Permission.photos;
-    }
-
-    final status = await permission.request();
-    return status.isGranted;
+    // Simple approach like camera permission
+    final permission = await Permission.photos.request();
+    return permission.isGranted;
   }
 
   void _showPermissionDialog({
@@ -79,6 +65,9 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(defaultBorderRadious),
+            ),
             title: Text(title),
             content: Text(message),
             actions: [
@@ -86,12 +75,12 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Cancel'),
               ),
-              TextButton(
+              ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
                   onSettingsPressed();
                 },
-                child: const Text('Settings'),
+                child: const Text('Open Settings'),
               ),
             ],
           ),
@@ -109,10 +98,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
 
       if (!hasPermission) {
         _showPermissionDialog(
-          title: 'Storage Permission Required',
-          message:
-              'Please allow access to your photos to select an image. '
-              'You can enable this in your device settings.',
+          title: 'Photos Permission Required',
+          message: 'Please allow access to photos to select an image.',
           onSettingsPressed: _openAppSettings,
         );
         return;
@@ -143,9 +130,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       if (!hasPermission) {
         _showPermissionDialog(
           title: 'Camera Permission Required',
-          message:
-              'Please allow camera access to take photos. '
-              'You can enable this in your device settings.',
+          message: 'Please allow camera access to take photos.',
           onSettingsPressed: _openAppSettings,
         );
         return;
@@ -183,104 +168,165 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       SnackBar(
         content: Text(errorMessage),
         action: SnackBarAction(label: 'Settings', onPressed: _openAppSettings),
+        backgroundColor: errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(defaultBorderRadious),
+        ),
       ),
     );
   }
 
   void _showImageSourceActionSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (context) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: defaultPadding),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(defaultPadding),
-                    child: Text(
-                      'Select Profile Photo',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.photo_library,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    title: const Text('Choose from Gallery'),
-                    subtitle: const Text('Select an existing photo'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage();
-                    },
-                  ),
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.camera_alt, color: Colors.green),
-                    ),
-                    title: const Text('Take Photo'),
-                    subtitle: const Text('Use your camera'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _takePhoto();
-                    },
-                  ),
-                  if (_avatarFile != null || _currentAvatarUrl != null)
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.delete, color: Colors.red),
-                      ),
-                      title: const Text(
-                        'Remove Photo',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                      subtitle: const Text('Delete current photo'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        setState(() {
-                          _avatarFile = null;
-                          _currentAvatarUrl = null;
-                        });
-                      },
-                    ),
-                  const SizedBox(height: defaultPadding),
-                ],
+    customModalBottomSheet(
+      context,
+      height: MediaQuery.of(context).size.height * 0.32,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: defaultPadding,
+          vertical: defaultPadding / 2,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: defaultPadding / 2),
+                decoration: BoxDecoration(
+                  color: greyColor.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
+            Text(
+              'Select Profile Photo',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: defaultPadding / 2),
+
+            _buildImageSourceOption(
+              icon: "assets/icons/Image.svg",
+              title: 'Choose from Gallery',
+              subtitle: 'Select an existing photo',
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+
+            const SizedBox(height: defaultPadding / 4),
+
+            _buildImageSourceOption(
+              icon: "assets/icons/Camera-Bold.svg",
+              title: 'Take Photo',
+              subtitle: 'Use your camera',
+              onTap: () {
+                Navigator.pop(context);
+                _takePhoto();
+              },
+            ),
+
+            if (_avatarFile != null || _currentAvatarUrl != null) ...[
+              const SizedBox(height: defaultPadding / 4),
+              _buildImageSourceOption(
+                icon: "assets/icons/Delete.svg",
+                title: 'Remove Photo',
+                subtitle: 'Delete current photo',
+                isDestructive: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _avatarFile = null;
+                    _currentAvatarUrl = null;
+                  });
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageSourceOption({
+    required String icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(defaultBorderRadious),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: defaultPadding / 2,
+            vertical: defaultPadding / 2,
           ),
+          decoration: BoxDecoration(
+            border: Border.all(color: greyColor.withOpacity(0.2)),
+            borderRadius: BorderRadius.circular(defaultBorderRadious),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color:
+                      isDestructive
+                          ? errorColor.withOpacity(0.1)
+                          : greyColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: SvgPicture.asset(
+                  icon,
+                  height: 20,
+                  width: 20,
+                  colorFilter: ColorFilter.mode(
+                    isDestructive ? errorColor : greyColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+              const SizedBox(width: defaultPadding / 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isDestructive ? errorColor : null,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: greyColor,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: greyColor.withOpacity(0.6),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -318,9 +364,13 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No changes to update'),
-              backgroundColor: Colors.orange,
+            SnackBar(
+              content: const Text('No changes to update'),
+              backgroundColor: warningColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(defaultBorderRadious),
+              ),
             ),
           );
         }
@@ -342,8 +392,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       avatarWidget = ClipOval(
         child: Image.file(
           _avatarFile!,
-          width: 120,
-          height: 120,
+          width: 100,
+          height: 100,
           fit: BoxFit.cover,
         ),
       );
@@ -352,16 +402,16 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       avatarWidget = ClipOval(
         child: Image.network(
           _currentAvatarUrl!,
-          width: 120,
-          height: 120,
+          width: 100,
+          height: 100,
           fit: BoxFit.cover,
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return Container(
-              width: 120,
-              height: 120,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: lightGreyColor,
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -371,19 +421,19 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
           },
           errorBuilder:
               (context, error, stackTrace) => Container(
-                width: 120,
-                height: 120,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     initials,
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
+                      color: primaryColor,
                     ),
                   ),
                 ),
@@ -393,19 +443,19 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
     } else {
       // Show initials
       avatarWidget = Container(
-        width: 120,
-        height: 120,
+        width: 100,
+        height: 100,
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          color: primaryColor.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
         child: Center(
           child: Text(
             initials,
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
+              color: primaryColor,
             ),
           ),
         ),
@@ -421,9 +471,9 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: primaryColor.withOpacity(0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -434,22 +484,26 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
               right: 0,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
+                  color: primaryColor,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 5,
+                      color: primaryColor.withOpacity(0.3),
+                      blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.white,
-                    size: 20,
+                  icon: SvgPicture.asset(
+                    "assets/icons/Camera-add.svg",
+                    height: 18,
+                    width: 18,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   onPressed: _showImageSourceActionSheet,
                 ),
@@ -459,12 +513,97 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         ),
         const SizedBox(height: defaultPadding / 2),
         Text(
-          'Tap the camera icon to change photo',
+          'Tap camera to change photo',
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+          ).textTheme.bodySmall?.copyWith(color: greyColor),
         ),
       ],
+    );
+  }
+
+  Widget _buildFormSection() {
+    return Container(
+      padding: const EdgeInsets.all(defaultPadding),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(defaultBorderRadious),
+        border: Border.all(color: primaryColor.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: SvgPicture.asset(
+                  "assets/icons/Profile.svg",
+                  height: 16,
+                  width: 16,
+                  colorFilter: ColorFilter.mode(primaryColor, BlendMode.srcIn),
+                ),
+              ),
+              const SizedBox(width: defaultPadding / 2),
+              Text(
+                'Personal Information',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: defaultPadding),
+
+          TextFormField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'Full Name *',
+              hintText: 'Enter your full name',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Name is required';
+              }
+              return null;
+            },
+            onChanged: (value) {
+              setState(() {}); // Rebuild to update initials
+            },
+          ),
+
+          const SizedBox(height: defaultPadding),
+
+          TextFormField(
+            controller: _bioController,
+            decoration: const InputDecoration(
+              labelText: 'Bio',
+              hintText: 'Tell us about yourself (optional)',
+              prefixIcon: Icon(Icons.info_outline),
+            ),
+            maxLines: 3,
+            maxLength: 150,
+          ),
+
+          const SizedBox(height: defaultPadding / 2),
+
+          TextFormField(
+            controller: _phoneController,
+            decoration: const InputDecoration(
+              labelText: 'Phone Number',
+              hintText: 'Enter your phone number (optional)',
+              prefixIcon: Icon(Icons.phone_outlined),
+            ),
+            keyboardType: TextInputType.phone,
+          ),
+        ],
+      ),
     );
   }
 
@@ -479,10 +618,19 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
             listener: (context, state) {
               if (state is ProfileUpdated) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Profile updated successfully!'),
-                    backgroundColor: Colors.green,
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Profile updated successfully!'),
+                      ],
+                    ),
+                    backgroundColor: successColor,
                     behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(defaultBorderRadious),
+                    ),
                   ),
                 );
                 Navigator.pop(context);
@@ -491,9 +639,18 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
               } else if (state is ProfileUpdateError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Error: ${state.message}'),
-                    backgroundColor: Colors.red,
+                    content: Row(
+                      children: [
+                        const Icon(Icons.error, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text('Error: ${state.message}')),
+                      ],
+                    ),
+                    backgroundColor: errorColor,
                     behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(defaultBorderRadious),
+                    ),
                     action: SnackBarAction(
                       label: 'Retry',
                       textColor: Colors.white,
@@ -508,17 +665,11 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: TextButton(
                   onPressed: state is ProfileUpdating ? null : _updateProfile,
-                  style: TextButton.styleFrom(
-                    foregroundColor:
-                        state is ProfileUpdating
-                            ? Colors.grey
-                            : Theme.of(context).primaryColor,
-                  ),
                   child:
                       state is ProfileUpdating
                           ? const SizedBox(
-                            width: 20,
-                            height: 20,
+                            width: 16,
+                            height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                           : const Text(
@@ -542,83 +693,12 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
             child: Form(
               key: _formKey,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildAvatarSection(),
-                  const SizedBox(height: defaultPadding * 2),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name',
-                      hintText: 'Enter your full name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Name is required';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      setState(() {}); // Rebuild to update initials
-                    },
-                  ),
+                  const SizedBox(height: defaultPadding * 1.5),
+                  _buildFormSection(),
                   const SizedBox(height: defaultPadding),
-                  TextFormField(
-                    controller: _bioController,
-                    decoration: const InputDecoration(
-                      labelText: 'Bio',
-                      hintText: 'Tell us about yourself',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.info_outline),
-                    ),
-                    maxLines: 3,
-                    maxLength: 150,
-                  ),
-                  const SizedBox(height: defaultPadding),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      hintText: 'Enter your phone number',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.phone_outlined),
-                    ),
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: defaultPadding * 2),
-                  if (state is ProfileUpdating)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(defaultPadding),
-                        child: Row(
-                          children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(width: defaultPadding),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Updating profile...',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Please wait while we save your changes',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
