@@ -1,8 +1,12 @@
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_entities.dart';
+import '../../domain/entities/review.dart' as review_entities;
 import '../models/category_model.dart';
+import '../models/review_model.dart';
 
 class ProductModel extends Product {
+  final String? categoryId;
+
   ProductModel({
     required super.id,
     required super.name,
@@ -34,15 +38,25 @@ class ProductModel extends Product {
     required super.saleLabel,
     required super.createdAt,
     required super.brand,
+    super.reviewSummary,
+    this.categoryId,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     try {
       // Handle category field which is now an object instead of string
       String categoryName = "uncategorized";
+      String? categoryId;
       if (json['category'] != null &&
           json['category'] is Map<String, dynamic>) {
         categoryName = json['category']['name'] as String? ?? 'uncategorized';
+        categoryId = json['category']['id'] as String?;
+      }
+
+      // Parse review summary from the API response
+      review_entities.ReviewSummary? reviewSummary;
+      if (json['review'] != null && json['review'] is Map<String, dynamic>) {
+        reviewSummary = ReviewSummaryModel.fromJson(json['review']);
       }
 
       return ProductModel(
@@ -83,12 +97,13 @@ class ProductModel extends Product {
         quantity: json['quantity'] as int? ?? 0,
         available: json['quantity'] as int? ?? 0,
         totalSold: json['total_sold'] as int? ?? 0,
-        totalRatings: (json['total_ratings'] as num?)?.toDouble() ?? 0.0,
-        totalReviews: json['total_reviews'] as int? ?? 0,
+        totalRatings: reviewSummary?.averageRating ?? 0.0,
+        totalReviews: reviewSummary?.totalReviews ?? 0,
         images: _parseImages(json['images']),
         vendor: Vendor(name: json['owner'] as String? ?? ''),
         category: categoryName,
-        reviews: [], // Default value as the API doesn't return reviews
+        reviews:
+            [], // Default value as the API doesn't return individual reviews in product details
         ratings: [], // Default value as the API doesn't return ratings
         newLabel: Label(enabled: false), // Default value
         saleLabel: SaleLabel(enabled: false), // Default value
@@ -97,6 +112,8 @@ class ProductModel extends Product {
                 ? DateTime.parse(json['created_at'].toString())
                 : DateTime.now(),
         brand: Brand(name: json['brand'] as String? ?? ''),
+        reviewSummary: reviewSummary,
+        categoryId: categoryId,
       );
     } catch (e) {
       print('Error parsing ProductModel: $e');

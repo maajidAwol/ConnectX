@@ -48,15 +48,13 @@ class FlashSale extends StatelessWidget {
                 }
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: state.products.length,
+                  itemCount: products.length,
                   itemBuilder:
                       (context, index) => Padding(
                         padding: EdgeInsets.only(
                           left: defaultPadding,
                           right:
-                              index == state.products.length - 1
-                                  ? defaultPadding
-                                  : 0,
+                              index == products.length - 1 ? defaultPadding : 0,
                         ),
                         child: ProductCard(
                           image: products[index].coverUrl,
