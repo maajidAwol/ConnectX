@@ -9,10 +9,6 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
           title: "Introduction",
           href: "/docs/quickstart/introduction",
         },
-        {
-          title: "Installation",
-          href: "/docs/quickstart/installation",
-        },
       ],
     },
     {

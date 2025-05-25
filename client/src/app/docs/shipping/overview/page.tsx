@@ -112,28 +112,6 @@ const curlExamples: CurlExample[] = [
     response: `{
   "message": "Shipping address deleted successfully"
 }`
-  },
-  {
-    title: "Find Addresses by User ID",
-    description: "Find shipping addresses for a specific user (tenant owner or admin only).",
-    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/shipping/by-user/?user_id=123e4567-e89b-12d3-a456-426614174001' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
-  -H 'Content-Type: application/json'`,
-    response: `[
-  {
-    "id": "123e4567-e89b-12d3-a456-426614174000",
-    "user": "123e4567-e89b-12d3-a456-426614174001",
-    "address_line1": "123 Main St",
-    "address_line2": "Apt 4B",
-    "city": "New York",
-    "state": "NY",
-    "postal_code": "10001",
-    "country": "USA",
-    "is_default": true,
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:00:00Z"
-  }
-]`
   }
 ];
 
@@ -239,7 +217,6 @@ export default function ShippingOverviewPage() {
               <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /shipping/</code> - Create a new address</li>
               <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">PATCH /shipping/{'{id}'}/</code> - Update an address</li>
               <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">DELETE /shipping/{'{id}'}/</code> - Delete an address</li>
-              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /shipping/by-user/?user_id={'{user_id}'}</code> - Find addresses by user ID</li>
             </ul>
           </div>
         </div>
@@ -251,8 +228,7 @@ export default function ShippingOverviewPage() {
             <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">User Permissions</h3>
             <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Regular users can only manage their own shipping addresses</li>
-              <li>Tenant owners and admin users can view addresses for any user in their tenant</li>
-              <li>Admin users have full access to all shipping addresses</li>
+              <li>Users can create, update, and delete their own shipping addresses</li>
             </ul>
           </div>
           <div>
