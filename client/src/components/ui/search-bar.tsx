@@ -7,6 +7,7 @@ interface SearchBarProps {
   placeholder?: string
   value: string
   onChange: (value: string) => void
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
   className?: string
 }
 
@@ -14,6 +15,7 @@ export function SearchBar({
   placeholder = "Search...",
   value,
   onChange,
+  onKeyDown,
   className = "w-full md:w-96",
 }: SearchBarProps) {
   return (
@@ -25,6 +27,7 @@ export function SearchBar({
         className="pl-8 w-full"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
       />
     </div>
   )

@@ -66,7 +66,7 @@ interface ProductState {
 
 // In a production environment, this would be loaded from environment variables
 // For this implementation, we're using a constant
-const API_URL = 'https://connectx-9agd.onrender.com/api'
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`
 
 const useProductStore = create<ProductState>((set, get) => ({
   products: [],

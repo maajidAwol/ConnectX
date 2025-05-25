@@ -53,7 +53,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
   fetchApiEndpoints: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch('https://connectx-backend-295168525338.europe-west1.run.app/api/admin/analytics/api_endpoints_graph/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/api_endpoints_graph/`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -83,7 +83,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
   fetchNewMerchants: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch('https://connectx-backend-295168525338.europe-west1.run.app/api/admin/analytics/new_merchants_graph/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/new_merchants_graph/`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -98,7 +98,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
   fetchWeekdayTransactions: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch('https://connectx-backend-295168525338.europe-west1.run.app/api/admin/analytics/weekday_transactions_graph/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/weekday_transactions_graph/`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }

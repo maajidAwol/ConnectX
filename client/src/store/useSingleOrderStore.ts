@@ -71,7 +71,7 @@ const useSingleOrderStore = create<SingleOrderStore>((set) => ({
     try {
       const { accessToken } = useAuthStore.getState()
       const res = await axios.get(
-        `https://connectx-9agd.onrender.com/api/orders/${id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -91,7 +91,7 @@ const useSingleOrderStore = create<SingleOrderStore>((set) => ({
     try {
       const { accessToken } = useAuthStore.getState()
       const res = await axios.patch(
-        `https://connectx-9agd.onrender.com/api/orders/${id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/`,
         { status },
         {
           headers: {
