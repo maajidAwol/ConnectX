@@ -1,8 +1,18 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 
-// Ensure we have the correct API URL
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://connectx-9agd.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+
+if (!API_URL) {
+  throw new Error('NEXT_PUBLIC_BACKEND_URL is not set in environment variables');
+}
+
+if (!API_KEY) {
+  throw new Error('NEXT_PUBLIC_API_KEY is not set in environment variables');
+}
+
+// Since we've checked API_URL is not undefined above, we can safely assert it here
+const API_URL_SAFE = API_URL as string;
 
 // Define allowed headers
 const ALLOWED_HEADERS = [
@@ -22,6 +32,36 @@ const ALLOWED_HEADERS = [
   'Pragma'
 ].join(',');
 
+// Helper function to sanitize error messages
+const sanitizeErrorMessage = (error: any): string => {
+  if (!error) return 'An unexpected error occurred';
+
+  // Handle network errors
+  if (error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
+    return 'Connection timed out. Please try again.';
+  }
+  if (error.cause?.code === 'UND_ERR_SOCKET') {
+    return 'Connection lost. Please try again.';
+  }
+
+  // Handle fetch errors
+  if (error.message === 'fetch failed') {
+    return 'Unable to connect to the server. Please try again.';
+  }
+
+  return 'An unexpected error occurred. Please try again.';
+};
+
+// Helper function to sanitize URL for logging
+const sanitizeUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+    return `${urlObj.hostname}${urlObj.pathname}`;
+  } catch {
+    return 'unknown-url';
+  }
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -39,51 +79,127 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
 
-  const { path } = req.query;
-  if (!path) {
-    return res.status(400).json({ detail: 'Path parameter is required' });
-  }
-
-  // Clean the path by removing any duplicate /api and ensuring no double slashes
-  const cleanPath = Array.isArray(path) 
-    ? path.join('/').replace(/^api\//, '').replace(/\/+/g, '/')
-    : path.toString().replace(/^api\//, '').replace(/\/+/g, '/');
-
-  // Ensure the path ends with a trailing slash
-  const pathWithSlash = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
-
-  // Construct the target URL - the backend already has /api in its routes
-  const targetUrl = `${API_URL}/${pathWithSlash}`;
-
   try {
-    const response = await fetch(targetUrl, {
+    const { path } = req.query;
+    const pathString = Array.isArray(path) ? path.join('/') : path || '';
+
+    // Construct the full URL, ensuring we don't have double slashes
+    const baseUrl = API_URL_SAFE.endsWith('/') ? API_URL_SAFE.slice(0, -1) : API_URL_SAFE;
+    const cleanPath = pathString.startsWith('/') ? pathString : `/${pathString}`;
+    // Ensure the path ends with a trailing slash for Django
+    const pathWithSlash = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
+    const url = `${baseUrl}${pathWithSlash}`;
+
+    // Prepare headers
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-API-KEY': API_KEY as string,
+    };
+
+    // Forward relevant headers from the original request
+    const forwardHeaders = [
+      'Authorization',
+      'X-CSRF-Token',
+      'X-Requested-With',
+      'Accept-Version',
+      'Content-Length',
+      'Content-MD5',
+      'Date',
+      'X-Api-Version',
+      'Cache-Control',
+      'Pragma'
+    ] as const;
+
+    forwardHeaders.forEach(header => {
+      const value = req.headers[header.toLowerCase()];
+      if (value && typeof value === 'string') {
+        headers[header as keyof HeadersInit] = value;
+      } else if (value && Array.isArray(value) && value[0]) {
+        headers[header as keyof HeadersInit] = value[0];
+      }
+    });
+
+    // Forward the request to the backend
+    const response = await fetch(url, {
       method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-API-KEY': API_KEY || '',
-        ...(req.headers.authorization && { 'Authorization': req.headers.authorization }),
-      },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
+      headers,
+      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
     });
 
     // Get the response data
     let data;
     const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
+    
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        try {
+          // Try to parse as JSON even if content-type is not application/json
+          data = JSON.parse(text);
+        } catch {
+          data = { message: text || 'Invalid response from server' };
+        }
+      }
+    } catch (e) {
+      data = { message: 'Invalid response from server' };
+    }
+
+    // Handle specific error cases with user-friendly messages
+    if (response.status === 401) {
+      return res.status(401).json({
+        message: 'Invalid email or password. Please try again.'
+      });
+    }
+
+    if (response.status === 403) {
+      return res.status(403).json({
+        message: 'Access denied. Please check your credentials.'
+      });
+    }
+
+    if (response.status === 404) {
+      return res.status(404).json({
+        message: 'The requested resource was not found.'
+      });
+    }
+
+    if (response.status === 422) {
+      return res.status(422).json({
+        message: data.detail || 'Please check your input and try again.'
+      });
+    }
+
+    if (response.status >= 500) {
+      // Log error in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Proxy Error]', {
+          endpoint: sanitizeUrl(url),
+          status: response.status,
+          method: req.method
+        });
+      }
+      return res.status(500).json({
+        message: 'The server is currently unavailable. Please try again later.'
+      });
     }
 
     // Forward the response status and data
     res.status(response.status).json(data);
-  } catch (error: any) {
-    // Handle network errors or other unexpected errors
-    console.error('Proxy error:', error);
+  } catch (error) {
+    // Log error in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[Proxy Error]', {
+        error: sanitizeErrorMessage(error),
+        endpoint: sanitizeUrl(`${API_URL_SAFE}/${Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path || ''}`),
+        method: req.method
+      });
+    }
+
     res.status(500).json({
-      detail: 'Internal server error',
-      message: error.message || 'An unexpected error occurred'
+      message: sanitizeErrorMessage(error)
     });
   }
 } 

@@ -41,6 +41,7 @@ interface AuthState {
   updateUser: (userData: User) => void;
   fetchTenantDetails: () => Promise<void>;
   initialize: () => Promise<void>;
+  refreshAccessToken: () => Promise<string>;
 }
 
 // Create a safe storage object that only works on the client side
@@ -86,7 +87,7 @@ const initialState = {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
 
       initialize: async () => {
@@ -210,6 +211,55 @@ export const useAuthStore = create<AuthState>()(
 
       clearError: () => {
         set({ error: null });
+      },
+
+      refreshAccessToken: async (): Promise<string> => {
+        try {
+          const store = get();
+          if (!store.refreshToken) {
+            throw new Error('No refresh token available');
+          }
+
+          console.log('Attempting to refresh token...');
+          const response = await fetch('/api/proxy/auth/token/refresh/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ refresh: store.refreshToken }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to refresh token');
+          }
+
+          const data = await response.json();
+          if (!data.access) {
+            throw new Error('Invalid refresh response');
+          }
+
+          console.log('Token refresh successful');
+          const newState = {
+            ...store,
+            accessToken: data.access,
+          };
+
+          set(newState);
+
+          // Update localStorage
+          storage.setItem('auth-storage', JSON.stringify({
+            state: newState,
+            version: 0,
+          }));
+
+          return data.access;
+        } catch (error) {
+          console.error('Error refreshing token:', error);
+          // If refresh fails, log out the user
+          set(initialState);
+          storage.removeItem('auth-storage');
+          throw error;
+        }
       },
     }),
     {

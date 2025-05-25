@@ -9,6 +9,7 @@ import createEmotionCache from 'src/utils/createEmotionCache';
 import ProgressBar from 'src/components/progress-bar';
 import { ThemeSettings, SettingsProvider } from 'src/components/settings';
 import MotionLazyContainer from 'src/components/animate/MotionLazyContainer';
+import ClientAuthProvider from 'src/components/auth/ClientAuthProvider';
 
 // ----------------------------------------------------------------------
 
@@ -39,8 +40,10 @@ export default function ClientOnlyApp(props: MyAppProps) {
           <ThemeProvider>
             <ThemeSettings>
               <MotionLazyContainer>
-                <ProgressBar />
-                {getLayout(<Component {...pageProps} />)}
+                <ClientAuthProvider>
+                  <ProgressBar />
+                  {getLayout(<Component {...pageProps} />)}
+                </ClientAuthProvider>
               </MotionLazyContainer>
             </ThemeSettings>
           </ThemeProvider>

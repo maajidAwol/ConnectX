@@ -81,30 +81,66 @@ export default function PaymentSuccessPage() {
           return;
         }
 
-        const response = await apiRequest(`/orders/${orderId}/`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (!response) {
-          setError('Failed to fetch order details');
+        // Get the current auth state
+        const { accessToken, refreshAccessToken } = useAuthStore.getState();
+        
+        if (!accessToken) {
+          setError('Authentication required. Please log in again.');
           setLoading(false);
           return;
         }
 
+        // Make the API request
+        const response = await apiRequest(`/orders/${orderId}/`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }, true, accessToken);
+
+        if (!response) {
+          throw new Error('No response from server');
+        }
+
         setOrderDetails(response as OrderDetails);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching order details:', error);
-        setError('Failed to load order details');
-      } finally {
+        
+        // Check if it's an authentication error
+        if (error instanceof Error && error.message.includes('token_not_valid')) {
+          try {
+            // Try to refresh the token
+            const newToken = await useAuthStore.getState().refreshAccessToken();
+            
+            if (newToken) {
+              // Retry the request with the new token
+              const retryResponse = await apiRequest(`/orders/${orderId}/`, {
+                method: 'GET',
+                headers: {
+                  Authorization: `Bearer ${newToken}`,
+                },
+              }, true, newToken);
+
+              if (retryResponse) {
+                setOrderDetails(retryResponse as OrderDetails);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+          }
+        }
+        
+        setError('Failed to load order details. Please try again.');
         setLoading(false);
       }
     };
 
     fetchOrderDetails();
     clearCart();
-  }, [accessToken, clearCart]);
+  }, [clearCart]);
 
   const handleContinue = () => {
     sessionStorage.removeItem('pendingOrder');
