@@ -62,6 +62,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
                     format=openapi.FORMAT_UUID,
                     description='Product UUID'
                 ),
+                'title': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Optional title for the review'
+                ),
                 'rating': openapi.Schema(
                     type=openapi.TYPE_INTEGER,
                     minimum=1,
