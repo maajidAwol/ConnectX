@@ -110,6 +110,20 @@ export default function PaymentSuccessPage() {
         // Check if it's an authentication error
         if (error instanceof Error && error.message.includes('token_not_valid')) {
           try {
+            const pendingOrder = sessionStorage.getItem('pendingOrder');
+            if (!pendingOrder) {
+              setError('No pending order found');
+              setLoading(false);
+              return;
+            }
+
+            const { orderId } = JSON.parse(pendingOrder);
+            if (!orderId) {
+              setError('Invalid order ID');
+              setLoading(false);
+              return;
+            }
+
             // Try to refresh the token
             const newToken = await useAuthStore.getState().refreshAccessToken();
             
