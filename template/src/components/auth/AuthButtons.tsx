@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 // next
 import NextLink from 'next/link';
@@ -20,8 +22,17 @@ import { paths } from 'src/routes/paths';
 import { useAuthStore } from 'src/store/auth';
 // components
 import Iconify from 'src/components/iconify';
+import ClientAuthProvider from './ClientAuthProvider';
 
 export default function AuthButtons() {
+  return (
+    <ClientAuthProvider>
+      <AuthButtonsContent />
+    </ClientAuthProvider>
+  );
+}
+
+function AuthButtonsContent() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -46,7 +57,7 @@ export default function AuthButtons() {
         variant="contained"
         color="inherit"
         component={NextLink}
-        href={paths.loginIllustration}
+        href={paths.auth.loginIllustration}
       >
         Sign In
       </Button>

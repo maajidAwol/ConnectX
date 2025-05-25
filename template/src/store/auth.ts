@@ -40,6 +40,7 @@ interface AuthState {
   clearError: () => void;
   updateUser: (userData: User) => void;
   fetchTenantDetails: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
 // Create a safe storage object that only works on the client side
@@ -88,6 +89,21 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       ...initialState,
 
+      initialize: async () => {
+        try {
+          const storedState = storage.getItem('auth-storage');
+          if (storedState?.state) {
+            set({
+              ...storedState.state,
+              isLoading: false,
+            });
+          }
+        } catch (error) {
+          console.error('Error initializing auth store:', error);
+          set({ isLoading: false });
+        }
+      },
+
       register: async (name: string, email: string, password: string) => {
         try {
           set({ isLoading: true, error: null });
@@ -133,13 +149,21 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('Invalid response from server');
           }
           
-          set({
+          const newState = {
             user: data.user,
             accessToken: data.access,
             refreshToken: data.refresh,
             isAuthenticated: true,
             isLoading: false,
-          });
+          };
+
+          set(newState);
+
+          // Store in localStorage
+          storage.setItem('auth-storage', JSON.stringify({
+            state: newState,
+            version: 0,
+          }));
 
           // Fetch tenant details after successful login
           const store = useAuthStore.getState();
@@ -180,6 +204,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        storage.removeItem('auth-storage');
         set(initialState);
       },
 
@@ -197,7 +222,16 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
-      skipHydration: true, // Skip hydration on initial load
+      skipHydration: false,
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          if (!state.user) state.user = null;
+          if (!state.tenant) state.tenant = null;
+          if (!state.accessToken) state.accessToken = null;
+          if (!state.refreshToken) state.refreshToken = null;
+          if (typeof state.isAuthenticated !== 'boolean') state.isAuthenticated = false;
+        }
+      },
     }
   )
 ); 
