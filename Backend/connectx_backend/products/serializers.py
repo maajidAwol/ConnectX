@@ -42,6 +42,9 @@ class ProductSerializer(serializers.ModelSerializer):
         allow_empty=True,
     )
 
+    # Add review summary fields
+    review_summary = serializers.SerializerMethodField()
+
     filter_backends = [filters.SearchFilter]
     search_fields = [
         "name",
@@ -79,6 +82,41 @@ class ProductSerializer(serializers.ModelSerializer):
             product=obj, tenant=request.user.tenant
         ).first()
         return listing.selling_price if listing else None
+
+    def get_review_summary(self, obj):
+        """Get review summary for the product."""
+        from django.db.models import Avg
+        from reviews.models import Review
+        
+        reviews = Review.objects.filter(product=obj)
+        total_reviews = reviews.count()
+        
+        if total_reviews == 0:
+            return {
+                "total_reviews": 0,
+                "average_rating": 0,
+                "rating_distribution": {
+                    "1": 0,
+                    "2": 0,
+                    "3": 0,
+                    "4": 0,
+                    "5": 0
+                }
+            }
+        
+        avg_rating = reviews.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
+        
+        # Get rating distribution
+        rating_distribution = {}
+        for i in range(1, 6):
+            count = reviews.filter(rating=i).count()
+            rating_distribution[str(i)] = count
+
+        return {
+            "total_reviews": total_reviews,
+            "average_rating": round(avg_rating, 2) if avg_rating else 0,
+            "rating_distribution": rating_distribution
+        }
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
@@ -217,6 +255,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "total_sold",
             "total_ratings",
             "total_reviews",
+            "review_summary",  # Add review summary field
             "created_at",
             "updated_at",
             "cover_image_upload",  # Add upload fields for input
@@ -230,6 +269,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "total_sold",
             "total_ratings",
             "total_reviews",
+            "review_summary",  # Review summary is read-only
             "created_at",
             "updated_at",
             "profit_percentage",
