@@ -48,9 +48,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   imageSrc: state.user.avatar_url ?? '',
                   // proLableText: "Sliver",
                   // isPro: true, if the user is pro
-                  // press: () {
-                  //   Navigator.pushNamed(context, userInfoScreenRoute);
-                  // },
+                  press: () {
+                    Navigator.pushNamed(context, profileUpdateScreenRoute);
+                  },
                 ),
 
                 // Padding(
@@ -75,6 +75,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 const SizedBox(height: defaultPadding / 2),
+                ProfileMenuListTile(
+                  text: "Edit Profile",
+                  svgSrc: "assets/icons/Edit Square.svg",
+                  press: () {
+                    Navigator.pushNamed(context, profileUpdateScreenRoute);
+                  },
+                ),
                 ProfileMenuListTile(
                   text: "Cart",
                   svgSrc: "assets/icons/Order.svg",

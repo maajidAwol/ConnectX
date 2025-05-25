@@ -5,6 +5,7 @@ import 'package:korecha/features/authentication/domain/usecases/add_address.dart
 import 'package:korecha/features/authentication/domain/usecases/get_addresses.dart';
 import 'package:korecha/features/authentication/domain/usecases/get_profile.dart';
 import 'package:korecha/features/authentication/domain/usecases/logout.dart';
+import 'package:korecha/features/authentication/domain/usecases/update_profile.dart';
 import 'package:korecha/features/authentication/presentation/state/address/bloc/address_bloc.dart';
 import 'package:korecha/features/authentication/presentation/state/profile/bloc/profile_bloc.dart';
 import 'package:korecha/features/cart/data/datasources/order_remote_datasource.dart';
@@ -108,6 +109,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => Login(sl()));
   sl.registerLazySingleton(() => SignUp(sl()));
   sl.registerLazySingleton(() => GetProfile(sl()));
+  sl.registerLazySingleton(() => UpdateProfile(sl()));
   sl.registerLazySingleton(() => Logout(sl()));
   sl.registerLazySingleton(() => AddAddress(sl()));
   sl.registerLazySingleton(() => GetAddresses(sl()));
@@ -136,7 +138,7 @@ Future<void> init() async {
       logout: sl(),
     ),
   );
-  sl.registerFactory(() => ProfileBloc(getProfile: sl()));
+  sl.registerFactory(() => ProfileBloc(getProfile: sl(), updateProfile: sl()));
   sl.registerFactory(
     () => AddressBloc(
       addAddress: sl(),
