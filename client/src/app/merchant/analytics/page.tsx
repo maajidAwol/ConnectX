@@ -92,7 +92,7 @@ export default function AnalyticsDashboard() {
           <h2 className="text-2xl font-bold tracking-tight">Analytics Dashboard</h2>
           <p className="text-muted-foreground">Track your e-commerce performance and insights</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* <div className="flex flex-wrap gap-2">
           <div className="flex items-center rounded-md border bg-background p-1 text-sm">
             <button
               className={`px-3 py-1 rounded-sm ${
@@ -135,7 +135,7 @@ export default function AnalyticsDashboard() {
             <Download className="h-4 w-4" />
             <span>Export</span>
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -212,7 +212,7 @@ export default function AnalyticsDashboard() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="products">Product Performance</TabsTrigger>
-          <TabsTrigger value="channels">Channel Insights</TabsTrigger>
+          {/* <TabsTrigger value="channels">Channel Insights</TabsTrigger> */}
           <TabsTrigger value="customers">Customer Behavior</TabsTrigger>
         </TabsList>
 
@@ -237,27 +237,49 @@ export default function AnalyticsDashboard() {
                   config={{
                     revenue: {
                       label: "Revenue",
-                      color: "hsl(var(--chart-1))",
+                      color: "#6366f1",
                     },
                     orders: {
                       label: "Orders",
-                      color: "hsl(var(--chart-2))",
+                      color: "#10b981",
                     },
                   }}
                   className="h-full w-full"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={revenueData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <defs>
+                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis
+                        stroke="#64748b"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `$${value.toLocaleString()}`}
+                      />
+                      <ChartTooltip
+                        content={<ChartTooltipContent />}
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                      />
                       <Area
                         type="monotone"
                         dataKey="revenue"
-                        stroke="var(--color-revenue)"
-                        fill="var(--color-revenue)"
-                        fillOpacity={0.3}
+                        stroke="#6366f1"
+                        strokeWidth={3}
+                        fill="url(#revenueGradient)"
+                        dot={{ fill: "#6366f1", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "white" }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -371,7 +393,7 @@ export default function AnalyticsDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="channels">
+        {/* <TabsContent value="channels">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -478,7 +500,7 @@ export default function AnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="customers">
           <div className="grid gap-4 md:grid-cols-2">
@@ -522,7 +544,7 @@ export default function AnalyticsDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Customer Retention</CardTitle>
                 <CardDescription>New vs returning customers</CardDescription>
@@ -571,7 +593,7 @@ export default function AnalyticsDashboard() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
             <Card>
               <CardHeader>

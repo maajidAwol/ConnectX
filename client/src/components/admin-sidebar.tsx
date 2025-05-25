@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/authStore"
+import { ModeToggle } from "./mode-toggle"
 
 interface SubmenuItem {
   title: string
@@ -251,15 +252,16 @@ export function AdminSidebar({ className }: SidebarProps) {
             ))}
           </nav>
         </div>
-        <div className="border-t border-border p-4">
-          <Button
-            variant="ghost"
+        <div className="flex gap-2 p-4">
+          <Button 
+            variant="ghost" 
             className="w-full justify-start text-muted-foreground hover:text-foreground"
             onClick={logout}
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </Button>
+          <ModeToggle />
         </div>
       </div>
     </>
