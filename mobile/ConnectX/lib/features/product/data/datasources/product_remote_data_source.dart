@@ -8,11 +8,18 @@ import '../models/category_model.dart';
 import '../models/review_model.dart';
 
 abstract class ProductRemoteDataSource {
-  Future<List<ProductModel>> getProducts();
+  Future<List<ProductModel>> getProducts({int page = 1, int pageSize = 20});
   Future<ProductModel> getProductById(String productId);
   Future<List<CategoryModel>> getProductCategories();
   Future<List<ProductModel>> getProductsByCategoryId(String categoryId);
   Future<List<ProductModel>> getProductBySearch(String query);
+
+  // New methods for better product filtering
+  Future<List<ProductModel>> getProductsWithPagination({
+    int page = 1,
+    int pageSize = 20,
+  });
+  Future<List<ProductModel>> getAllProductsAcrossPages({int maxPages = 3});
 
   // Review methods
   Future<ReviewModel> createReview({
@@ -46,10 +53,13 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<List<ProductModel>> getProducts() async {
+  Future<List<ProductModel>> getProducts({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/'),
+        Uri.parse('$baseUrl/products/?page=$page&page_size=$pageSize'),
         headers: _headers,
       );
       print(response.body);
@@ -267,6 +277,71 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       }
     } catch (e) {
       print('Error getting reviews: $e');
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<ProductModel>> getProductsWithPagination({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$baseUrl/products/?page=$page&page_size=$pageSize'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedResponse = json.decode(response.body);
+        final List<dynamic> productsJson = decodedResponse['results'];
+        return productsJson.map((json) => ProductModel.fromJson(json)).toList();
+      } else {
+        throw ServerException(
+          'Failed to load products: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<ProductModel>> getAllProductsAcrossPages({
+    int maxPages = 3,
+  }) async {
+    List<ProductModel> allProducts = [];
+
+    try {
+      for (int page = 1; page <= maxPages; page++) {
+        final response = await client.get(
+          Uri.parse('$baseUrl/products/?page=$page&page_size=20'),
+          headers: _headers,
+        );
+
+        if (response.statusCode == 200) {
+          final decodedResponse = json.decode(response.body);
+          final List<dynamic> productsJson = decodedResponse['results'];
+          final products =
+              productsJson.map((json) => ProductModel.fromJson(json)).toList();
+
+          allProducts.addAll(products);
+
+          // Check if there are more pages
+          if (decodedResponse['next'] == null) {
+            break; // No more pages
+          }
+        } else {
+          print('Failed to load page $page: ${response.statusCode}');
+          break; // Stop on error
+        }
+
+        // Add a small delay to avoid overwhelming the server
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      return allProducts;
+    } catch (e) {
       throw ServerException(e.toString());
     }
   }

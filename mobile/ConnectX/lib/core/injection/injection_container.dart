@@ -20,6 +20,7 @@ import 'package:korecha/features/product/domain/usecases/get_filtered_products.d
 import 'package:korecha/features/product/domain/usecases/get_product_by_id.dart';
 import 'package:korecha/features/product/domain/usecases/get_product_by_search.dart';
 import 'package:korecha/features/product/domain/usecases/get_product_categories.dart';
+import 'package:korecha/features/product/domain/services/product_filter_service.dart';
 import 'package:korecha/features/product/presentation/state/details/bloc/details_bloc.dart';
 import 'package:korecha/features/product/presentation/state/discover/bloc/discover_bloc.dart';
 import 'package:korecha/features/product/presentation/state/home/bloc/home_bloc.dart';
@@ -118,7 +119,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetOrdersUseCase(sl()));
   sl.registerLazySingleton(() => GetOrderDetailsUseCase(sl()));
   sl.registerLazySingleton(() => GetProductsByCategory(sl()));
-  sl.registerLazySingleton(() => GetFilteredProducts(sl()));
+  sl.registerLazySingleton(() => ProductFilterService());
+  sl.registerLazySingleton(() => GetFilteredProducts(sl(), sl()));
   sl.registerLazySingleton(() => GetProductById(sl()));
   sl.registerLazySingleton(() => GetProductCategories(sl()));
   sl.registerLazySingleton(() => FetchAllProducts(sl()));

@@ -31,49 +31,58 @@ class MostPopular extends StatelessWidget {
               // print(state.products ?? "no products");
               if (state is HomeLoading) {
                 return const Center(child: SeconderyProductSkelton());
-              }  else if (state is HomeLoaded) {
-                final products = state.products[ProductFilter.popularProducts] ?? [];
+              } else if (state is HomeLoaded) {
+                final products =
+                    state.products[ProductFilter.popularProducts] ?? [];
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: products.length,
-                  itemBuilder: (context, index) => Padding(
-                    padding: EdgeInsets.only(
-                      left: defaultPadding,
-                      right: index == state.products.length - 1
-                          ? defaultPadding
-                          : 0,
-                    ),
-                    child: SecondaryProductCard(
-                      // image: state.products[index].coverUrl,
-                      image: products[index].coverUrl,
-                      brandName: products[index].name,
-                      title: products[index].subDescription,
-                     price: products[index].priceSale  !=null && products[index].priceSale! > products[index].price ? products[index].priceSale! : products[index].price,
-                      priceAfetDiscount: products[index].price,
-                      dicountpercent: products[index].priceSale != null && products[index].priceSale! > products[index].price
-                          ? ((products[index].price -
-                                  products[index].priceSale!) /
-                              products[index].price *
-                              100)
-                              .round()
-                          : null,
-                      press: () {
-                        // Navigator.pushNamed(
-                        //   context,
-                        //   productDetailsScreenRoute,
-                        //   arguments: state.products[index].id,
-                        // );
-                        Navigator.pushNamed(
-                          context,
-                          productDetailsScreenRoute,
-                          arguments: {
-                            'isProductAvailable': true,
-                            'productId': products[index].id,
+                  itemBuilder:
+                      (context, index) => Padding(
+                        padding: EdgeInsets.only(
+                          left: defaultPadding,
+                          right:
+                              index == products.length - 1 ? defaultPadding : 0,
+                        ),
+                        child: SecondaryProductCard(
+                          // image: state.products[index].coverUrl,
+                          image: products[index].coverUrl,
+                          brandName: products[index].name,
+                          title: products[index].subDescription,
+                          price:
+                              products[index].priceSale != null &&
+                                      products[index].priceSale! >
+                                          products[index].price
+                                  ? products[index].priceSale!
+                                  : products[index].price,
+                          priceAfetDiscount: products[index].price,
+                          dicountpercent:
+                              products[index].priceSale != null &&
+                                      products[index].priceSale! >
+                                          products[index].price
+                                  ? ((products[index].price -
+                                              products[index].priceSale!) /
+                                          products[index].price *
+                                          100)
+                                      .round()
+                                  : null,
+                          press: () {
+                            // Navigator.pushNamed(
+                            //   context,
+                            //   productDetailsScreenRoute,
+                            //   arguments: state.products[index].id,
+                            // );
+                            Navigator.pushNamed(
+                              context,
+                              productDetailsScreenRoute,
+                              arguments: {
+                                'isProductAvailable': true,
+                                'productId': products[index].id,
+                              },
+                            );
                           },
-                        );
-                      },
-                    ),
-                  ),
+                        ),
+                      ),
                 );
               } else if (state is HomeError) {
                 return Center(child: Text(state.message));
@@ -81,7 +90,7 @@ class MostPopular extends StatelessWidget {
               return const SizedBox();
             },
           ),
-        )
+        ),
       ],
     );
   }

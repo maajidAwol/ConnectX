@@ -16,12 +16,18 @@ class ProductRepositoryImpl implements ProductRepository {
   });
 
   @override
-  Future<Either<Failure, List<Product>>> getProducts() async {
+  Future<Either<Failure, List<Product>>> getProducts({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
     print('getProducts');
     if (await networkInfo.isConnected) {
       try {
-        final products = await remoteDataSource.getProducts();
-        
+        final products = await remoteDataSource.getProducts(
+          page: page,
+          pageSize: pageSize,
+        );
+
         return Right(products);
       } catch (e) {
         // print(e);
@@ -32,8 +38,29 @@ class ProductRepositoryImpl implements ProductRepository {
       return Left(NetworkFailure());
     }
   }
+
   @override
-  Future<Either<Failure, List<Product>>> getProductBySearch(String query) async {
+  Future<Either<Failure, List<Product>>> getAllProductsAcrossPages({
+    int maxPages = 3,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final products = await remoteDataSource.getAllProductsAcrossPages(
+          maxPages: maxPages,
+        );
+        return Right(products);
+      } catch (e) {
+        return Left(ServerFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Product>>> getProductBySearch(
+    String query,
+  ) async {
     if (await networkInfo.isConnected) {
       try {
         final products = await remoteDataSource.getProductBySearch(query);
@@ -45,6 +72,7 @@ class ProductRepositoryImpl implements ProductRepository {
       return Left(NetworkFailure());
     }
   }
+
   @override
   Future<Either<Failure, Product>> getProductById(String productId) async {
     if (await networkInfo.isConnected) {
@@ -63,7 +91,7 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Either<Failure, List<Category>>> getProductCategories() async {
     if (await networkInfo.isConnected) {
       try {
-            final categories = await remoteDataSource.getProductCategories();
+        final categories = await remoteDataSource.getProductCategories();
         return Right(categories);
       } catch (e) {
         return Left(ServerFailure(message: e.toString()));
@@ -72,12 +100,17 @@ class ProductRepositoryImpl implements ProductRepository {
       return Left(NetworkFailure());
     }
   }
+
   @override
-  Future<Either<Failure, List<Product>>> getProductsByCategoryId(String categoryId) async {
+  Future<Either<Failure, List<Product>>> getProductsByCategoryId(
+    String categoryId,
+  ) async {
     if (await networkInfo.isConnected) {
       try {
-        final products = await remoteDataSource.getProductsByCategoryId(categoryId);
-        return Right(products); 
+        final products = await remoteDataSource.getProductsByCategoryId(
+          categoryId,
+        );
+        return Right(products);
       } catch (e) {
         return Left(ServerFailure(message: e.toString()));
       }
