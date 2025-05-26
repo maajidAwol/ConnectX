@@ -35,7 +35,7 @@ from .models import (
     APIUsage,
     SystemHealth,
     ActivityLog,
-    APIUsageLog,   
+    APIUsageLog,
 )
 from .serializers import (
     AnalyticsSerializer,
@@ -54,6 +54,7 @@ from .serializers import (
     SalesOverviewSerializer,
     TopProductSerializer,
     ReviewAnalyticsSerializer,
+    DemographicAnalyticsSerializer,
 )
 from reviews.models import Review
 from tenants.models import Tenant
@@ -1498,6 +1499,87 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         }
 
         serializer = ReviewAnalyticsSerializer(data)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get demographic analytics for the tenant",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: DemographicAnalyticsSerializer()},
+    )
+    @action(detail=False, methods=["get"])
+    def demographic_analytics(self, request):
+        """Get demographic analytics for the tenant."""
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Base queryset
+        users = User.objects.filter(tenant=tenant)
+
+        # Apply date filters if provided
+        if start_date:
+            users = users.filter(created_at__gte=start_date)
+        if end_date:
+            users = users.filter(created_at__lte=end_date)
+
+        # Calculate total users
+        total_users = users.count()
+
+        # Define age groups
+        age_groups = [
+            (18, 24),
+            (25, 34),
+            (35, 44),
+            (45, 54),
+            (55, None),  # 55 and above
+        ]
+
+        # Calculate gender-age distribution
+        gender_age_distribution = {}
+        for gender in ["male", "female"]:
+            for age_min, age_max in age_groups:
+                # Build the query for this gender-age group
+                query = Q(gender=gender)
+                if age_max:
+                    query &= Q(age__gte=age_min, age__lte=age_max)
+                else:
+                    query &= Q(age__gte=age_min)
+
+                # Count users in this group
+                count = users.filter(query).count()
+
+                # Calculate percentage
+                percentage = (count / total_users * 100) if total_users > 0 else 0
+
+                # Create the key for this group
+                age_key = f"{age_min}_{age_max}" if age_max else f"{age_min}_plus"
+                key = f"{gender}_{age_key}"
+
+                gender_age_distribution[key] = round(percentage, 1)
+
+        data = {
+            "total_users": total_users,
+            "gender_age_distribution": gender_age_distribution,
+        }
+
+        serializer = DemographicAnalyticsSerializer(data)
         return Response(serializer.data)
 
 
