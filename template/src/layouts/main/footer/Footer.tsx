@@ -96,7 +96,17 @@ export default function Footer() {
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
-                        <Button variant="contained" color="inherit" size="large">
+                        <Button 
+                          variant="contained" 
+                          size="large"
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'primary.contrastText',
+                            '&:hover': {
+                              bgcolor: 'primary.dark',
+                            },
+                          }}
+                        >
                           Subscribe
                         </Button>
                       </InputAdornment>
@@ -110,7 +120,15 @@ export default function Footer() {
                 <Typography variant="h6">Follow Us</Typography>
                 <Stack direction="row" alignItems="center">
                   {_socials.map((social) => (
-                    <IconButton key={social.value} color="primary">
+                    <IconButton 
+                      key={social.value} 
+                      sx={{
+                        color: 'primary.main',
+                        '&:hover': {
+                          bgcolor: 'primary.lighter',
+                        },
+                      }}
+                    >
                       <Iconify icon={social.icon} />
                     </IconButton>
                   ))}
@@ -138,11 +156,29 @@ export default function Footer() {
           </Typography>
 
           <Stack direction="row" spacing={3} justifyContent="center">
-            <Link variant="caption" sx={{ color: 'text.secondary' }}>
+            <Link 
+              variant="caption" 
+              sx={{ 
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               Privacy Policy
             </Link>
 
-            <Link variant="caption" sx={{ color: 'text.secondary' }}>
+            <Link 
+              variant="caption" 
+              sx={{ 
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               Terms of Service
             </Link>
           </Stack>

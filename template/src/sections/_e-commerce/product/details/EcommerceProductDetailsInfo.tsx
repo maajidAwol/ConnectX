@@ -2,7 +2,7 @@ import { useState } from 'react';
 // next
 import NextLink from 'next/link';
 // @mui
-import { Stack, Button, Rating, Typography, TextField, Divider } from '@mui/material';
+import { Stack, Button, Rating, Typography, TextField, Divider, Box } from '@mui/material';
 // hooks
 import useResponsive from 'src/hooks/useResponsive';
 // routes
@@ -12,26 +12,19 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 // store
 import { useCartStore } from 'src/store/cart';
+import { useReviewStore } from 'src/store/review';
 //
 import { ProductColorPicker, ProductPrice } from '../../components';
+import ReviewSummary from 'src/sections/review/e-commerce/ReviewSummary';
+import ReviewList from 'src/sections/review/e-commerce/ReviewList';
+import ReviewNewForm from 'src/sections/review/components/ReviewNewForm';
 
 // ----------------------------------------------------------------------
 
 type Props = {
+  id: string;
   name: string;
   price: number;
-  rating: number;
-  review: {
-    total_reviews: number;
-    average_rating: number;
-    rating_distribution: {
-      '1': number;
-      '2': number;
-      '3': number;
-      '4': number;
-      '5': number;
-    };
-  };
   priceSale: number;
   caption: string;
   inStock: number;
@@ -39,10 +32,9 @@ type Props = {
 };
 
 export default function EcommerceProductDetailsInfo({
+  id,
   name,
   price,
-  rating,
-  review,
   priceSale,
   caption,
   inStock,
@@ -50,6 +42,7 @@ export default function EcommerceProductDetailsInfo({
 }: Props) {
   const isMdUp = useResponsive('up', 'md');
   const { addItem } = useCartStore();
+  const [openReviewForm, setOpenReviewForm] = useState(false);
 
   const [color, setColor] = useState(colors[0] || '');
   const [quantity, setQuantity] = useState(1);
@@ -72,7 +65,7 @@ export default function EcommerceProductDetailsInfo({
 
   const handleAddToCart = () => {
     addItem({
-      id: name,
+      id,
       name,
       price,
       quantity,
@@ -84,6 +77,14 @@ export default function EcommerceProductDetailsInfo({
     });
   };
 
+  const handleOpenReviewForm = () => {
+    setOpenReviewForm(true);
+  };
+
+  const handleCloseReviewForm = () => {
+    setOpenReviewForm(false);
+  };
+
   return (
     <>
       <Label color={inStock > 0 ? "success" : "error"} sx={{ mb: 3 }}>
@@ -92,14 +93,6 @@ export default function EcommerceProductDetailsInfo({
 
       <Stack spacing={1} sx={{ mb: 2 }}>
         <Typography variant="h4"> {name} </Typography>
-
-        <Stack spacing={0.5} direction="row" alignItems="center">
-          <Rating size="small" value={review.average_rating} readOnly precision={0.5} />
-
-          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-            ({review.total_reviews} reviews)
-          </Typography>
-        </Stack>
       </Stack>
 
       <Stack spacing={2}>
@@ -144,11 +137,21 @@ export default function EcommerceProductDetailsInfo({
           <Button
             fullWidth={!isMdUp}
             size="large"
-            color="inherit"
             variant="contained"
             startIcon={<Iconify icon="carbon:shopping-cart-plus" />}
             disabled={inStock === 0}
             onClick={handleAddToCart}
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+              '&.Mui-disabled': {
+                bgcolor: 'grey.300',
+                color: 'grey.500',
+              },
+            }}
           >
             Add to Cart
           </Button>
@@ -158,9 +161,19 @@ export default function EcommerceProductDetailsInfo({
             href={paths.eCommerce.checkout}
             fullWidth={!isMdUp}
             size="large"
-            color="primary"
             variant="contained"
             disabled={inStock === 0}
+            sx={{
+              bgcolor: 'success.main',
+              color: 'success.contrastText',
+              '&:hover': {
+                bgcolor: 'success.dark',
+              },
+              '&.Mui-disabled': {
+                bgcolor: 'grey.300',
+                color: 'grey.500',
+              },
+            }}
           >
             Buy Now
           </Button>
@@ -169,7 +182,7 @@ export default function EcommerceProductDetailsInfo({
 
       <Divider sx={{ borderStyle: 'dashed', my: 3 }} />
 
-      <Stack spacing={3} direction="row" justifyContent={{ xs: 'center', md: 'unset' }}>
+      <Stack spacing={2} direction="row" justifyContent={{ xs: 'center', md: 'unset' }}>
         <Stack direction="row" alignItems="center" sx={{ typography: 'subtitle2' }}>
           <Iconify icon="carbon:add-alt" sx={{ mr: 1 }} /> Compare
         </Stack>
@@ -182,6 +195,15 @@ export default function EcommerceProductDetailsInfo({
           <Iconify icon="carbon:share" sx={{ mr: 1 }} /> Share
         </Stack>
       </Stack>
+
+      <Divider sx={{ borderStyle: 'dashed', my: 3 }} />
+
+      {/* Product Description */}
+      <Typography variant="body1" sx={{ mb: 3 }}>
+        {caption}
+      </Typography>
+
+     
     </>
   );
 }

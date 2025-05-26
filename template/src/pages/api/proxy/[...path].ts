@@ -87,6 +87,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const baseUrl = API_URL_SAFE.endsWith('/') ? API_URL_SAFE.slice(0, -1) : API_URL_SAFE;
     const cleanPath = pathString.startsWith('/') ? pathString : `/${pathString}`;
     
+    // Ensure the path ends with a trailing slash for POST requests
+    const pathWithSlash = req.method !== 'GET' && !cleanPath.endsWith('/') ? `${cleanPath}/` : cleanPath;
+    
     // Convert query parameters to URLSearchParams and clean any trailing slashes
     const searchParams = new URLSearchParams();
     Object.entries(queryParams).forEach(([key, value]) => {
@@ -98,9 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Construct URL without adding extra slash
-    const url = `${baseUrl}${cleanPath}?${searchParams.toString()}`;
-
-
+    const url = `${baseUrl}${pathWithSlash}?${searchParams.toString()}`;
 
     // Prepare headers
     const headers: HeadersInit = {
@@ -139,6 +140,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
     });
 
+    // Log request and response details in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Proxy Request]', {
+        url: sanitizeUrl(url),
+        method: req.method,
+        headers,
+        body: req.body
+      });
+      console.log('[Proxy Response]', {
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+    }
+
     // Get the response data
     let data;
     const contentType = response.headers.get('content-type');
@@ -155,7 +170,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data = { message: text || 'Invalid response from server' };
         }
       }
+
+      // Log response data in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Proxy Response Data]', data);
+      }
     } catch (e) {
+      console.error('[Proxy Error] Error parsing response:', e);
       data = { message: 'Invalid response from server' };
     }
 
@@ -190,11 +211,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error('[Proxy Error]', {
           endpoint: sanitizeUrl(url),
           status: response.status,
-          method: req.method
+          method: req.method,
+          requestBody: req.body,
+          responseData: data
         });
       }
       return res.status(500).json({
-        message: 'The server is currently unavailable. Please try again later.'
+        message: data.message || 'The server is currently unavailable. Please try again later.'
       });
     }
 
@@ -206,7 +229,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('[Proxy Error]', {
         error: sanitizeErrorMessage(error),
         endpoint: sanitizeUrl(`${API_URL_SAFE}/${Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path || ''}`),
-        method: req.method
+        method: req.method,
+        requestBody: req.body
       });
     }
 
