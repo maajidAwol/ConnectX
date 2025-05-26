@@ -3,7 +3,7 @@ from django.conf import settings
 from .jwt_utils import generate_email_verification_token, generate_password_reset_token
 
 
-def send_verification_email(user, frontEndUrl=None) -> bool:
+def     send_verification_email(user) -> bool:
     """
     Send an email verification link to the user.
 
@@ -20,7 +20,7 @@ def send_verification_email(user, frontEndUrl=None) -> bool:
     base_url = (
         user.tenant.website_url
         if user.tenant and user.tenant.website_url
-        else (frontEndUrl or settings.FRONTEND_URL)
+        else settings.FRONTEND_URL
     )
     verification_url = f"{base_url}/verify-email?token={token}"
 

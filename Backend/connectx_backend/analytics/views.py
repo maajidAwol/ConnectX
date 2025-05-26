@@ -1301,12 +1301,12 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     @swagger_auto_schema(
-        operation_description="Get revenue overview for the past 30 days",
+        operation_description="Get revenue overview for the past 12 months",
         manual_parameters=[
             openapi.Parameter(
                 "start_date",
                 openapi.IN_QUERY,
-                description="Start date (YYYY-MM-DD). Defaults to 30 days ago",
+                description="Start date (YYYY-MM-DD). Defaults to 12 months ago",
                 type=openapi.TYPE_STRING,
                 required=False,
             ),
@@ -1327,29 +1327,29 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
                         "labels": openapi.Schema(
                             type=openapi.TYPE_ARRAY,
                             items=openapi.Schema(type=openapi.TYPE_STRING),
-                            description="Dates in YYYY-MM-DD format",
+                            description="Months in YYYY-MM format",
                         ),
                         "revenue": openapi.Schema(
                             type=openapi.TYPE_ARRAY,
                             items=openapi.Schema(type=openapi.TYPE_NUMBER),
-                            description="Daily revenue amounts",
+                            description="Monthly revenue amounts",
                         ),
                         "total_revenue": openapi.Schema(
                             type=openapi.TYPE_NUMBER,
                             description="Total revenue for the period",
                         ),
-                        "average_daily_revenue": openapi.Schema(
+                        "average_monthly_revenue": openapi.Schema(
                             type=openapi.TYPE_NUMBER,
-                            description="Average daily revenue",
+                            description="Average monthly revenue",
                         ),
-                        "highest_revenue_day": openapi.Schema(
+                        "highest_revenue_month": openapi.Schema(
                             type=openapi.TYPE_OBJECT,
                             properties={
                                 "date": openapi.Schema(type=openapi.TYPE_STRING),
                                 "amount": openapi.Schema(type=openapi.TYPE_NUMBER),
                             },
                         ),
-                        "lowest_revenue_day": openapi.Schema(
+                        "lowest_revenue_month": openapi.Schema(
                             type=openapi.TYPE_OBJECT,
                             properties={
                                 "date": openapi.Schema(type=openapi.TYPE_STRING),
@@ -1363,7 +1363,7 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"])
     def revenue_overview(self, request):
-        """Get revenue overview data for the past 30 days."""
+        """Get revenue overview data for the past 12 months."""
         tenant = self.get_tenant(request)
 
         # Get date filters
@@ -1377,45 +1377,46 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         if start_date:
             start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date()
         else:
-            start_date = end_date - timedelta(days=30)
+            start_date = end_date - relativedelta(months=12)
 
-        # Get daily revenue data
-        daily_revenue = (
+        # Get monthly revenue data
+        monthly_revenue = (
             Order.objects.filter(
                 tenant=tenant,
                 status__in=["confirmed", "shipped", "delivered"],
                 created_at__date__range=[start_date, end_date],
             )
-            .annotate(date=TruncDate("created_at"))
-            .values("date")
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
             .annotate(revenue=Sum("total_amount"))
-            .order_by("date")
+            .order_by("month")
         )
 
-        # Create a map of all dates in the range
-        date_revenue_map = {
-            (start_date + timedelta(days=x)).strftime("%Y-%m-%d"): 0
-            for x in range((end_date - start_date).days + 1)
-        }
+        # Create a map of all months in the range
+        date_revenue_map = {}
+        current = start_date
+        while current <= end_date:
+            date_revenue_map[current.strftime("%Y-%m")] = 0
+            current = current + relativedelta(months=1)
 
         # Fill in the actual revenue data
-        for entry in daily_revenue:
-            date_str = entry["date"].strftime("%Y-%m-%d")
+        for entry in monthly_revenue:
+            date_str = entry["month"].strftime("%Y-%m")
             date_revenue_map[date_str] = float(entry["revenue"] or 0)
 
         # Calculate statistics
         revenue_values = list(date_revenue_map.values())
         total_revenue = sum(revenue_values)
-        average_daily_revenue = (
+        average_monthly_revenue = (
             total_revenue / len(revenue_values) if revenue_values else 0
         )
 
-        # Find highest and lowest revenue days
-        highest_revenue_day = max(
+        # Find highest and lowest revenue months
+        highest_revenue_month = max(
             [(date, amount) for date, amount in date_revenue_map.items()],
             key=lambda x: x[1],
         )
-        lowest_revenue_day = min(
+        lowest_revenue_month = min(
             [(date, amount) for date, amount in date_revenue_map.items()],
             key=lambda x: x[1],
         )
@@ -1424,14 +1425,14 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
             "labels": list(date_revenue_map.keys()),
             "revenue": revenue_values,
             "total_revenue": total_revenue,
-            "average_daily_revenue": average_daily_revenue,
-            "highest_revenue_day": {
-                "date": highest_revenue_day[0],
-                "amount": highest_revenue_day[1],
+            "average_monthly_revenue": average_monthly_revenue,
+            "highest_revenue_month": {
+                "date": highest_revenue_month[0],
+                "amount": highest_revenue_month[1],
             },
-            "lowest_revenue_day": {
-                "date": lowest_revenue_day[0],
-                "amount": lowest_revenue_day[1],
+            "lowest_revenue_month": {
+                "date": lowest_revenue_month[0],
+                "amount": lowest_revenue_month[1],
             },
         }
 
