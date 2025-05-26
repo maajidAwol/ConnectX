@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -31,9 +31,46 @@ import {
   Pie,
   Cell,
 } from "recharts"
+import { useAuthStore } from "@/store/authStore"
+import { toast } from "sonner"
+import { useProductAnalyticsStore } from "@/store/productAnalyticsStore"
+import { useMerchantAnalyticsStore } from "@/store/merchantAnalyticsStore"
+
+interface TopProduct {
+  id: string
+  name: string
+  total_sales: number
+  total_revenue: string
+  quantity: number
+}
+
+interface TopProductsResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: TopProduct[]
+}
 
 export default function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState("30d")
+  const { topProducts, isLoading: isLoadingProducts, error, fetchTopProducts } = useProductAnalyticsStore()
+  const { overview, isLoading: isLoadingOverview, error: overviewError, fetchOverview } = useMerchantAnalyticsStore()
+  const { accessToken } = useAuthStore.getState()
+
+  useEffect(() => {
+    fetchTopProducts()
+    fetchOverview()
+  }, [fetchTopProducts, fetchOverview])
+
+  // Show error toast if there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+    if (overviewError) {
+      toast.error(overviewError)
+    }
+  }, [error, overviewError])
 
   // Dummy chart data
   const revenueData = [
@@ -145,7 +182,13 @@ export default function AnalyticsDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+              ) : (
+                `$${Number(overview?.total_revenue || 0).toLocaleString()}`
+              )}
+            </div>
             <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
@@ -162,7 +205,13 @@ export default function AnalyticsDashboard() {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSales}</div>
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              ) : (
+                overview?.total_orders || 0
+              )}
+            </div>
             <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
@@ -175,11 +224,17 @@ export default function AnalyticsDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
             <LineChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${averageOrderValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              ) : (
+                overview?.total_products || 0
+              )}
+            </div>
             <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
@@ -192,11 +247,17 @@ export default function AnalyticsDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+124</div>
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              ) : (
+                overview?.total_customers || 0
+              )}
+            </div>
             <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
@@ -337,7 +398,7 @@ export default function AnalyticsDashboard() {
         <TabsContent value="products">
           <Card>
             <CardHeader>
-              <CardTitle>Product Performance</CardTitle>
+              <CardTitle>Top Product Performance</CardTitle>
               <CardDescription>Sales and revenue by product</CardDescription>
             </CardHeader>
             <CardContent>
@@ -346,48 +407,68 @@ export default function AnalyticsDashboard() {
                   <div className="col-span-5">Product</div>
                   <div className="col-span-2 text-center">Units Sold</div>
                   <div className="col-span-2 text-center">Revenue</div>
-                  <div className="col-span-2 text-center">Growth</div>
-                  <div className="col-span-1 text-right">Trend</div>
+                  <div className="col-span-2 text-center">Stock</div>
+                  <div className="col-span-1 text-right">Status</div>
                 </div>
                 <div className="divide-y">
-                  {products
-                    .sort((a, b) => b.sales - a.sales)
-                    .slice(0, 5)
-                    .map((product, index) => {
-                      // Generate random growth percentage for demo
-                      const growth = Math.floor(Math.random() * 30) - 5
-                      const isPositive = growth > 0
+                  {isLoadingProducts ? (
+                    // Loading skeleton
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <div key={index} className="grid grid-cols-12 items-center p-3">
+                        <div className="col-span-5">
+                          <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                          <div className="h-3 w-24 bg-muted rounded animate-pulse mt-1" />
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <div className="h-4 w-16 bg-muted rounded animate-pulse mx-auto" />
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <div className="h-4 w-20 bg-muted rounded animate-pulse mx-auto" />
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <div className="h-4 w-16 bg-muted rounded animate-pulse mx-auto" />
+                        </div>
+                        <div className="col-span-1">
+                          <div className="h-4 w-8 bg-muted rounded animate-pulse ml-auto" />
+                        </div>
+                      </div>
+                    ))
+                  ) : topProducts.length > 0 ? (
+                    topProducts.map((product) => {
+                      const isLowStock = product.quantity < 10
+                      const isOutOfStock = product.quantity === 0
 
                       return (
                         <div key={product.id} className="grid grid-cols-12 items-center p-3">
                           <div className="col-span-5">
                             <div className="font-medium">{product.name}</div>
-                            <div className="text-xs text-muted-foreground">{product.sku}</div>
+                            <div className="text-xs text-muted-foreground">ID: {product.id}</div>
                           </div>
-                          <div className="col-span-2 text-center">{product.sales}</div>
-                          <div className="col-span-2 text-center">{product.revenue}</div>
-                          <div className="col-span-2 text-center">
-                            <span
-                              className={isPositive ? "text-green-600" : "text-red-600"}
-                            >{`${isPositive ? "+" : ""}${growth}%`}</span>
-                          </div>
+                          <div className="col-span-2 text-center">{product.total_sales}</div>
+                          <div className="col-span-2 text-center">${product.total_revenue}</div>
+                          <div className="col-span-2 text-center">{product.quantity}</div>
                           <div className="col-span-1 flex justify-end">
-                            {isPositive ? (
-                              <TrendingUp className="h-4 w-4 text-green-600" />
+                            {isOutOfStock ? (
+                              <Badge variant="destructive">Out of Stock</Badge>
+                            ) : isLowStock ? (
+                              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                                Low Stock
+                              </Badge>
                             ) : (
-                              <TrendingDown className="h-4 w-4 text-red-600" />
+                              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+                                In Stock
+                              </Badge>
                             )}
                           </div>
                         </div>
                       )
-                    })}
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">
+                      No product data available
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="mt-4 flex justify-center">
-                <Button variant="outline" className="gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  <span>View All Products</span>
-                </Button>
               </div>
             </CardContent>
           </Card>

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import axios from 'axios'
 
 interface User {
   id: string
@@ -68,6 +69,7 @@ interface AuthState {
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>
   validateToken: () => boolean
   updateProfile: (formData: FormData) => Promise<void>
+  resendVerification: (email: string) => Promise<void>
 }
 
 // In Next.js, cookies need to be set server-side
@@ -496,6 +498,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: error instanceof Error ? error.message : 'Failed to update profile'
       });
       throw error;
+    }
+  },
+
+  resendVerification: async (email: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/resend-verification/`,
+        { email },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      )
+
+      if (!response.data) {
+        throw new Error('Failed to resend verification email')
+      }
+
+      set({ isLoading: false, error: null })
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to resend verification email'
+      })
+      throw error
     }
   },
 }))
