@@ -59,7 +59,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }) async {
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/?page=$page&page_size=$pageSize'),
+        Uri.parse('$baseUrl/products/?filter_type=listed&page=$page&page_size=$pageSize'),
         headers: _headers,
       );
       print(response.body);
@@ -85,7 +85,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<List<ProductModel>> getProductBySearch(String query) async {
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/?search=$query'),
+        Uri.parse('$baseUrl/products/?filter_type=listed&search=$query'),
         headers: _headers,
       );
 
@@ -108,7 +108,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     print(productId);
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/$productId/'),
+        Uri.parse('$baseUrl/products/?filter_type=listed&id=$productId/'),
         headers: _headers,
       );
       print(response.body);
@@ -288,7 +288,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }) async {
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/?page=$page&page_size=$pageSize'),
+        Uri.parse('$baseUrl/products/?filter_type=listed&page=$page&page_size=$pageSize'),
         headers: _headers,
       );
 
@@ -315,7 +315,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     try {
       for (int page = 1; page <= maxPages; page++) {
         final response = await client.get(
-          Uri.parse('$baseUrl/products/?page=$page&page_size=20'),
+          Uri.parse('$baseUrl/products/?filter_type=listed&page=$page&page_size=20'),
           headers: _headers,
         );
 
