@@ -30,6 +30,7 @@ const String searchHistoryScreenRoute = "search_history";
 const String bookmarkScreenRoute = "bookmark";
 const String entryPointScreenRoute = "entry_point";
 const String profileScreenRoute = "profile";
+const String profileUpdateScreenRoute = "profile_update";
 const String getHelpScreenRoute = "get_help";
 const String chatScreenRoute = "chat";
 const String userInfoScreenRoute = "user_info";

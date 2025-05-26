@@ -18,7 +18,7 @@
     <!-- Vibration permission for notifications -->
     <uses-permission android:name="android.permission.VIBRATE"/>
     <application
-        android:label="korecha"
+        android:label="ConnectX"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:enableOnBackInvokedCallback="true">

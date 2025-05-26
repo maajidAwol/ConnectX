@@ -17,3 +17,17 @@ final class ProfileError extends ProfileState {
   final String message;
   ProfileError(this.message);
 }
+
+final class ProfileUpdating extends ProfileState {}
+
+final class ProfileUpdated extends ProfileState {
+  final User user;
+
+  ProfileUpdated(this.user);
+}
+
+final class ProfileUpdateError extends ProfileState {
+  final String message;
+
+  ProfileUpdateError(this.message);
+}

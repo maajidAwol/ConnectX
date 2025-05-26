@@ -501,28 +501,7 @@ class _OrderDetailsSheetV2State extends State<OrderDetailsSheetV2> {
                               fontSize: 14,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'SKU: ${item.productDetails.sku}',
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
                             '${item.quantity} x ${item.price.toStringAsFixed(2)} Birr',
                             style: TextStyle(color: blackColor60, fontSize: 13),

@@ -19,4 +19,9 @@ class RemoveFromCart extends CartEvent {
   RemoveFromCart(this.id);
 }
 
+class RemoveMultipleFromCart extends CartEvent {
+  final List<String> ids;
+  RemoveMultipleFromCart(this.ids);
+}
+
 class ClearCart extends CartEvent {}

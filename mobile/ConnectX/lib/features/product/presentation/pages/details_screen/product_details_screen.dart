@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:korecha/components/cart_button.dart';
 import 'package:korecha/components/product/product_card.dart';
 import 'package:korecha/components/review_card.dart';
+import 'package:korecha/components/reviews_bottom_sheet.dart';
 import 'package:korecha/components/skleton/product/products_skelton.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/features/product/domain/usecases/get_filtered_products.dart';
@@ -15,6 +16,13 @@ import 'package:korecha/features/product/presentation/widgets/details/product_de
 import 'package:korecha/screens/product/views/components/notify_me_card.dart';
 import 'package:korecha/screens/product/views/components/product_images.dart';
 import 'package:korecha/screens/product/views/components/product_info.dart';
+import 'package:korecha/features/product/presentation/pages/add_review_screen.dart';
+import 'package:korecha/features/product/data/models/review_model.dart';
+import 'package:korecha/features/product/data/models/product_model.dart';
+import 'package:korecha/features/product/domain/entities/review.dart'
+    as review_entities;
+import 'package:korecha/core/injection/injection_container.dart';
+import 'package:korecha/features/product/data/datasources/product_remote_data_source.dart';
 
 import 'package:korecha/route/screen_export.dart';
 
@@ -33,11 +41,123 @@ class ProductDetailsScreen extends StatefulWidget {
 }
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+  List<review_entities.Review> _reviews = [];
+  bool _loadingReviews = false;
+  List<ProductModel> _relatedProducts = [];
+  bool _loadingRelatedProducts = false;
+
   @override
   void initState() {
     super.initState();
     context.read<DetailsBloc>().add(
       LoadProductDetails(productId: widget.productId),
+    );
+    _loadReviews();
+  }
+
+  @override
+  void dispose() {
+    // Cancel any ongoing operations to prevent setState after dispose
+    super.dispose();
+  }
+
+  Future<void> _loadReviews() async {
+    if (!mounted) return;
+
+    setState(() {
+      _loadingReviews = true;
+    });
+
+    try {
+      final dataSource = sl<ProductRemoteDataSource>();
+      final reviewModels = await dataSource.getProductReviews(widget.productId);
+
+      if (mounted) {
+        setState(() {
+          _reviews = reviewModels.cast<review_entities.Review>();
+          _loadingReviews = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading reviews: $e');
+      if (mounted) {
+        setState(() {
+          _loadingReviews = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadRelatedProducts(String categoryId) async {
+    if (!mounted) return;
+
+    setState(() {
+      _loadingRelatedProducts = true;
+    });
+
+    try {
+      final dataSource = sl<ProductRemoteDataSource>();
+      final products = await dataSource.getProductsByCategoryId(categoryId);
+
+      // Filter out the current product
+      final filteredProducts =
+          products.where((product) => product.id != widget.productId).toList();
+
+      if (mounted) {
+        setState(() {
+          _relatedProducts = filteredProducts;
+          _loadingRelatedProducts = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading related products: $e');
+      if (mounted) {
+        setState(() {
+          _loadingRelatedProducts = false;
+        });
+      }
+    }
+  }
+
+  void _navigateToAddReview(String productId, String productName) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddReviewScreen(
+              productId: productId,
+              productName: productName,
+              onReviewSubmitted: () {
+                // Refresh product details to get updated review data
+                context.read<DetailsBloc>().add(
+                  LoadProductDetails(productId: widget.productId),
+                );
+                _loadReviews(); // Also refresh the reviews list
+              },
+            ),
+      ),
+    );
+
+    // If a review was submitted, refresh the data
+    if (result == true) {
+      _loadReviews();
+    }
+  }
+
+  void _showReviews() {
+    ReviewsBottomSheet.show(
+      context,
+      reviews: _reviews,
+      productId: widget.productId,
+      onWriteReview:
+          () => _navigateToAddReview(
+            widget.productId,
+            context.read<DetailsBloc>().state is DetailsLoaded
+                ? (context.read<DetailsBloc>().state as DetailsLoaded)
+                    .product
+                    .name
+                : 'Product',
+          ),
     );
   }
 
@@ -52,6 +172,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           return Center(child: Text(state.message));
         }
         if (state is DetailsLoaded) {
+          // Load related products when product details are loaded
+          final productModel = state.product;
+          if (_relatedProducts.isEmpty &&
+              !_loadingRelatedProducts &&
+              productModel is ProductModel &&
+              productModel.categoryId != null &&
+              productModel.categoryId!.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _loadRelatedProducts(productModel.categoryId!);
+            });
+          }
+
           return Scaffold(
             bottomNavigationBar:
                 widget.isProductAvailable
@@ -92,8 +224,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   ProductImages(
                     images: [
-                      state.product.coverUrl,
-                      ...state.product.images.map((e) => e.url),
+                      if (state.product.coverUrl.isNotEmpty)
+                        state.product.coverUrl,
+                      ...state.product.images
+                          .map((e) => e.url)
+                          .where((url) => url.isNotEmpty),
                     ],
                   ),
                   ProductInfo(
@@ -101,8 +236,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     title: state.product.subDescription,
                     isAvailable: widget.isProductAvailable,
                     description: state.product.description,
-                    rating: 4.4,
-                    numOfReviews: 126,
+                    rating: state.product.reviewSummary?.averageRating ?? 0.0,
+                    numOfReviews:
+                        state.product.reviewSummary?.totalReviews ?? 0,
                   ),
                   // ProductListTile(
                   //   svgSrc: "assets/icons/Product.svg",
@@ -144,14 +280,58 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(defaultPadding),
-                      child: ReviewCard(
-                        rating: state.product.totalRatings,
-                        numOfReviews: 128,
-                        numOfFiveStar: 80,
-                        numOfFourStar: 30,
-                        numOfThreeStar: 5,
-                        numOfTwoStar: 4,
-                        numOfOneStar: 1,
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: _showReviews,
+                            child: ReviewCard(
+                              rating:
+                                  state.product.reviewSummary?.averageRating ??
+                                  0.0,
+                              numOfReviews:
+                                  state.product.reviewSummary?.totalReviews ??
+                                  0,
+                              numOfFiveStar:
+                                  state.product.reviewSummary?.fiveStarCount ??
+                                  0,
+                              numOfFourStar:
+                                  state.product.reviewSummary?.fourStarCount ??
+                                  0,
+                              numOfThreeStar:
+                                  state.product.reviewSummary?.threeStarCount ??
+                                  0,
+                              numOfTwoStar:
+                                  state.product.reviewSummary?.twoStarCount ??
+                                  0,
+                              numOfOneStar:
+                                  state.product.reviewSummary?.oneStarCount ??
+                                  0,
+                            ),
+                          ),
+                          const SizedBox(height: defaultPadding),
+                          // Add Review Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed:
+                                  () => _navigateToAddReview(
+                                    state.product.id,
+                                    state.product.name,
+                                  ),
+                              icon: const Icon(Icons.rate_review_outlined),
+                              label: const Text('Write a Review'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: defaultPadding,
+                                ),
+                                side: BorderSide(
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                foregroundColor: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -175,68 +355,62 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   SliverToBoxAdapter(
                     child: SizedBox(
                       height: 220,
-                      child: BlocBuilder<HomeBloc, HomeState>(
-                        builder: (context, homeState) {
-                          if (homeState is HomeLoading) {
-                            return const ProductsSkelton();
-                          } else if (homeState is HomeLoaded) {
-                            final products =
-                                homeState.products[ProductFilter
-                                    .popularProducts] ??
-                                [];
-                            if (products.isEmpty) {
-                              return const Center(
-                                child: Text('No products available'),
-                              );
-                            }
-                            return ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: products.length,
-                              itemBuilder:
-                                  (context, index) => Padding(
-                                    padding: EdgeInsets.only(
-                                      left: defaultPadding,
-                                      right:
-                                          index == products.length - 1
-                                              ? defaultPadding
-                                              : 0,
+                      child:
+                          _loadingRelatedProducts
+                              ? const ProductsSkelton()
+                              : _relatedProducts.isEmpty
+                              ? const Center(
+                                child: Text('No related products available'),
+                              )
+                              : ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _relatedProducts.length,
+                                itemBuilder:
+                                    (context, index) => Padding(
+                                      padding: EdgeInsets.only(
+                                        left: defaultPadding,
+                                        right:
+                                            index == _relatedProducts.length - 1
+                                                ? defaultPadding
+                                                : 0,
+                                      ),
+                                      child: ProductCard(
+                                        image: _relatedProducts[index].coverUrl,
+                                        brandName: _relatedProducts[index].name,
+                                        title:
+                                            _relatedProducts[index]
+                                                .subDescription,
+                                        price:
+                                            _relatedProducts[index].priceSale ??
+                                            _relatedProducts[index].price,
+                                        priceAfetDiscount:
+                                            _relatedProducts[index].price,
+                                        dicountpercent:
+                                            _relatedProducts[index].priceSale !=
+                                                    null
+                                                ? ((_relatedProducts[index]
+                                                                .price -
+                                                            _relatedProducts[index]
+                                                                .priceSale!) /
+                                                        _relatedProducts[index]
+                                                            .price *
+                                                        100)
+                                                    .round()
+                                                : 0,
+                                        press: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            productDetailsScreenRoute,
+                                            arguments: {
+                                              'isProductAvailable': true,
+                                              'productId':
+                                                  _relatedProducts[index].id,
+                                            },
+                                          );
+                                        },
+                                      ),
                                     ),
-                                    child: ProductCard(
-                                      image: products[index].coverUrl,
-                                      brandName: products[index].name,
-                                      title: products[index].subDescription,
-                                      price:
-                                          products[index].priceSale ??
-                                          products[index].price,
-                                      priceAfetDiscount: products[index].price,
-                                      dicountpercent:
-                                          products[index].priceSale != null
-                                              ? ((products[index].price -
-                                                          products[index]
-                                                              .priceSale!) /
-                                                      products[index].price *
-                                                      100)
-                                                  .round()
-                                              : 0,
-                                      press: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          productDetailsScreenRoute,
-                                          arguments: {
-                                            'isProductAvailable': true,
-                                            'productId': products[index].id,
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                            );
-                          } else if (homeState is HomeError) {
-                            return Center(child: Text(homeState.message));
-                          }
-                          return const SizedBox();
-                        },
-                      ),
+                              ),
                     ),
                   ),
                   const SliverToBoxAdapter(

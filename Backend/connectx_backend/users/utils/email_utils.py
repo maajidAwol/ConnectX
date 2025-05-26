@@ -3,18 +3,26 @@ from django.conf import settings
 from .jwt_utils import generate_email_verification_token, generate_password_reset_token
 
 
-def send_verification_email(user) -> bool:
+def     send_verification_email(user) -> bool:
     """
     Send an email verification link to the user.
 
     Args:
         user: The user instance to send the verification email to
+        frontEndUrl: Optional frontend URL. If not provided, will use tenant's website URL or default FRONTEND_URL
 
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
     token = generate_email_verification_token(str(user.id), user.email)
-    verification_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+
+    # Use tenant's website URL if available, otherwise fall back to provided frontEndUrl or default FRONTEND_URL
+    base_url = (
+        user.tenant.website_url
+        if user.tenant and user.tenant.website_url
+        else settings.FRONTEND_URL
+    )
+    verification_url = f"{base_url}/verify-email?token={token}"
 
     subject = "Verify your email address"
     message = f"""

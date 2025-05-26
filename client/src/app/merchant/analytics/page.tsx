@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -31,12 +31,98 @@ import {
   Pie,
   Cell,
 } from "recharts"
+import { useAuthStore } from "@/store/authStore"
+import { toast } from "sonner"
+import { useProductAnalyticsStore } from "@/store/productAnalyticsStore"
+import { useMerchantAnalyticsStore } from "@/store/merchantAnalyticsStore"
+
+interface TopProduct {
+  id: string
+  name: string
+  total_sales: number
+  total_revenue: string
+  quantity: number
+}
+
+interface TopProductsResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: TopProduct[]
+}
 
 export default function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState("30d")
+  const { topProducts, isLoading: isLoadingProducts, error, fetchTopProducts } = useProductAnalyticsStore()
+  const { 
+    overview, 
+    revenueOverview, 
+    reviewAnalytics,
+    demographicAnalytics,
+    isLoading: isLoadingOverview, 
+    error: overviewError, 
+    fetchOverview, 
+    fetchRevenueOverview,
+    fetchReviewAnalytics,
+    fetchDemographicAnalytics
+  } = useMerchantAnalyticsStore()
+  // const { accessToken } = useAuthStore.getState()
 
-  // Dummy chart data
-  const revenueData = [
+  useEffect(() => {
+    fetchTopProducts()
+    fetchOverview()
+    fetchRevenueOverview()
+    fetchReviewAnalytics()
+    fetchDemographicAnalytics()
+  }, [fetchTopProducts, fetchOverview, fetchRevenueOverview, fetchReviewAnalytics, fetchDemographicAnalytics])
+
+  // Show error toast if there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+    if (overviewError) {
+      toast.error(overviewError)
+    }
+  }, [error, overviewError])
+
+  // Utility function to convert date format from "2025-05" to "May"
+  const formatDateLabel = (dateString: string) => {
+    const [year, month] = dateString.split('-')
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ]
+    return monthNames[parseInt(month) - 1] || dateString
+  }
+
+  // Transform rating distribution data from API
+  const getRatingDistribution = () => {
+    if (reviewAnalytics) {
+      return [
+        { stars: 5, percentage: reviewAnalytics.rating_distribution["5"] },
+        { stars: 4, percentage: reviewAnalytics.rating_distribution["4"] },
+        { stars: 3, percentage: reviewAnalytics.rating_distribution["3"] },
+        { stars: 2, percentage: reviewAnalytics.rating_distribution["2"] },
+        { stars: 1, percentage: reviewAnalytics.rating_distribution["1"] },
+      ]
+    }
+    return [
+      { stars: 5, percentage: 85 },
+      { stars: 4, percentage: 10 },
+      { stars: 3, percentage: 3 },
+      { stars: 2, percentage: 1 },
+      { stars: 1, percentage: 1 },
+    ]
+  }
+
+  // Transform revenue overview data from API
+  const revenueData = revenueOverview?.labels?.map((label, index) => ({
+    date: formatDateLabel(label),
+    revenue: revenueOverview.revenue[index],
+    orders: 0, // Orders data not available in the API response
+  })) || [
+    // Fallback dummy data if API data is not available
     { date: "Jan", revenue: 12000, orders: 145 },
     { date: "Feb", revenue: 15000, orders: 178 },
     { date: "Mar", revenue: 18000, orders: 210 },
@@ -57,7 +143,21 @@ export default function AnalyticsDashboard() {
     { name: "Affiliate", value: 25, color: "#f59e0b" },
   ]
 
-  const demographicsData = [
+  // Transform demographic analytics data from API
+  const demographicsData = demographicAnalytics ? [
+    { name: "Male 18-24", value: demographicAnalytics.gender_age_distribution.male_18_24, color: "#3b82f6" },
+    { name: "Female 18-24", value: demographicAnalytics.gender_age_distribution.female_18_24, color: "#93c5fd" },
+    { name: "Male 25-34", value: demographicAnalytics.gender_age_distribution.male_25_34, color: "#10b981" },
+    { name: "Female 25-34", value: demographicAnalytics.gender_age_distribution.female_25_34, color: "#6ee7b7" },
+    { name: "Male 35-44", value: demographicAnalytics.gender_age_distribution.male_35_44, color: "#f59e0b" },
+    { name: "Female 35-44", value: demographicAnalytics.gender_age_distribution.female_35_44, color: "#fbbf24" },
+    { name: "Male 45-54", value: demographicAnalytics.gender_age_distribution.male_45_54, color: "#ef4444" },
+    { name: "Female 45-54", value: demographicAnalytics.gender_age_distribution.female_45_54, color: "#fca5a5" },
+    { name: "Male 55+", value: demographicAnalytics.gender_age_distribution.male_55_plus, color: "#8b5cf6" },
+    { name: "Female 55+", value: demographicAnalytics.gender_age_distribution.female_55_plus, color: "#c4b5fd" },
+    { name: "Others", value: demographicAnalytics.gender_age_distribution.others, color: "#6b7280" },
+  ].filter(item => item.value > 0) : [
+    // Fallback dummy data if API data is not available
     { name: "Male 18-24", value: 8, color: "#3b82f6" },
     { name: "Female 18-24", value: 7, color: "#93c5fd" },
     { name: "Male 25-34", value: 18, color: "#10b981" },
@@ -81,9 +181,9 @@ export default function AnalyticsDashboard() {
   const averageOrderValue = totalRevenue / totalSales
 
   // Calculate month-over-month growth (simulated)
-  const salesGrowth = 12.5
-  const revenueGrowth = 15.2
-  const customerGrowth = 8.7
+  // const salesGrowth = 12.5
+  // const revenueGrowth = 15.2
+  // const customerGrowth = 8.7
 
   return (
     <div className="space-y-6">
@@ -145,14 +245,20 @@ export default function AnalyticsDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-            <div className="flex items-center pt-1">
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+              ) : (
+                `${Number(overview?.total_revenue || 0).toLocaleString()} ETB`
+              )}
+            </div>
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+{revenueGrowth}%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -162,48 +268,66 @@ export default function AnalyticsDashboard() {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSales}</div>
-            <div className="flex items-center pt-1">
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              ) : (
+                overview?.total_orders || 0
+              )}
+            </div>
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+{salesGrowth}%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
             <LineChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${averageOrderValue.toFixed(2)}</div>
-            <div className="flex items-center pt-1">
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              ) : (
+                overview?.total_products || 0
+              )}
+            </div>
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+2.4%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+124</div>
-            <div className="flex items-center pt-1">
+            <div className="text-2xl font-bold">
+              {isLoadingOverview ? (
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              ) : (
+                overview?.total_customers || 0
+              )}
+            </div>
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+{customerGrowth}%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>
@@ -222,68 +346,81 @@ export default function AnalyticsDashboard() {
               <CardHeader>
                 <CardTitle>Revenue Overview</CardTitle>
                 <CardDescription>
-                  Revenue breakdown for the past{" "}
-                  {dateRange === "7d"
+                  Revenue breakdown for the past 12 months
+                  
+                  {/* {dateRange === "7d"
                     ? "7 days"
                     : dateRange === "30d"
                       ? "30 days"
                       : dateRange === "90d"
                         ? "90 days"
-                        : "year"}
+                        : "year"} */}
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <ChartContainer
-                  config={{
-                    revenue: {
-                      label: "Revenue",
-                      color: "#6366f1",
-                    },
-                    orders: {
-                      label: "Orders",
-                      color: "#10b981",
-                    },
-                  }}
-                  className="h-full w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueData}>
-                      <defs>
-                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis
-                        stroke="#64748b"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(value) => `$${value.toLocaleString()}`}
-                      />
-                      <ChartTooltip
-                        content={<ChartTooltipContent />}
-                        contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="revenue"
-                        stroke="#6366f1"
-                        strokeWidth={3}
-                        fill="url(#revenueGradient)"
-                        dot={{ fill: "#6366f1", strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "white" }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                {isLoadingOverview ? (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <div className="space-y-4 w-full">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                    </div>
+                  </div>
+                ) : (
+                  <ChartContainer
+                    config={{
+                      revenue: {
+                        label: "Revenue",
+                        color: "#6366f1",
+                      },
+                      orders: {
+                        label: "Orders",
+                        color: "#10b981",
+                      },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={revenueData}>
+                        <defs>
+                          <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis
+                          stroke="#64748b"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => `${value.toLocaleString()} ETB`}
+                        />
+                        <ChartTooltip
+                          content={<ChartTooltipContent />}
+                          contentStyle={{
+                            backgroundColor: "white",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#6366f1"
+                          strokeWidth={3}
+                          fill="url(#revenueGradient)"
+                          dot={{ fill: "#6366f1", strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "white" }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                )}
               </CardContent>
             </Card>
 
@@ -337,7 +474,7 @@ export default function AnalyticsDashboard() {
         <TabsContent value="products">
           <Card>
             <CardHeader>
-              <CardTitle>Product Performance</CardTitle>
+              <CardTitle>Top Product Performance</CardTitle>
               <CardDescription>Sales and revenue by product</CardDescription>
             </CardHeader>
             <CardContent>
@@ -346,48 +483,68 @@ export default function AnalyticsDashboard() {
                   <div className="col-span-5">Product</div>
                   <div className="col-span-2 text-center">Units Sold</div>
                   <div className="col-span-2 text-center">Revenue</div>
-                  <div className="col-span-2 text-center">Growth</div>
-                  <div className="col-span-1 text-right">Trend</div>
+                  <div className="col-span-2 text-center">Stock</div>
+                  <div className="col-span-1 text-right">Status</div>
                 </div>
                 <div className="divide-y">
-                  {products
-                    .sort((a, b) => b.sales - a.sales)
-                    .slice(0, 5)
-                    .map((product, index) => {
-                      // Generate random growth percentage for demo
-                      const growth = Math.floor(Math.random() * 30) - 5
-                      const isPositive = growth > 0
+                  {isLoadingProducts ? (
+                    // Loading skeleton
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <div key={index} className="grid grid-cols-12 items-center p-3">
+                        <div className="col-span-5">
+                          <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                          <div className="h-3 w-24 bg-muted rounded animate-pulse mt-1" />
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <div className="h-4 w-16 bg-muted rounded animate-pulse mx-auto" />
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <div className="h-4 w-20 bg-muted rounded animate-pulse mx-auto" />
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <div className="h-4 w-16 bg-muted rounded animate-pulse mx-auto" />
+                        </div>
+                        <div className="col-span-1">
+                          <div className="h-4 w-8 bg-muted rounded animate-pulse ml-auto" />
+                        </div>
+                      </div>
+                    ))
+                  ) : topProducts.length > 0 ? (
+                    topProducts.map((product) => {
+                      const isLowStock = product.quantity < 10
+                      const isOutOfStock = product.quantity === 0
 
                       return (
                         <div key={product.id} className="grid grid-cols-12 items-center p-3">
                           <div className="col-span-5">
                             <div className="font-medium">{product.name}</div>
-                            <div className="text-xs text-muted-foreground">{product.sku}</div>
+                            <div className="text-xs text-muted-foreground">ID: {product.id}</div>
                           </div>
-                          <div className="col-span-2 text-center">{product.sales}</div>
-                          <div className="col-span-2 text-center">{product.revenue}</div>
-                          <div className="col-span-2 text-center">
-                            <span
-                              className={isPositive ? "text-green-600" : "text-red-600"}
-                            >{`${isPositive ? "+" : ""}${growth}%`}</span>
-                          </div>
+                          <div className="col-span-2 text-center">{product.total_sales}</div>
+                          <div className="col-span-2 text-center">${product.total_revenue}</div>
+                          <div className="col-span-2 text-center">{product.quantity}</div>
                           <div className="col-span-1 flex justify-end">
-                            {isPositive ? (
-                              <TrendingUp className="h-4 w-4 text-green-600" />
+                            {isOutOfStock ? (
+                              <Badge variant="destructive">Out of Stock</Badge>
+                            ) : isLowStock ? (
+                              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                                Low Stock
+                              </Badge>
                             ) : (
-                              <TrendingDown className="h-4 w-4 text-red-600" />
+                              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+                                In Stock
+                              </Badge>
                             )}
                           </div>
                         </div>
                       )
-                    })}
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">
+                      No product data available
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="mt-4 flex justify-center">
-                <Button variant="outline" className="gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  <span>View All Products</span>
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -510,37 +667,48 @@ export default function AnalyticsDashboard() {
                 <CardDescription>Age and gender distribution</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <ChartContainer
-                  config={{
-                    demographics: {
-                      label: "Demographics",
-                      color: "hsl(var(--chart-1))",
-                    },
-                  }}
-                  className="h-full w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie
-                        data={demographicsData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: ${value}%`}
-                        labelLine={false}
-                      >
-                        {demographicsData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip
-                        content={<ChartTooltipContent />}
-                        formatter={(value, name) => [`${value}%`, name]}
-                      />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                {isLoadingOverview ? (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <div className="space-y-4 w-full">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+                    </div>
+                  </div>
+                ) : (
+                  <ChartContainer
+                    config={{
+                      demographics: {
+                        label: "Demographics",
+                        color: "hsl(var(--chart-1))",
+                      },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={demographicsData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}%`}
+                          labelLine={false}
+                        >
+                          {demographicsData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip
+                          content={<ChartTooltipContent />}
+                          formatter={(value, name) => [`${value}%`, name]}
+                        />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                )}
               </CardContent>
             </Card>
 
@@ -601,52 +769,62 @@ export default function AnalyticsDashboard() {
                 <CardDescription>Ratings and reviews</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <div className="h-full w-full rounded-md border p-4">
-                  <div className="flex h-full flex-col justify-between">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold">4.8/5</div>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          <ArrowUp className="mr-1 h-3 w-3" />
-                          <span>+0.2</span>
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-2">
-                        {[
-                          { stars: 5, percentage: 85 },
-                          { stars: 4, percentage: 10 },
-                          { stars: 3, percentage: 3 },
-                          { stars: 2, percentage: 1 },
-                          { stars: 1, percentage: 1 },
-                        ].map((rating) => (
-                          <div key={rating.stars} className="flex items-center gap-2">
-                            <div className="text-sm font-medium w-3">{rating.stars}</div>
-                            <div className="h-2 flex-1 rounded-full bg-gray-100">
-                              <div
-                                className="h-full rounded-full bg-yellow-400"
-                                style={{ width: `${rating.percentage}%` }}
-                              ></div>
-                            </div>
-                            <div className="text-xs text-muted-foreground w-8">{rating.percentage}%</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-2">
-                        <div className="text-sm font-medium">Total Reviews</div>
-                        <div className="text-2xl font-bold">1,248</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-center">
-                      <Button variant="outline" className="gap-2">
-                        <ArrowRight className="h-4 w-4" />
-                        <span>View All Reviews</span>
-                      </Button>
+                {isLoadingOverview ? (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <div className="space-y-4 w-full">
+                      <div className="h-8 w-24 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="h-full w-full rounded-md border p-4">
+                    <div className="flex h-full flex-col justify-between">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="text-2xl font-bold">
+                            {reviewAnalytics ? `${reviewAnalytics.average_rating}/5` : '4.8/5'}
+                          </div>
+                          {/* <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <ArrowUp className="mr-1 h-3 w-3" />
+                            <span>+0.2</span>
+                          </Badge> */}
+                        </div>
+
+                        <div className="space-y-2">
+                          {getRatingDistribution().map((rating) => (
+                            <div key={rating.stars} className="flex items-center gap-2">
+                              <div className="text-sm font-medium w-3">{rating.stars}</div>
+                              <div className="h-2 flex-1 rounded-full bg-gray-100">
+                                <div
+                                  className="h-full rounded-full bg-yellow-400"
+                                  style={{ width: `${rating.percentage}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-muted-foreground w-8">{rating.percentage}%</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="pt-2">
+                          <div className="text-sm font-medium">Total Reviews</div>
+                          <div className="text-2xl font-bold">
+                            {reviewAnalytics ? reviewAnalytics.total_reviews.toLocaleString() : '1,248'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* <div className="flex items-center justify-center">
+                        <Button variant="outline" className="gap-2">
+                          <ArrowRight className="h-4 w-4" />
+                          <span>View All Reviews</span>
+                        </Button>
+                      </div> */}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

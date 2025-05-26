@@ -120,7 +120,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: SizedBox(
                       width: width * 0.6,
                       height: height * 0.16,
-                      child: Image.asset("assets/connectx/transparent_logo.png"),
+                      child: Image.asset(
+                        "assets/connectx/transparent_logo.png",
+                      ),
                     ),
                   ),
                   Padding(
@@ -144,20 +146,57 @@ class _LoginScreenState extends State<LoginScreen> {
                           emailController: _emailController,
                           passwordController: _passwordController,
                         ),
-                        // Align(
-                        //   child: TextButton(
-                        //     child: const Text("Forgot password"),
-                        //     onPressed: () {
-                        //       Navigator.pushNamed(
-                        //           context, passwordRecoveryScreenRoute);
-                        //     },
-                        //   ),
-                        // ),
+                        const SizedBox(height: defaultPadding / 2),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // TextButton(
+                            //   onPressed: () {
+                            //     // TODO: Implement forgot email functionality
+                            //     ScaffoldMessenger.of(context).showSnackBar(
+                            //       const SnackBar(
+                            //         content: Text(
+                            //           'Forgot email functionality will be implemented soon',
+                            //         ),
+                            //         duration: Duration(seconds: 2),
+                            //       ),
+                            //     );
+                            //   },
+                            //   child: Text(
+                            //     "Forgot Email?",
+                            //     style: TextStyle(
+                            //       color: Theme.of(context).primaryColor,
+                            //       fontWeight: FontWeight.w500,
+                            //     ),
+                            //   ),
+                            // ),
+                            TextButton(
+                              onPressed: () {
+                                // TODO: Implement forgot password functionality
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Forgot password functionality will be implemented soon',
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                "Forgot Password?",
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         SizedBox(
                           height:
                               MediaQuery.of(context).size.height > 700
-                                  ? MediaQuery.of(context).size.height * 0.1
-                                  : defaultPadding,
+                                  ? MediaQuery.of(context).size.height * 0.05
+                                  : defaultPadding / 2,
                         ),
                         ElevatedButton(
                           onPressed: _handleLogin,

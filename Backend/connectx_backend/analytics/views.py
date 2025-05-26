@@ -1,8 +1,20 @@
+from django.forms import DecimalField
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, AllowAny
-from django.db.models import Sum, Count, Q, F, Avg, Case, When, Value
+from django.db.models import (
+    Sum,
+    Count,
+    Q,
+    F,
+    Avg,
+    Case,
+    When,
+    Value,
+    IntegerField,
+    DecimalField as DBDecimalField,
+)
 from django.db.models.functions import (
     TruncDate,
     TruncWeek,
@@ -41,7 +53,10 @@ from .serializers import (
     RecentOrderSerializer,
     SalesOverviewSerializer,
     TopProductSerializer,
+    ReviewAnalyticsSerializer,
+    DemographicAnalyticsSerializer,
 )
+from reviews.models import Review
 from tenants.models import Tenant
 from orders.models import Order
 from users.models import User
@@ -49,6 +64,7 @@ from products.models import Product
 from dateutil.relativedelta import relativedelta
 
 from users.permissions import IsTenantMember
+from django.db.models.functions import Coalesce
 
 
 class CustomPagination(PageNumberPagination):
@@ -602,7 +618,13 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
         }
 
         # Build a map from weekday number to (count, revenue)
-        weekday_map = {item["weekday"]: {"count": item["count"], "revenue": float(item["revenue"] or 0)} for item in weekday_transactions}
+        weekday_map = {
+            item["weekday"]: {
+                "count": item["count"],
+                "revenue": float(item["revenue"] or 0),
+            }
+            for item in weekday_transactions
+        }
         labels = [weekday_names[i] for i in range(1, 8)]
         counts = [weekday_map.get(i, {"count": 0})["count"] for i in range(1, 8)]
         revenue = [weekday_map.get(i, {"revenue": 0.0})["revenue"] for i in range(1, 8)]
@@ -1195,10 +1217,21 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         if end_date:
             products = products.filter(created_at__lte=end_date)
 
-        # Annotate with sales data
+        # Annotate with proper output fields
         products = products.annotate(
-            total_sales=Sum("order_items__quantity"),
-            total_revenue=Sum(F("order_items__quantity") * F("order_items__price")),
+            total_sales=Coalesce(
+                Count("order_items", distinct=True),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            total_revenue=Coalesce(
+                Sum(
+                    F("order_items__quantity") * F("order_items__price"),
+                    output_field=DBDecimalField(max_digits=15, decimal_places=2),
+                ),
+                Value(0),
+                output_field=DBDecimalField(max_digits=15, decimal_places=2),
+            ),
         ).order_by(order_by_str)
 
         # Apply pagination
@@ -1211,7 +1244,7 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
                 "id": product.id,
                 "name": product.name,
                 "total_sales": product.total_sales or 0,
-                "total_revenue": product.total_revenue or 0,
+                "total_revenue": float(product.total_revenue or 0),
                 "quantity": product.quantity,
             }
             for product in paginated_products
@@ -1269,6 +1302,298 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         paginated_activities = paginator.paginate_queryset(activities, request)
         serializer = RecentActivitySerializer(paginated_activities, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get revenue overview for the past 12 months",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD). Defaults to 12 months ago",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD). Defaults to today",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Revenue overview data",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "labels": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(type=openapi.TYPE_STRING),
+                            description="Months in YYYY-MM format",
+                        ),
+                        "revenue": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(type=openapi.TYPE_NUMBER),
+                            description="Monthly revenue amounts",
+                        ),
+                        "total_revenue": openapi.Schema(
+                            type=openapi.TYPE_NUMBER,
+                            description="Total revenue for the period",
+                        ),
+                        "average_monthly_revenue": openapi.Schema(
+                            type=openapi.TYPE_NUMBER,
+                            description="Average monthly revenue",
+                        ),
+                        "highest_revenue_month": openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                "date": openapi.Schema(type=openapi.TYPE_STRING),
+                                "amount": openapi.Schema(type=openapi.TYPE_NUMBER),
+                            },
+                        ),
+                        "lowest_revenue_month": openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                "date": openapi.Schema(type=openapi.TYPE_STRING),
+                                "amount": openapi.Schema(type=openapi.TYPE_NUMBER),
+                            },
+                        ),
+                    },
+                ),
+            ),
+        },
+    )
+    @action(detail=False, methods=["get"])
+    def revenue_overview(self, request):
+        """Get revenue overview data for the past 12 months."""
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        end_date = request.query_params.get("end_date")
+        if end_date:
+            end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
+        else:
+            end_date = timezone.now().date()
+
+        start_date = request.query_params.get("start_date")
+        if start_date:
+            start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date()
+        else:
+            start_date = end_date - relativedelta(months=12)
+
+        # Get monthly revenue data
+        monthly_revenue = (
+            Order.objects.filter(
+                tenant=tenant,
+                status__in=["confirmed", "shipped", "delivered"],
+                created_at__date__range=[start_date, end_date],
+            )
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(revenue=Sum("total_amount"))
+            .order_by("month")
+        )
+
+        # Create a map of all months in the range
+        date_revenue_map = {}
+        current = start_date
+        while current <= end_date:
+            date_revenue_map[current.strftime("%Y-%m")] = 0
+            current = current + relativedelta(months=1)
+
+        # Fill in the actual revenue data
+        for entry in monthly_revenue:
+            date_str = entry["month"].strftime("%Y-%m")
+            date_revenue_map[date_str] = float(entry["revenue"] or 0)
+
+        # Calculate statistics
+        revenue_values = list(date_revenue_map.values())
+        total_revenue = sum(revenue_values)
+        average_monthly_revenue = (
+            total_revenue / len(revenue_values) if revenue_values else 0
+        )
+
+        # Find highest and lowest revenue months
+        highest_revenue_month = max(
+            [(date, amount) for date, amount in date_revenue_map.items()],
+            key=lambda x: x[1],
+        )
+        lowest_revenue_month = min(
+            [(date, amount) for date, amount in date_revenue_map.items()],
+            key=lambda x: x[1],
+        )
+
+        data = {
+            "labels": list(date_revenue_map.keys()),
+            "revenue": revenue_values,
+            "total_revenue": total_revenue,
+            "average_monthly_revenue": average_monthly_revenue,
+            "highest_revenue_month": {
+                "date": highest_revenue_month[0],
+                "amount": highest_revenue_month[1],
+            },
+            "lowest_revenue_month": {
+                "date": lowest_revenue_month[0],
+                "amount": lowest_revenue_month[1],
+            },
+        }
+
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_description="Get review analytics for the tenant",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: ReviewAnalyticsSerializer()},
+    )
+    @action(detail=False, methods=["get"])
+    def review_analytics(self, request):
+        """Get review analytics for the tenant."""
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Base queryset
+        reviews = Review.objects.filter(tenant=tenant)
+
+        # Apply date filters if provided
+        if start_date:
+            reviews = reviews.filter(created_at__gte=start_date)
+        if end_date:
+            reviews = reviews.filter(created_at__lte=end_date)
+
+        # Calculate total reviews
+        total_reviews = reviews.count()
+
+        # Calculate average rating
+        avg_rating = reviews.aggregate(avg_rating=Avg("rating"))["avg_rating"] or 0
+
+        # Calculate rating distribution
+        rating_distribution = {}
+        for i in range(1, 6):
+            count = reviews.filter(rating=i).count()
+            percentage = (count / total_reviews * 100) if total_reviews > 0 else 0
+            rating_distribution[str(i)] = round(percentage, 1)
+
+        data = {
+            "average_rating": round(avg_rating, 1),
+            "total_reviews": total_reviews,
+            "rating_distribution": rating_distribution,
+        }
+
+        serializer = ReviewAnalyticsSerializer(data)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_description="Get demographic analytics for the tenant",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: DemographicAnalyticsSerializer()},
+    )
+    @action(detail=False, methods=["get"])
+    def demographic_analytics(self, request):
+        """Get demographic analytics for the tenant."""
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Base queryset
+        users = User.objects.filter(tenant=tenant, role="customer")
+
+        # Apply date filters if provided
+        if start_date:
+            users = users.filter(created_at__gte=start_date)
+        if end_date:
+            users = users.filter(created_at__lte=end_date)
+
+        # Calculate total users
+        total_users = users.count()
+
+        # Define age groups
+        age_groups = [
+            (18, 24),
+            (25, 34),
+            (35, 44),
+            (45, 54),
+            (55, None),  # 55 and above
+        ]
+
+        # Calculate gender-age distribution
+        gender_age_distribution = {}
+
+        # First, handle users with complete demographic data
+        for gender in ["male", "female"]:
+            for age_min, age_max in age_groups:
+                # Build the query for this gender-age group
+                query = Q(gender=gender)
+                if age_max:
+                    query &= Q(age__gte=age_min, age__lte=age_max)
+                else:
+                    query &= Q(age__gte=age_min)
+
+                # Count users in this group
+                count = users.filter(query).count()
+
+                # Calculate percentage
+                percentage = (count / total_users * 100) if total_users > 0 else 0
+
+                # Create the key for this group
+                age_key = f"{age_min}_{age_max}" if age_max else f"{age_min}_plus"
+                key = f"{gender}_{age_key}"
+
+                gender_age_distribution[key] = round(percentage, 1)
+
+        # Handle users with missing demographic data
+        users_with_missing_data = users.filter(
+            Q(gender__isnull=True) | Q(gender="") | Q(age__isnull=True)
+        ).count()
+
+        # Calculate percentage for users with missing data
+        others_percentage = (
+            (users_with_missing_data / total_users * 100) if total_users > 0 else 0
+        )
+        gender_age_distribution["others"] = round(others_percentage, 1)
+
+        data = {
+            "total_users": total_users,
+            "gender_age_distribution": gender_age_distribution,
+        }
+
+        serializer = DemographicAnalyticsSerializer(data)
+        return Response(serializer.data)
 
 
 class APIUsageLogViewSet(viewsets.ViewSet):

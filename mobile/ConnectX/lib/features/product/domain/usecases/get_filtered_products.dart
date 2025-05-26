@@ -3,6 +3,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../entities/product.dart';
 import '../repositories/product_repository.dart';
+import '../services/product_filter_service.dart';
 
 enum ProductFilter {
   allProducts,
@@ -15,30 +16,41 @@ enum ProductFilter {
   topProducts,
 }
 
-  class GetFilteredProducts implements UseCase<Map<ProductFilter, List<Product>>, void> {
+class GetFilteredProducts
+    implements UseCase<Map<ProductFilter, List<Product>>, void> {
   final ProductRepository repository;
+  final ProductFilterService filterService;
 
-  GetFilteredProducts(this.repository);
+  GetFilteredProducts(this.repository, this.filterService);
 
   @override
-Future<Either<Failure, Map<ProductFilter, List<Product>>>> call(void params) async {
-    final result = await repository.getProducts();
+  Future<Either<Failure, Map<ProductFilter, List<Product>>>> call(
+    void params,
+  ) async {
+    try {
+      // Try to get products from multiple pages for better variety
+      final result = await repository.getAllProductsAcrossPages(maxPages: 3);
 
-    return result.map((products) {
-      final Map<ProductFilter, List<Product>> filteredProducts = {};
+      return result.map((products) {
+        if (products.isEmpty) {
+          // Return empty maps for all filters if no products
+          return ProductFilter.values.fold<Map<ProductFilter, List<Product>>>(
+            {},
+            (map, filter) => map..[filter] = [],
+          );
+        }
 
-      filteredProducts[ProductFilter.allProducts] = products;
-      filteredProducts[ProductFilter.featured] = products;
-      filteredProducts[ProductFilter.hotDeals] = products;
-      filteredProducts[ProductFilter.topBrands] = products;
-      filteredProducts[ProductFilter.countDownProducts] =  products;
-      filteredProducts[ProductFilter.popularProducts] = products;
-      filteredProducts[ProductFilter.specialOffers] = products;
-         
-      filteredProducts[ProductFilter.topProducts] = products;
+        // Use the filter service to categorize products
+        final filteredProducts = filterService.filterProducts(products);
 
-      return filteredProducts;
-    });
+        // Sort products by relevance for each category
+        filterService.sortProductsByRelevance(filteredProducts);
+
+        return filteredProducts;
+      });
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to filter products: $e'));
+    }
   }
 
   // List<Product> _getTopBrands(List<Product> products) {

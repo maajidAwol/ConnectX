@@ -9,6 +9,10 @@ class UserModel extends User {
     required super.role,
     required super.is_verified,
     super.avatar_url,
+    super.bio,
+    super.phoneNumber,
+    super.age,
+    super.gender,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -29,6 +33,11 @@ class UserModel extends User {
       role: userData['role']?.toString() ?? 'customer', // Default role
       is_verified: userData['is_verified'] as bool? ?? false, // Changed name
       avatar_url: userData['avatar_url']?.toString(), // Changed name
+      bio: userData['bio']?.toString(), // Added bio field
+      phoneNumber:
+          userData['phone_number']?.toString(), // Added phone_number field
+      age: userData['age'] as int?, // Added age field
+      gender: userData['gender']?.toString(), // Added gender field
       createdAt: DateTime.parse(
         userData['created_at']?.toString() ?? DateTime.now().toIso8601String(),
       ), // Changed name
@@ -47,6 +56,10 @@ class UserModel extends User {
       'role': role,
       'is_verified': is_verified,
       'avatar_url': avatar_url,
+      'bio': bio,
+      'phone_number': phoneNumber,
+      'age': age,
+      'gender': gender,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

@@ -17,7 +17,6 @@ import 'package:korecha/core/services/storage_service.dart';
 import 'core/injection/injection_container.dart' as di;
 
 void main() async {
-  
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
   runApp(const MyApp());
@@ -25,7 +24,6 @@ void main() async {
 }
 
 // Thanks for using our template. You are using the free version of the template.
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -35,43 +33,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (_) => di.sl<AuthBloc>(),
-        ),
-        BlocProvider<ProductBloc>(
-          create: (_) => di.sl<ProductBloc>(),
-        ),
-        BlocProvider<HomeBloc>(
-          create: (_) => di.sl<HomeBloc>(),
-        ),
-        BlocProvider<DetailsBloc>(
-          create: (_) => di.sl<DetailsBloc>(),
-        ),
-        BlocProvider<CartBloc>(
-          create: (_) => di.sl<CartBloc>(),
-        ),
-        BlocProvider<ProfileBloc>(
-          create: (_) => di.sl<ProfileBloc>(),
-        ),
-        BlocProvider<AddressBloc>(
-          create: (_) => di.sl<AddressBloc>(),
-        ),
-        BlocProvider<OrderBloc>(
-          create: (_) => di.sl<OrderBloc>(),
-        ),
-        BlocProvider<DiscoverBloc>(
-          create: (_) => di.sl<DiscoverBloc>(),
-        ),
+        BlocProvider<AuthBloc>(create: (_) => di.sl<AuthBloc>()),
+        BlocProvider<ProductBloc>(create: (_) => di.sl<ProductBloc>()),
+        BlocProvider<HomeBloc>(create: (_) => di.sl<HomeBloc>()),
+        BlocProvider<DetailsBloc>(create: (_) => di.sl<DetailsBloc>()),
+        BlocProvider<CartBloc>(create: (_) => di.sl<CartBloc>()),
+        BlocProvider<ProfileBloc>(create: (_) => di.sl<ProfileBloc>()),
+        BlocProvider<AddressBloc>(create: (_) => di.sl<AddressBloc>()),
+        BlocProvider<OrderBloc>(create: (_) => di.sl<OrderBloc>()),
+        BlocProvider<DiscoverBloc>(create: (_) => di.sl<DiscoverBloc>()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Korecha',
+        title: 'ConnectX',
         theme: AppTheme.lightTheme(context),
         themeMode: ThemeMode.light,
         onGenerateRoute: router.generateRoute,
-        home: di.sl<StorageService>().hasSeenOnboarding()
-            ? const LoginScreen()
-            : const OnBordingScreen(),
+        home:
+            di.sl<StorageService>().hasSeenOnboarding()
+                ? const LoginScreen()
+                : const OnBordingScreen(),
       ),
     );
   }

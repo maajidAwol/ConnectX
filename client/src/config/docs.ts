@@ -15,7 +15,7 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       title: "Authentication",
       items: [
         {
-          title: "Overview",
+          title: "Authentication",
           href: "/docs/authentication/overview",
         },
         {
@@ -32,56 +32,48 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       title: "User Management",
       items: [
         {
-          title: "Overview",
+          title: "Users",
           href: "/docs/users/overview",
         },
-      
       ],
     },
     {
       title: "Product APIs",
       items: [
         {
-          title: "Overview",
+          title: "Products",
           href: "/docs/products/overview",
         },
-       
       ],
     },
     {
       title: "Categories",
       items: [
         {
-          title: "Overview",
+          title: "Categories",
           href: "/docs/categories/overview",
         },
-       
       ],
     },
     {
       title: "Order APIs",
       items: [
         {
-          title: "Overview",
+          title: "Orders",
           href: "/docs/orders/overview",
         },
-       
       ],
     },
     {
       title: "Payment Integration",
       items: [
         {
-          title: "Overview",
+          title: "Payments",
           href: "/docs/payments/overview",
         },
         {
           title: "Chapa Integration",
           href: "/docs/payments/chapa",
-        },
-        {
-          title: "Cash on Delivery",
-          href: "/docs/payments/cod",
         },
       ],
     },
@@ -89,38 +81,17 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       title: "Shipping Management",
       items: [
         {
-          title: "Overview",
+          title: "Shipping",
           href: "/docs/shipping/overview",
         },
-       
       ],
     },
     {
       title: "Reviews",
       items: [
         {
-          title: "Overview",
+          title: "Reviews",
           href: "/docs/reviews/overview",
-        },
-       
-      ],
-    },
-    {
-      title: "Tenant Management",
-      items: [
-        {
-          title: "Overview",
-          href: "/docs/tenants/overview",
-        },
-       
-      ],
-    },
-    {
-      title: "Error Handling",
-      items: [
-        {
-          title: "Overview",
-          href: "/docs/api/errors",
         },
       ],
     },

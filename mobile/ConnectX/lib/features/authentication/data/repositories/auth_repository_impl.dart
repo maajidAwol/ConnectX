@@ -49,6 +49,8 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     required String role,
+    int? age,
+    String? gender,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -58,6 +60,8 @@ class AuthRepositoryImpl implements AuthRepository {
           email: email,
           password: password,
           role: role,
+          age: age,
+          gender: gender,
         );
         // Return the user object on success
         return Right(user);
@@ -212,6 +216,32 @@ class AuthRepositoryImpl implements AuthRepository {
       try {
         final user = await remoteDataSource.getUserProfile();
         return Right(user);
+      } on ValidationException catch (e) {
+        return Left(ValidationFailure(e.message));
+      }
+    } else {
+      return Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> updateProfile({
+    String? name,
+    String? bio,
+    String? phoneNumber,
+    String? avatarPath,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final user = await remoteDataSource.updateProfile(
+          name: name,
+          bio: bio,
+          phoneNumber: phoneNumber,
+          avatarPath: avatarPath,
+        );
+        return Right(user);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message));
       } on ValidationException catch (e) {
         return Left(ValidationFailure(e.message));
       }

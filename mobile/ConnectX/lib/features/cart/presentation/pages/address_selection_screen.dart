@@ -38,18 +38,50 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       context: context,
       isScrollControlled: true,
       builder:
-          (context) => Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: defaultPadding,
-              right: defaultPadding,
-              top: defaultPadding,
-            ),
-            child: _AddAddressForm(
-              onAddressAdded: () {
-                _loadAddresses();
-              },
-            ),
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.9,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder:
+                (context, scrollController) => Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                      left: defaultPadding,
+                      right: defaultPadding,
+                      top: defaultPadding,
+                    ),
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: Column(
+                        children: [
+                          // Drag handle
+                          Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          _AddAddressForm(
+                            onAddressAdded: () {
+                              _loadAddresses();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
           ),
     );
   }
@@ -449,146 +481,183 @@ class _AddAddressFormState extends State<_AddAddressForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Add New Address',
-            style: Theme.of(context).textTheme.titleLarge,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: _labelController,
-            decoration: const InputDecoration(
-              labelText: 'Label',
-              hintText: 'Home, Work, etc.',
-              border: OutlineInputBorder(),
+    return BlocListener<AddressBloc, AddressState>(
+      listener: (context, state) {
+        if (state is AddressError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+        if (state is AddressAdded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Address added successfully'),
+              backgroundColor: Colors.green,
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a label';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: _addressController,
-            decoration: const InputDecoration(
-              labelText: 'Street Address',
-              hintText: 'Enter your street address',
-              border: OutlineInputBorder(),
+          );
+          widget.onAddressAdded();
+          Navigator.pop(context);
+        }
+      },
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Add New Address',
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter street address';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: _cityController,
-            decoration: const InputDecoration(
-              labelText: 'City',
-              hintText: 'Enter your city',
-              border: OutlineInputBorder(),
+            const SizedBox(height: defaultPadding),
+            TextFormField(
+              controller: _labelController,
+              decoration: const InputDecoration(
+                labelText: 'Label',
+                hintText: 'Home, Work, etc.',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a label';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter city';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: _stateController,
-            decoration: const InputDecoration(
-              labelText: 'State/Region',
-              hintText: 'Enter your state or region',
-              border: OutlineInputBorder(),
+            const SizedBox(height: defaultPadding),
+            TextFormField(
+              controller: _addressController,
+              decoration: const InputDecoration(
+                labelText: 'Street Address',
+                hintText: 'Enter your street address',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter street address';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter state/region';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: _countryController,
-            decoration: const InputDecoration(
-              labelText: 'Country',
-              hintText: 'Enter your country',
-              border: OutlineInputBorder(),
+            const SizedBox(height: defaultPadding),
+            TextFormField(
+              controller: _cityController,
+              decoration: const InputDecoration(
+                labelText: 'City',
+                hintText: 'Enter your city',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter city';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter country';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          TextFormField(
-            controller: _phoneController,
-            decoration: const InputDecoration(
-              labelText: 'Phone Number',
-              hintText: 'Enter your phone number',
-              border: OutlineInputBorder(),
+            const SizedBox(height: defaultPadding),
+            TextFormField(
+              controller: _stateController,
+              decoration: const InputDecoration(
+                labelText: 'State/Region',
+                hintText: 'Enter your state or region',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter state/region';
+                }
+                return null;
+              },
             ),
-            keyboardType: TextInputType.phone,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter phone number';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          SwitchListTile(
-            title: const Text('Set as default address'),
-            value: _isDefault,
-            onChanged: (value) {
-              setState(() => _isDefault = value);
-            },
-          ),
-          const SizedBox(height: defaultPadding),
-          ElevatedButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                final fullAddress = [
-                  _addressController.text.trim(),
-                  _cityController.text.trim(),
-                  _stateController.text.trim(),
-                  _countryController.text.trim(),
-                ].join(', ');
+            const SizedBox(height: defaultPadding),
+            TextFormField(
+              controller: _countryController,
+              decoration: const InputDecoration(
+                labelText: 'Country',
+                hintText: 'Enter your country',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter country';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: defaultPadding),
+            TextFormField(
+              controller: _phoneController,
+              decoration: const InputDecoration(
+                labelText: 'Phone Number',
+                hintText: 'Enter your phone number',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.phone,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter phone number';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: defaultPadding),
+            SwitchListTile(
+              title: const Text('Set as default address'),
+              value: _isDefault,
+              onChanged: (value) {
+                setState(() => _isDefault = value);
+              },
+            ),
+            const SizedBox(height: defaultPadding),
+            BlocBuilder<AddressBloc, AddressState>(
+              builder: (context, state) {
+                final isLoading = state is AddressLoading;
+                return ElevatedButton(
+                  onPressed:
+                      isLoading
+                          ? null
+                          : () {
+                            if (_formKey.currentState!.validate()) {
+                              final fullAddress = [
+                                _addressController.text.trim(),
+                                _cityController.text.trim(),
+                                _stateController.text.trim(),
+                                _countryController.text.trim(),
+                              ].join(', ');
 
-                final address = Address(
-                  id: '', // Will be assigned by the server
-                  label: _labelController.text.trim(),
-                  fullAddress: fullAddress,
-                  phoneNumber: _phoneController.text.trim(),
-                  isDefault: _isDefault,
-                );
+                              final address = Address(
+                                id: '', // Will be assigned by the server
+                                label: _labelController.text.trim(),
+                                fullAddress: fullAddress,
+                                phoneNumber: _phoneController.text.trim(),
+                                isDefault: _isDefault,
+                              );
 
-                context.read<AddressBloc>().add(
-                  AddAddressEvent(address: address),
+                              context.read<AddressBloc>().add(
+                                AddAddressEvent(address: address),
+                              );
+                            }
+                          },
+                  child:
+                      isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text('Save Address'),
                 );
-                widget.onAddressAdded();
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save Address'),
-          ),
-          const SizedBox(height: defaultPadding),
-        ],
+              },
+            ),
+            const SizedBox(height: defaultPadding),
+          ],
+        ),
       ),
     );
   }

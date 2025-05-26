@@ -182,7 +182,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = Product.objects.filter(id__in=product_ids)
 
         # Filter by filter_type
-        if filter_type == "listed":
+        if filter_type == "listed" or HasValidAPIKey().has_permission(self.request, self):
             listings = ProductListing.objects.filter(tenant=tenant)
             product_ids = listings.values_list("product_id", flat=True)
             queryset = queryset.filter(id__in=product_ids)

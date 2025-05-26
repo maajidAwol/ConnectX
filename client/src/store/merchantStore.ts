@@ -34,8 +34,8 @@ interface MerchantStore {
   loading: boolean
   error: string | null
   fetchMerchantDetails: (id: string) => Promise<void>
-  updateMerchantStatus: (id: string, status: 'pending' | 'under_review' | 'rejected') => Promise<void>
-  approveMerchant: (id: string) => Promise<void>
+  updateMerchantStatus: (id: string, status: 'pending' | 'under_review') => Promise<void>
+  approveMerchant: (id: string, isVerified: boolean) => Promise<void>
 }
 
 export const useMerchantStore = create<MerchantStore>((set) => ({
@@ -60,7 +60,7 @@ export const useMerchantStore = create<MerchantStore>((set) => ({
       set({ error: error instanceof Error ? error.message : 'Failed to fetch merchant details', loading: false })
     }
   },
-  updateMerchantStatus: async (id: string, status: 'pending' | 'under_review' | 'rejected') => {
+  updateMerchantStatus: async (id: string, status: 'pending' | 'under_review') => {
     set({ loading: true, error: null })
     try {
       const { accessToken } = useAuthStore.getState()
@@ -88,13 +88,13 @@ export const useMerchantStore = create<MerchantStore>((set) => ({
       throw error
     }
   },
-  approveMerchant: async (id: string) => {
+  approveMerchant: async (id: string, isVerified: boolean) => {
     set({ loading: true, error: null })
     try {
       const { accessToken } = useAuthStore.getState()
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_API_URL}/tenants/${id}/VerificationStatus`,
-        { is_verified: true },
+        { is_verified: isVerified },
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -106,15 +106,15 @@ export const useMerchantStore = create<MerchantStore>((set) => ({
       set((state) => ({
         merchant: state.merchant ? { 
           ...state.merchant, 
-          is_verified: true,
-          tenant_verification_status: 'approved',
+          is_verified: isVerified,
+          tenant_verification_status: isVerified ? 'approved' : 'rejected',
           tenant_verification_date: response.data.tenant_verification_date
         } : null,
         loading: false,
       }))
       return response.data
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to approve merchant', loading: false })
+      set({ error: error instanceof Error ? error.message : `Failed to ${isVerified ? 'approve' : 'reject'} merchant`, loading: false })
       throw error
     }
   },

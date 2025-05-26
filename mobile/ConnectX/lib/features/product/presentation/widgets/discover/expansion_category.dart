@@ -13,21 +13,60 @@ class ExpansionCategory extends StatelessWidget {
     required this.title,
     required this.subCategory,
     required this.svgSrc,
+    this.categoryId,
   });
 
   final String title, svgSrc;
   final List<Category> subCategory;
+  final String? categoryId;
+
+  Widget _buildCategoryIcon(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty || imageUrl == "icon-url") {
+      return Container(
+        height: 24,
+        width: 24,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Icon(Icons.category_outlined, color: Colors.grey[400], size: 16),
+      );
+    }
+
+    return SizedBox(
+      height: 24,
+      width: 24,
+      child: NetworkImageWithLoader(imageUrl, fit: BoxFit.contain, radius: 4),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // If there are no subcategories, show as a simple ListTile instead of ExpansionTile
+    if (subCategory.isEmpty) {
+      return ListTile(
+        leading: _buildCategoryIcon(svgSrc),
+        title: Text(title, style: const TextStyle(fontSize: 14)),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () {
+          if (categoryId != null) {
+            context.read<ProductBloc>().add(
+              LoadProductsByCategoryId(categoryId!),
+            );
+            Navigator.pushNamed(
+              context,
+              categoryScreenRoute,
+              arguments: {'title': title},
+            );
+          }
+        },
+      );
+    }
+
     return ExpansionTile(
       iconColor: Theme.of(context).textTheme.bodyLarge!.color,
       collapsedIconColor: Theme.of(context).textTheme.bodyMedium!.color,
-      leading: SizedBox(
-        height: 24,
-        width: 24,
-        child: NetworkImageWithLoader(svgSrc, fit: BoxFit.contain, radius: 0),
-      ),
+      leading: _buildCategoryIcon(svgSrc),
       title: Text(title, style: const TextStyle(fontSize: 14)),
       textColor: Theme.of(context).textTheme.bodyLarge!.color,
       childrenPadding: const EdgeInsets.only(left: defaultPadding * 3.5),
@@ -36,21 +75,7 @@ class ExpansionCategory extends StatelessWidget {
         (index) => Column(
           children: [
             ListTile(
-              leading:
-                  subCategory[index].coverImg != null
-                      ? SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: NetworkImageWithLoader(
-                          subCategory[index].coverImg!,
-                          fit: BoxFit.contain,
-                          radius: 0,
-                        ),
-                      )
-                      : const SizedBox(
-                        width: 24,
-                        height: 24,
-                      ), // Maintain space if no image
+              leading: _buildCategoryIcon(subCategory[index].coverImg),
               onTap: () {
                 context.read<ProductBloc>().add(
                   LoadProductsByCategoryId(subCategory[index].id.toString()),

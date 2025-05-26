@@ -111,7 +111,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         //         itemBuilder: (context, index) {
                         //           final product = state.products[index];
                         //           return ProductCard(
-                                    
+
                         //             product: product,
                         //           );
                         //         },
@@ -119,9 +119,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         //     ),
                         //   ],
                         // );
-
-
-
                       }
 
                       // Show categories (initial state or after clicking Explore Categories)
@@ -144,10 +141,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                                 itemCount: state.categories.length,
                                 itemBuilder:
                                     (context, index) => ExpansionCategory(
-                                      svgSrc: state.categories[index].coverImg!,
+                                      svgSrc:
+                                          state.categories[index].coverImg ??
+                                          '',
                                       title: state.categories[index].name,
                                       subCategory:
-                                          state.categories[index].children!,
+                                          state.categories[index].children ??
+                                          [],
+                                      categoryId: state.categories[index].id,
                                     ),
                               ),
                             ),
