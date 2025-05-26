@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import Link from "next/link"
 import { ArrowUpRight, Clock, DollarSign, Package, ShoppingCart, TrendingUp, Users } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -52,11 +53,11 @@ export default function MerchantPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">{Number(overview?.total_revenue).toLocaleString()} ETB</div>
-                  <div className="flex items-center pt-1">
-                    <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                    <span className="text-xs text-green-500">+12.5%</span>
-                    <span className="text-xs text-muted-foreground ml-1">from last month</span>
-                  </div>
+                    {/* <div className="flex items-center pt-1">
+                      <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                      <span className="text-xs text-green-500">+12.5%</span>
+                      <span className="text-xs text-muted-foreground ml-1">from last month</span>
+                    </div> */}
                 </>
               )}
             </CardContent>
@@ -75,11 +76,11 @@ export default function MerchantPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">+{overview?.total_orders}</div>
-                  <div className="flex items-center pt-1">
+                  {/* <div className="flex items-center pt-1">
                     <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                     <span className="text-xs text-green-500">+8.2%</span>
                     <span className="text-xs text-muted-foreground ml-1">from last month</span>
-                  </div>
+                  </div> */}
                 </>
               )}
             </CardContent>
@@ -98,9 +99,9 @@ export default function MerchantPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">{overview?.total_products}</div>
-                  <div className="flex items-center pt-1">
-                    <span className="text-xs text-muted-foreground">12 added this month</span>
-                  </div>
+                    {/* <div className="flex items-center pt-1">
+                      <span className="text-xs text-muted-foreground">12 added this month</span>
+                    </div> */}
                 </>
               )}
             </CardContent>
@@ -119,18 +120,18 @@ export default function MerchantPage() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">{overview?.total_customers}</div>
-                  <div className="flex items-center pt-1">
+                  {/* <div className="flex items-center pt-1">
                     <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                     <span className="text-xs text-green-500">+5.1%</span>
                     <span className="text-xs text-muted-foreground ml-1">from last month</span>
-                  </div>
+                  </div> */}
                 </>
               )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid gap-4 min-h-48">
           <Card className="lg:col-span-4">
             <CardHeader>
               <CardTitle>Recent Orders</CardTitle>
@@ -156,32 +157,39 @@ export default function MerchantPage() {
                 <div className="text-center py-4 text-red-500">{error.orders}</div>
               ) : (
                 <div className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                      <div className="space-y-1">
-                        <p className="font-medium">{order.order_number}</p>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <span>{order.customer_name}</span>
-                          <span className="mx-2">•</span>
-                          <span className="capitalize">{order.status}</span>
-                          <span className="mx-2">•</span>
-                          <span>{format(new Date(order.created_at), 'MMM d, yyyy')}</span>
+                  {recentOrders.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No recent orders found</p>
+                      <p className="text-sm text-muted-foreground mt-1">New orders will appear here</p>
+                    </div>
+                  ) : (
+                    recentOrders.map((order) => (
+                      <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="space-y-1">
+                          <p className="font-medium">{order.order_number}</p>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <span>{order.customer_name}</span>
+                            <span className="mx-2">•</span>
+                            <span className="capitalize">{order.status}</span>
+                            <span className="mx-2">•</span>
+                            <span>{format(new Date(order.created_at), 'MMM d, yyyy')}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-medium">${parseFloat(order.total_amount).toLocaleString()}</span>
+                          <Link href={`/merchant/orders/${order.id}`} className="text-sm font-medium text-blue-600 hover:underline">
+                            View
+                          </Link>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="font-medium">${parseFloat(order.total_amount).toLocaleString()}</span>
-                        <Link href={`/merchant/orders/${order.id}`} className="text-sm font-medium text-blue-600 hover:underline">
-                          View
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-3">
+          {/* <Card className="lg:col-span-3">
             <CardHeader>
               <CardTitle>Sales Overview</CardTitle>
               <CardDescription>Monthly revenue breakdown</CardDescription>
@@ -226,7 +234,7 @@ export default function MerchantPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -236,7 +244,7 @@ export default function MerchantPage() {
                 <CardTitle>Top Products</CardTitle>
                 <CardDescription>By sales volume</CardDescription>
               </div>
-              <Link href="#" className="text-sm font-medium text-blue-600 hover:underline flex items-center">
+              <Link href="/merchant/products" className="text-sm font-medium text-blue-600 hover:underline flex items-center">
                 View All <ArrowUpRight className="ml-1 h-3 w-3" />
               </Link>
             </CardHeader>
@@ -277,9 +285,9 @@ export default function MerchantPage() {
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>Latest store events</CardDescription>
               </div>
-              <Link href="#" className="text-sm font-medium text-blue-600 hover:underline flex items-center">
+              {/* <Link href="/merchant/orders" className="text-sm font-medium text-blue-600 hover:underline flex items-center">
                 View All <ArrowUpRight className="ml-1 h-3 w-3" />
-              </Link>
+              </Link> */}
             </CardHeader>
             <CardContent>
               {isLoading.activities ? (

@@ -11,8 +11,9 @@ import { toast } from "sonner"
 import { Toaster } from "sonner"
 import { Logo } from "@/components/logo"
 import Link from "next/link"
-import { Mail, Check, X, Loader2 } from "lucide-react"
+import { Mail, Check, X, Loader2, Eye, EyeOff } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface PasswordValidation {
   hasMinLength: boolean
@@ -23,13 +24,15 @@ interface PasswordValidation {
 
 export default function SignUpPage() {
   const router = useRouter()
-  const { signup, isLoading, error, clearError } = useAuthStore()
+  const { signup, isLoading, error, clearError, resendVerification } = useAuthStore()
   const [showSuccess, setShowSuccess] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     fullname: "",
+    age: "",
+    gender: "male" as "male" | "female",
   })
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
     hasMinLength: false,
@@ -38,6 +41,9 @@ export default function SignUpPage() {
     hasSpecial: false,
   })
   const [passwordStrength, setPasswordStrength] = useState(0)
+  const [cooldown, setCooldown] = useState(60)
+  const [canResend, setCanResend] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     // Password validation
@@ -56,8 +62,29 @@ export default function SignUpPage() {
     setPasswordStrength(password.length ? (criteriaCount / 4) * 100 : 0)
   }, [formData.password])
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (showSuccess && cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            setCanResend(true)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+    return () => clearInterval(timer)
+  }, [showSuccess, cooldown])
+
   const isPasswordValid = Object.values(passwordValidation).every(Boolean)
-  const isFormValid = isPasswordValid && formData.name && formData.email && formData.fullname
+  const isFormValid = isPasswordValid && 
+    formData.name && 
+    formData.email && 
+    formData.fullname && 
+    formData.age && 
+    formData.gender
 
   // Get strength color
   const getStrengthColor = () => {
@@ -115,6 +142,21 @@ export default function SignUpPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleResendVerification = async () => {
+    try {
+      await resendVerification(formData.email)
+      toast.success("Verification email sent successfully!", {
+        className: "bg-[#02569B] text-white",
+      })
+      setCooldown(60)
+      setCanResend(false)
+    } catch (error) {
+      toast.error("Failed to resend verification email", {
+        className: "bg-red-500 text-white",
+      })
+    }
+  }
+
   if (showSuccess) {
     return (
       <div className="container flex h-screen w-screen flex-col items-center justify-center">
@@ -143,6 +185,13 @@ export default function SignUpPage() {
                   If you don't see the email, check your spam folder or click the resend button below.
                 </p>
               </div>
+              <Button
+                onClick={handleResendVerification}
+                disabled={!canResend}
+                className="w-full bg-[#02569B] hover:bg-[#02569B]/90"
+              >
+                {canResend ? "Resend Verification Email" : `Resend in ${cooldown}s`}
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => router.push("/login")}
@@ -214,19 +263,65 @@ export default function SignUpPage() {
                 <p className="text-sm text-red-500">This email is already registered</p>
               )}
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  name="age"
+                  type="number"
+                  placeholder="Enter your age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  required
+                  min="18"
+                  max="100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value: "male" | "female") => 
+                    setFormData(prev => ({ ...prev, gender: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                minLength={8}
-                className={!isPasswordValid && formData.password ? "border-red-500" : ""}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  minLength={8}
+                  className={!isPasswordValid && formData.password ? "border-red-500" : ""}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {formData.password && (
                 <div className="space-y-2 mt-2">
                   <div className="flex items-center justify-between text-xs">

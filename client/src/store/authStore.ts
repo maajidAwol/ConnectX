@@ -48,6 +48,8 @@ interface SignupData {
   email: string
   password: string
   fullname: string
+  age: string
+  gender: 'male' | 'female'
 }
 
 interface AuthState {
@@ -133,43 +135,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
 
   signup: async (data: SignupData) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null })
     try {
-      // Create FormData object
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('email', data.email);
-      formData.append('password', data.password);
-      formData.append('fullname', data.fullname);
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('email', data.email)
+      formData.append('password', data.password)
+      formData.append('fullname', data.fullname)
+      formData.append('age', data.age)
+      formData.append('gender', data.gender)
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-        },
-        body: formData,
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Signup failed');
-      }
-
-      // Don't set authentication state on signup
-      // User needs to verify email and login first
-      set({ 
-        isLoading: false,
-        error: null
-      });
-
-      return responseData;
-    } catch (error) {
-      set({ 
-        isLoading: false, 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      });
-      throw error;
+      const response = await axios.post(
+        'https://connectx-backend-295168525338.europe-west1.run.app/api/tenants/',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+      set({ isLoading: false })
+      return response.data
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to create account'
+      set({ error: errorMessage, isLoading: false })
+      throw error
     }
   },
 

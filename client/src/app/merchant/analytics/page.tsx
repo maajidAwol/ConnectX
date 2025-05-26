@@ -118,9 +118,9 @@ export default function AnalyticsDashboard() {
   const averageOrderValue = totalRevenue / totalSales
 
   // Calculate month-over-month growth (simulated)
-  const salesGrowth = 12.5
-  const revenueGrowth = 15.2
-  const customerGrowth = 8.7
+  // const salesGrowth = 12.5
+  // const revenueGrowth = 15.2
+  // const customerGrowth = 8.7
 
   return (
     <div className="space-y-6">
@@ -186,16 +186,16 @@ export default function AnalyticsDashboard() {
               {isLoadingOverview ? (
                 <div className="h-8 w-32 bg-muted rounded animate-pulse" />
               ) : (
-                `$${Number(overview?.total_revenue || 0).toLocaleString()}`
+                `${Number(overview?.total_revenue || 0).toLocaleString()} ETB`
               )}
             </div>
-            <div className="flex items-center pt-1">
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+{revenueGrowth}%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -212,13 +212,13 @@ export default function AnalyticsDashboard() {
                 overview?.total_orders || 0
               )}
             </div>
-            <div className="flex items-center pt-1">
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+{salesGrowth}%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -235,13 +235,13 @@ export default function AnalyticsDashboard() {
                 overview?.total_products || 0
               )}
             </div>
-            <div className="flex items-center pt-1">
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+2.4%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -258,13 +258,13 @@ export default function AnalyticsDashboard() {
                 overview?.total_customers || 0
               )}
             </div>
-            <div className="flex items-center pt-1">
+            {/* <div className="flex items-center pt-1">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <TrendingUp className="mr-1 h-3 w-3" />
                 <span>+{customerGrowth}%</span>
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">vs. last month</span>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>
