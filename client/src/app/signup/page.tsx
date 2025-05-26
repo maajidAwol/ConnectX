@@ -31,7 +31,7 @@ export default function SignUpPage() {
     email: "",
     password: "",
     fullname: "",
-    age: "",
+    age: null as number | null,
     gender: "male" as "male" | "female",
   })
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
@@ -139,7 +139,10 @@ export default function SignUpPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'age' ? (value ? parseInt(value) : null) : value
+    }))
   }
 
   const handleResendVerification = async () => {
@@ -271,7 +274,7 @@ export default function SignUpPage() {
                   name="age"
                   type="number"
                   placeholder="Enter your age"
-                  value={formData.age}
+                  value={formData.age ? formData.age.toString() : ""}
                   onChange={handleChange}
                   required
                   min="18"
