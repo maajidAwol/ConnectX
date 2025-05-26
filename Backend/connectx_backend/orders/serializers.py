@@ -4,6 +4,7 @@ from products.serializers import ProductSerializer
 from tenants.serializers import TenantSerializer
 from users.serializers import UserSerializer
 from shipping.serializers import ShippingAddressSerializer
+from utils import generate_image_url
 
 
 # Simplified serializers for nested representation
@@ -26,9 +27,17 @@ class MinimalShippingAddressSerializer(serializers.ModelSerializer):
 
 
 class MinimalProductSerializer(serializers.ModelSerializer):
+    cover_url = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductSerializer.Meta.model
         fields = ["id", "name", "sku", "cover_url"]
+
+    def get_cover_url(self, obj):
+        """Generate full Cloudinary URL from public ID."""
+        if obj.cover_url:
+            return generate_image_url(obj.cover_url)
+        return None
 
 
 # Very minimal serializers for history and items
@@ -288,10 +297,15 @@ class OrderListSerializer(serializers.ModelSerializer):
         if not first_item:
             return None
 
+        # Generate full Cloudinary URL from public ID
+        cover_url = None
+        if first_item.product.cover_url:
+            cover_url = generate_image_url(first_item.product.cover_url)
+
         return {
             "product_name": first_item.product.name,
             "product_id": str(first_item.product.id),
-            "cover_url": first_item.product.cover_url,
+            "cover_url": cover_url,
         }
 
     def get_payment_status(self, obj):
