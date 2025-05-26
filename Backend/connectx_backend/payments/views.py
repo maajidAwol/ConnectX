@@ -340,9 +340,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             )
         }
     )
-    @authentication_classes([])
-    @permission_classes([])
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], authentication_classes=[], permission_classes=[])
     def simulate_webhook(self, request):
         """Simulate a Chapa webhook for testing purposes."""
         tx_ref = request.data.get('tx_ref')
