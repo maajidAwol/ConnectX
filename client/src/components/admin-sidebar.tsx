@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/authStore"
 import { ModeToggle } from "./mode-toggle"
+import { Logo } from "./logo"
 
 interface SubmenuItem {
   title: string
@@ -104,8 +105,9 @@ export function AdminSidebar({ className }: SidebarProps) {
           <div className="flex h-full flex-col bg-background border-r border-border">
             <div className="flex h-14 items-center border-b border-border px-4">
               <div className="flex items-center gap-2 font-semibold text-foreground">
-                <Database className="h-5 w-5 text-primary" />
-                <span>ConnectX Admin</span>
+                {/* <Database className="h-5 w-5 text-primary" />
+                <span>ConnectX Admin</span> */}
+                <Logo />
               </div>
               <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setIsOpen(false)}>
                 <X className="h-5 w-5" />
@@ -192,8 +194,9 @@ export function AdminSidebar({ className }: SidebarProps) {
       >
         <div className="flex h-14 items-center border-b border-border px-4">
           <div className="flex items-center gap-2 font-semibold text-foreground">
-            <Database className="h-5 w-5 text-primary" />
-            <span>ConnectX Admin</span>
+                {/* <Database className="h-5 w-5 text-primary" />
+                <span>ConnectX Admin</span> */}
+                <Logo />
           </div>
         </div>
         <div className="flex-1 overflow-auto py-2">
