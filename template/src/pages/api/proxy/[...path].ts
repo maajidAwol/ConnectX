@@ -141,18 +141,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Log request and response details in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Proxy Request]', {
-        url: sanitizeUrl(url),
-        method: req.method,
-        headers,
-        body: req.body
-      });
-      console.log('[Proxy Response]', {
-        status: response.status,
-        headers: Object.fromEntries(response.headers.entries())
-      });
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('[Proxy Request]', {
+    //     url: sanitizeUrl(url),
+    //     method: req.method,
+    //     headers,
+    //     body: req.body
+    //   });
+    //   console.log('[Proxy Response]', {
+    //     status: response.status,
+    //     headers: Object.fromEntries(response.headers.entries())
+    //   });
+    // }
 
     // Get the response data
     let data;
@@ -173,10 +173,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Log response data in development
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Proxy Response Data]', data);
+        // console.log('[Proxy Response Data]', data);
       }
     } catch (e) {
-      console.error('[Proxy Error] Error parsing response:', e);
+      // console.error('[Proxy Error] Error parsing response:', e);
       data = { message: 'Invalid response from server' };
     }
 
@@ -207,15 +207,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (response.status >= 500) {
       // Log error in development only
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Proxy Error]', {
-          endpoint: sanitizeUrl(url),
-          status: response.status,
-          method: req.method,
-          requestBody: req.body,
-          responseData: data
-        });
-      }
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.error('[Proxy Error]', {
+      //     endpoint: sanitizeUrl(url),
+      //     status: response.status,
+      //     method: req.method,
+      //     requestBody: req.body,
+      //     responseData: data
+      //   });
+      // }
       return res.status(500).json({
         message: data.message || 'The server is currently unavailable. Please try again later.'
       });
@@ -225,14 +225,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(response.status).json(data);
   } catch (error) {
     // Log error in development only
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[Proxy Error]', {
-        error: sanitizeErrorMessage(error),
-        endpoint: sanitizeUrl(`${API_URL_SAFE}/${Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path || ''}`),
-        method: req.method,
-        requestBody: req.body
-      });
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.error('[Proxy Error]', {
+    //     error: sanitizeErrorMessage(error),
+    //     endpoint: sanitizeUrl(`${API_URL_SAFE}/${Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path || ''}`),
+    //     method: req.method,
+    //     requestBody: req.body
+    //   });
+    // }
 
     res.status(500).json({
       message: sanitizeErrorMessage(error)
