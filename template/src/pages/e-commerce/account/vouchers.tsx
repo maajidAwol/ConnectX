@@ -17,7 +17,7 @@ export default function EcommerceAccountVouchersPage() {
   return (
     <>
       <Head>
-        <title>Account: Vouchers | ZONE UI</title>
+        <title>Account: Vouchers | ConnectX</title>
       </Head>
 
       <EcommerceAccountVouchersView />

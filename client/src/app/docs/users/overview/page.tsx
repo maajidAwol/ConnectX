@@ -231,10 +231,10 @@ export default function UsersOverviewPage() {
 
       <DocSection title="Authentication" defaultOpen={true}>
         <p className="text-gray-700 dark:text-gray-300 mb-4">
-          Most API requests require authentication using a Bearer token. Include your access token in the Authorization header:
+          Most API requests require authentication using an API key. Include your API key in the Authorization header:
         </p>
         <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
-          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">Authorization: Bearer YOUR_ACCESS_TOKEN</code>
+          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">Authorization: Bearer YOUR_API_KEY</code>
         </pre>
         <p className="text-gray-700 dark:text-gray-300 mt-4">
           Note: Some endpoints like password reset request and user creation do not require authentication.

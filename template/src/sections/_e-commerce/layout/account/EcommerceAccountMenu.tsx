@@ -19,8 +19,8 @@ import useActiveLink from 'src/hooks/useActiveLink';
 import { NAV } from 'src/config-global';
 // routes
 import { paths } from 'src/routes/paths';
-// _mock
-import _mock from 'src/_mock';
+// store
+import { useAuthStore } from 'src/store/auth';
 // components
 import Iconify from 'src/components/iconify';
 import TextMaxLine from 'src/components/text-max-line';
@@ -34,6 +34,11 @@ const navigations = [
     icon: <Iconify icon="carbon:user" />,
   },
   {
+    title: 'Orders',
+    path: paths.eCommerce.account.orders,
+    icon: <Iconify icon="carbon:document" />,
+  },
+  {
     title: 'Wishlist',
     path: paths.eCommerce.account.wishlist,
     icon: <Iconify icon="carbon:favorite" />,
@@ -42,11 +47,6 @@ const navigations = [
     title: 'Vouchers',
     path: paths.eCommerce.account.vouchers,
     icon: <Iconify icon="carbon:cut-out" />,
-  },
-  {
-    title: 'Orders',
-    path: paths.eCommerce.account.orders,
-    icon: <Iconify icon="carbon:document" />,
   },
   {
     title: 'Payment',
@@ -64,6 +64,11 @@ type Props = {
 
 export default function EcommerceAccountMenu({ open, onClose }: Props) {
   const isMdUp = useResponsive('up', 'md');
+  const { user } = useAuthStore();
+
+  if (!user) {
+    return null;
+  }
 
   const renderContent = (
     <Stack
@@ -79,23 +84,21 @@ export default function EcommerceAccountMenu({ open, onClose }: Props) {
     >
       <Stack spacing={2} sx={{ p: 3, pb: 2 }}>
         <Stack spacing={2} direction="row" alignItems="center">
-          <Avatar src={_mock.image.avatar(0)} sx={{ width: 64, height: 64 }} />
-          <Stack
-            direction="row"
-            alignItems="center"
-            sx={{ typography: 'caption', cursor: 'pointer', '&:hover': { opacity: 0.72 } }}
+          <Avatar 
+            src={user.avatar_url || undefined}
+            alt={user.name}
+            sx={{ width: 64, height: 64 }}
           >
-            <Iconify icon="carbon:edit" sx={{ mr: 1 }} />
-            Change photo
-          </Stack>
+            {user.name.charAt(0)}
+          </Avatar>
         </Stack>
 
         <Stack spacing={0.5}>
           <TextMaxLine variant="subtitle1" line={1}>
-            Jayvion Simon
+            {user.name}
           </TextMaxLine>
           <TextMaxLine variant="body2" line={1} sx={{ color: 'text.secondary' }}>
-            nannie_abernathy70@yahoo.com
+            {user.email}
           </TextMaxLine>
         </Stack>
       </Stack>
@@ -106,28 +109,6 @@ export default function EcommerceAccountMenu({ open, onClose }: Props) {
         {navigations.map((item) => (
           <MenuItem key={item.title} item={item} />
         ))}
-      </Stack>
-
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      <Stack sx={{ my: 1, px: 2 }}>
-        <ListItemButton
-          sx={{
-            px: 1,
-            height: 44,
-            borderRadius: 1,
-          }}
-        >
-          <ListItemIcon>
-            <Iconify icon="carbon:logout" />
-          </ListItemIcon>
-          <ListItemText
-            primary="Logout"
-            primaryTypographyProps={{
-              typography: 'body2',
-            }}
-          />
-        </ListItemButton>
       </Stack>
     </Stack>
   );

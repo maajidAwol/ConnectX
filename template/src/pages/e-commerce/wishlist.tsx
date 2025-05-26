@@ -4,6 +4,7 @@ import Head from 'next/head';
 import MainLayout from 'src/layouts/main';
 // sections
 import { EcommerceWishlistView } from 'src/sections/_e-commerce/view';
+import { _products } from 'src/_mock';
 
 // ----------------------------------------------------------------------
 
@@ -18,7 +19,7 @@ export default function EcommerceWishlistPage() {
         <title>Wishlist | ConnectX</title>
       </Head>
 
-      <EcommerceWishlistView />
+      {/* <EcommerceWishlistView products={_products} /> */}
     </>
   );
 }

@@ -15,6 +15,7 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.4",
@@ -51,6 +52,7 @@
     "date-fns": "3.3.1",
     "embla-carousel-react": "8.5.1",
     "framer-motion": "^12.9.2",
+    "heroicons": "^2.2.0",
     "input-otp": "1.4.1",
     "jose": "^6.0.10",
     "lucide-react": "^0.454.0",

@@ -13,7 +13,7 @@ import { ProductDetailsTab } from "@/components/products/product-details-tab"
 import { ProductImagesTab } from "@/components/products/product-images-tab"
 import { ProductOptionsTab } from "@/components/products/product-options-tab"
 import { FormSuccessAlert } from "@/components/products/form-success-alert"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation"
 import useProductStore from "@/store/useProductStore"
 import useCategoryStore from "@/store/useCategoryStore"
 import { toast } from "sonner"
+import { useAuthStore } from "@/store/authStore"
 
 interface FormErrors {
   name?: string
@@ -34,7 +35,6 @@ interface FormErrors {
 
 interface SubmitData {
   name: string
-  sku: string
   base_price: string
   quantity: number
   category_id: string
@@ -49,6 +49,13 @@ interface SubmitData {
   additional_info: Record<string, string>
   cover_image_upload?: File
   images_upload?: File[]
+}
+
+interface ImageState {
+  file?: File
+  preview: string
+  uploading?: boolean
+  existing?: boolean
 }
 
 export default function ProductPage() {
@@ -68,15 +75,14 @@ export default function ProductPage() {
     "upcoming", // Images
     "upcoming"  // Options
   ])
-  const [coverImage, setCoverImage] = useState<{ file?: File; preview: string; uploading?: boolean; existing?: boolean } | null>(null)
-  const [images, setImages] = useState<Array<{ file?: File; preview: string; uploading?: boolean; existing?: boolean }>>([])
+  const [coverImage, setCoverImage] = useState<ImageState | null>(null)
+  const [images, setImages] = useState<ImageState[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null!)
   const coverImageInputRef = useRef<HTMLInputElement>(null!)
   
   // Form state
   const [formData, setFormData] = useState({
     name: "",
-    sku: "",
     base_price: "",
     quantity: "",
     category_id: "",
@@ -93,6 +99,8 @@ export default function ProductPage() {
 
   const { createProduct, updateProduct, getProductById } = useProductStore((state: any) => state)
   const { categories, fetchCategories, isLoading: isCategoriesLoading } = useCategoryStore()
+  const { isTenantVerified } = useAuthStore()
+  const isVerified = isTenantVerified()
   
   // Fetch categories when component mounts
   useEffect(() => {
@@ -110,7 +118,6 @@ export default function ProductPage() {
           // Set form data from product
           setFormData({
             name: product.name || "",
-            sku: product.sku || "",
             base_price: product.base_price?.toString() || "",
             quantity: product.quantity?.toString() || "",
             category_id: product.category?.id || "",
@@ -293,7 +300,6 @@ export default function ProductPage() {
     // Validation logic for each step
     if (step === 0) { // Basic Info
       if (!formData.name.trim()) newErrors.name = "Product name is required";
-      if (!formData.sku.trim()) newErrors.sku = "SKU is required";
       if (!formData.category_id) newErrors.category_id = "Category is required";
       if (!formData.description.trim()) newErrors.description = "Description is required";
     } 
@@ -398,7 +404,6 @@ export default function ProductPage() {
     
     // Validate step 0 (Basic Info)
     if (!formData.name.trim()) newErrors.name = "Product name is required";
-    if (!formData.sku.trim()) newErrors.sku = "SKU is required";
     if (!formData.category_id) newErrors.category_id = "Category is required";
     if (!formData.description.trim()) newErrors.description = "Description is required";
     
@@ -416,7 +421,7 @@ export default function ProductPage() {
     if (Object.keys(newErrors).length > 0) {
       console.log("Validation errors found:", newErrors);
       
-      if (newErrors.name || newErrors.sku || newErrors.category_id || newErrors.description) {
+      if (newErrors.name || newErrors.category_id || newErrors.description) {
         if (currentStep !== 0) setCurrentStep(0); // Only change if not already there
         return false;
       } else if (newErrors.base_price || newErrors.quantity) {
@@ -520,17 +525,6 @@ export default function ProductPage() {
     }
   }
 
-  // Generate a random SKU
-  const generateSKU = () => {
-    const timestamp = Date.now().toString().slice(-6)
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    const sku = `SKU-${timestamp}-${random}`
-    setFormData(prev => ({
-      ...prev,
-      sku
-    }))
-  }
-
   // Render current step content
   const renderStepContent = () => {
     switch (currentStep) {
@@ -540,7 +534,6 @@ export default function ProductPage() {
             formData={formData}
             handleInputChange={handleInputChange}
             handleArrayFieldChange={handleArrayFieldChange}
-            generateSKU={generateSKU}
             errors={errors}
             categories={categories}
             isCategoriesLoading={isCategoriesLoading}
@@ -591,6 +584,27 @@ export default function ProductPage() {
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <p className="mt-4 text-muted-foreground">Loading product data...</p>
         </div>
+      </div>
+    )
+  }
+
+  if (!isVerified) {
+    return (
+      <div className="container mx-auto py-8">
+        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Verification Required</AlertTitle>
+          <AlertDescription>
+            Your business is not verified yet. You need to verify your business before adding products.
+            <div className="mt-2">
+              <Link href="/merchant/profile/verify">
+                <Button variant="outline" className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100">
+                  Verify Your Business
+                </Button>
+              </Link>
+            </div>
+          </AlertDescription>
+        </Alert>
       </div>
     )
   }

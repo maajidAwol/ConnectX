@@ -1,4 +1,4 @@
-# korecha
+# ConnectX
 
 A new Flutter project.
 

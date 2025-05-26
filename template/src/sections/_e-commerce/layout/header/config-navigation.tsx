@@ -1,4 +1,3 @@
-// _mock
 import _mock from 'src/_mock';
 // components
 import Iconify from 'src/components/iconify';

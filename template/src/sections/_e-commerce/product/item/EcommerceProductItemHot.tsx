@@ -2,7 +2,7 @@
 import NextLink from 'next/link';
 // @mui
 import { Theme } from '@mui/material/styles';
-import { Stack, Paper, Typography, LinearProgress, SxProps, Link } from '@mui/material';
+import { Stack, Paper, Typography, LinearProgress, SxProps, Link, Box } from '@mui/material';
 // routes
 import { paths } from 'src/routes/paths';
 // types
@@ -22,41 +22,44 @@ type Props = {
 };
 
 export default function EcommerceProductItemHot({ product, hotProduct = false, sx }: Props) {
+  const PLACEHOLDER_IMAGE = '/assets/placeholder.jpg';
+
+  const coverImg = product.cover_url && !product.cover_url.includes('example.com') 
+    ? product.cover_url 
+    : PLACEHOLDER_IMAGE;
+
   return (
-    <Link component={NextLink} href={paths.eCommerce.product} color="inherit" underline="none">
-      <Paper
-        variant="outlined"
+    <Link component={NextLink} href={`${paths.eCommerce.product}?id=${product.id}`} color="inherit">
+      <Box
         sx={{
-          p: 2,
-          borderRadius: 2,
-          bgcolor: 'background.default',
-          transition: (theme) =>
-            theme.transitions.create('background-color', {
-              easing: theme.transitions.easing.easeIn,
-              duration: theme.transitions.duration.shortest,
-            }),
+          position: 'relative',
+          transition: 'all .3s ease-in-out',
           '&:hover': {
-            bgcolor: 'background.neutral',
+            transform: 'translateY(-8px)',
           },
-          ...sx,
         }}
       >
         <Image
-          src={product.coverImg}
+          src={coverImg}
           sx={{
             mb: 2,
-            borderRadius: 1.5,
+            borderRadius: 2,
             bgcolor: 'background.neutral',
           }}
         />
 
         <Stack spacing={0.5}>
+          <TextMaxLine variant="caption" line={1} sx={{ color: 'text.disabled' }}>
+            {product.category.name}
+          </TextMaxLine>
+
           <TextMaxLine variant="body2" line={1} sx={{ fontWeight: 'fontWeightMedium' }}>
             {product.name}
           </TextMaxLine>
 
           <ProductPrice
-            price={product.price}
+            price={parseFloat(product.base_price)}
+            priceSale={product.selling_price || undefined}
             sx={{
               ...(hotProduct && {
                 color: 'error.main',
@@ -70,17 +73,17 @@ export default function EcommerceProductItemHot({ product, hotProduct = false, s
             <LinearProgress
               color="inherit"
               variant="determinate"
-              value={(product.sold / product.inStock) * 100}
+              value={(product.total_sold / product.quantity) * 100}
               sx={{ width: 1 }}
             />
 
             <Typography
               variant="caption"
               sx={{ flexShrink: 0, color: 'text.disabled' }}
-            >{`🔥 ${product.sold} Sold`}</Typography>
+            >{`🔥 ${product.total_sold} Sold`}</Typography>
           </Stack>
         )}
-      </Paper>
+      </Box>
     </Link>
   );
 }

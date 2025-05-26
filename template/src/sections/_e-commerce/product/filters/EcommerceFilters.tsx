@@ -24,14 +24,6 @@ import {
 
 const BRAND_OPTIONS = ['Apple', 'Samsung', 'Xiaomi', 'Honor'];
 
-const CATEGORY_OPTIONS = [
-  'Apple iPhone',
-  'Samsung Galaxy',
-  'Nike Air Max',
-  'Adidas Ultraboost',
-  'Sony PlayStation',
-];
-
 const SHIPPING_OPTIONS = ['Fast', 'Saving', 'Free'];
 
 const TAG_OPTIONS = ['Books and Media', 'Pet', 'Electronics', 'Food', 'Automotive and Industrial'];
@@ -51,12 +43,20 @@ const defaultValues = {
   },
 };
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 type Props = {
   mobileOpen: boolean;
   onMobileClose: VoidFunction;
+  categories: Category[];
+  onSelectCategory: (categoryId: string | null) => void;
+  selectedCategoryId: string | null;
 };
 
-export default function EcommerceFilters({ mobileOpen, onMobileClose }: Props) {
+export default function EcommerceFilters({ mobileOpen, onMobileClose, categories = [], onSelectCategory, selectedCategoryId }: Props) {
   const isMdUp = useResponsive('up', 'md');
 
   const [filters, setFilters] = useState<IProductFiltersProps>(defaultValues);
@@ -67,10 +67,8 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose }: Props) {
       : [...selectedItems, item];
 
   const handleChangeCategories = (name: string) => {
-    setFilters({
-      ...filters,
-      filterCategories: name,
-    });
+    const selectedCategory = categories.find(cat => cat.name === name);
+    onSelectCategory(selectedCategory?.id || null);
   };
 
   const handleChangeBrand = (name: string) => {
@@ -143,9 +141,9 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose }: Props) {
     >
       <Block title="Category">
         <EcommerceFilterCategory
-          filterCategories={filters.filterCategories}
+          filterCategories={selectedCategoryId || ''}
           onChangeCategories={handleChangeCategories}
-          options={CATEGORY_OPTIONS}
+          options={categories.map(cat => cat.name)}
           sx={{ mt: 2 }}
         />
       </Block>

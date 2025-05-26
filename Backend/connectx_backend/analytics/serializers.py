@@ -58,12 +58,35 @@ class ActivityLogSerializer(serializers.ModelSerializer):
 
 
 class APIUsageLogSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    tenant = TenantSerializer(read_only=True)
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_name = serializers.CharField(source="user.name", read_only=True)
+    tenant_name = serializers.CharField(source="tenant.name", read_only=True)
+    response_time_ms = serializers.SerializerMethodField()
 
     class Meta:
         model = APIUsageLog
-        fields = "__all__"
+        fields = [
+            "id",
+            "endpoint",
+            "method",
+            "status_code",
+            "response_time",
+            "response_time_ms",
+            "user",
+            "user_email",
+            "user_name",
+            "tenant",
+            "tenant_name",
+            "request_data",
+            "response_data",
+            "timestamp",
+            "ip_address",
+        ]
+        read_only_fields = fields
+
+    def get_response_time_ms(self, obj):
+        """Convert response time to milliseconds."""
+        return round(obj.response_time * 1000, 2) if obj.response_time else None
 
 
 class AdminAnalyticsOverviewSerializer(serializers.Serializer):
@@ -71,6 +94,38 @@ class AdminAnalyticsOverviewSerializer(serializers.Serializer):
     total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
     total_orders = serializers.IntegerField()
     active_tenants = serializers.IntegerField()
+
+
+class TenantAnalyticsOverviewSerializer(serializers.Serializer):
+    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_orders = serializers.IntegerField()
+    total_products = serializers.IntegerField()
+    total_customers = serializers.IntegerField()
+
+
+class RecentOrderSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    order_number = serializers.CharField()
+    customer_name = serializers.CharField()
+    total_amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    status = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class SalesOverviewSerializer(serializers.Serializer):
+    date = serializers.DateField(required=False)
+    week = serializers.DateField(required=False)
+    month = serializers.DateField(required=False)
+    total_sales = serializers.DecimalField(max_digits=15, decimal_places=2)
+    order_count = serializers.IntegerField()
+
+
+class TopProductSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    total_sales = serializers.IntegerField()
+    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
+    quantity = serializers.IntegerField()
 
 
 class TopTenantSerializer(serializers.Serializer):
@@ -108,3 +163,58 @@ class AdminDashboardSerializer(serializers.Serializer):
     recent_activities = serializers.ListField(
         child=serializers.DictField(child=serializers.CharField())
     )
+
+
+class ReviewAnalyticsSerializer(serializers.Serializer):
+    """Serializer for review analytics data"""
+
+    average_rating = serializers.FloatField()
+    total_reviews = serializers.IntegerField()
+    rating_distribution = serializers.DictField(
+        child=serializers.FloatField(),
+        help_text="Percentage distribution of ratings (1-5 stars)",
+    )
+
+    class Meta:
+        swagger_schema_fields = {
+            "example": {
+                "average_rating": 4.8,
+                "total_reviews": 1248,
+                "rating_distribution": {
+                    "5": 85.0,
+                    "4": 10.0,
+                    "3": 3.0,
+                    "2": 1.0,
+                    "1": 1.0,
+                },
+            }
+        }
+
+
+class DemographicAnalyticsSerializer(serializers.Serializer):
+    """Serializer for demographic analytics data"""
+
+    total_users = serializers.IntegerField()
+    gender_age_distribution = serializers.DictField(
+        child=serializers.FloatField(),
+        help_text="Percentage distribution of users by gender and age group",
+    )
+
+    class Meta:
+        swagger_schema_fields = {
+            "example": {
+                "total_users": 1000,
+                "gender_age_distribution": {
+                    "male_18_24": 15.0,
+                    "female_18_24": 12.0,
+                    "male_25_34": 20.0,
+                    "female_25_34": 18.0,
+                    "male_35_44": 12.0,
+                    "female_35_44": 10.0,
+                    "male_45_54": 5.0,
+                    "female_45_54": 4.0,
+                    "male_55_plus": 2.0,
+                    "female_55_plus": 2.0,
+                },
+            }
+        }

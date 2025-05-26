@@ -76,7 +76,8 @@ export default function IntroductionPage() {
           </p>
           <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
             <li>Next.js for the frontend</li>
-            <li>React for UI components</li>
+            <li>Django for the backend</li>
+            <li>Zustand for state management</li>
             <li>Tailwind CSS for styling</li>
             <li>TypeScript for type safety</li>
           </ul>
@@ -90,28 +91,10 @@ export default function IntroductionPage() {
             <li>Dart programming language</li>
             <li>Material Design and Cupertino widgets</li>
             <li>Native platform integration</li>
+            <li>Clean architecture</li>
           </ul>
         </div>
       </DocSection>
-
-      <DocSection title="Getting Started" defaultOpen={true}>
-        <div className="space-y-4">
-          <p className="text-gray-700 dark:text-gray-300">
-            To get started with ConnectX, follow these steps:
-          </p>
-          <ol className="list-decimal pl-6 space-y-2 text-gray-700 dark:text-gray-300">
-            <li>Review the prerequisites for your chosen platform (web or mobile)</li>
-            <li>Follow the installation guide to set up your development environment</li>
-            <li>Configure your environment variables</li>
-            <li>Start the development server</li>
-            <li>Begin exploring the features and APIs</li>
-          </ol>
-          <p className="text-gray-700 dark:text-gray-300 mt-4">
-            For detailed instructions, proceed to the <a href="/docs/quickstart/installation" className="text-blue-600 dark:text-blue-400 hover:underline">Installation Guide</a>.
-          </p>
-        </div>
-      </DocSection>
-
       <DocsPager />
     </div>
   );

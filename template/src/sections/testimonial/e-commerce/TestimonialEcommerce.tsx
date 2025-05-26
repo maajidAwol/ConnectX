@@ -80,7 +80,7 @@ export default function TestimonialEcommerce({ testimonials }: Props) {
       </Stack>
 
       <Carousel ref={carouselRef} {...carouselSettings}>
-        {testimonials.map((testimonial) => (
+        {testimonials?.map((testimonial) => (
           <Box key={testimonial.id} sx={{ px: 1.5 }}>
             <TestimonialItem testimonial={testimonial} />
           </Box>

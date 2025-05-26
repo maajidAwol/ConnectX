@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import axios from 'axios'
 
 interface User {
   id: string
@@ -16,6 +17,8 @@ interface User {
   tenant_id: string
   is_active: boolean
   groups: string[]
+  age: number | null
+  gender: 'male' | 'female'
 }
 
 interface TenantData {
@@ -47,6 +50,8 @@ interface SignupData {
   email: string
   password: string
   fullname: string
+  age: number | null
+  gender: 'male' | 'female'
 }
 
 interface AuthState {
@@ -68,6 +73,7 @@ interface AuthState {
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>
   validateToken: () => boolean
   updateProfile: (formData: FormData) => Promise<void>
+  resendVerification: (email: string) => Promise<void>
 }
 
 // In Next.js, cookies need to be set server-side
@@ -131,43 +137,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
 
   signup: async (data: SignupData) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null })
     try {
-      // Create FormData object
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('email', data.email);
-      formData.append('password', data.password);
-      formData.append('fullname', data.fullname);
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('email', data.email)
+      formData.append('password', data.password)
+      formData.append('fullname', data.fullname)
+      formData.append('age', data.age?.toString() || '')
+      formData.append('gender', data.gender)
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tenants/`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-        },
-        body: formData,
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Signup failed');
-      }
-
-      // Don't set authentication state on signup
-      // User needs to verify email and login first
-      set({ 
-        isLoading: false,
-        error: null
-      });
-
-      return responseData;
-    } catch (error) {
-      set({ 
-        isLoading: false, 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      });
-      throw error;
+      const response = await axios.post(
+        'https://connectx-backend-295168525338.europe-west1.run.app/api/tenants/',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+      set({ isLoading: false })
+      return response.data
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to create account'
+      set({ error: errorMessage, isLoading: false })
+      throw error
     }
   },
 
@@ -496,6 +490,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: error instanceof Error ? error.message : 'Failed to update profile'
       });
       throw error;
+    }
+  },
+
+  resendVerification: async (email: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/resend-verification/`,
+        { email },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      )
+
+      if (!response.data) {
+        throw new Error('Failed to resend verification email')
+      }
+
+      set({ isLoading: false, error: null })
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to resend verification email'
+      })
+      throw error
     }
   },
 }))

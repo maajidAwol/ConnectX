@@ -7,7 +7,7 @@ import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 // @mui
 import { LoadingButton } from '@mui/lab';
-import { Stack, Link, IconButton, InputAdornment, Alert } from '@mui/material';
+import { Stack, Link, IconButton, InputAdornment, Snackbar, Box } from '@mui/material';
 // routes
 import { paths } from 'src/routes/paths';
 // components
@@ -28,6 +28,8 @@ export default function AuthLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, error, clearError, isLoading } = useAuthStore();
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const LoginSchema = Yup.object().shape({
     email: Yup.string().required('Email is required').email('That is not an email'),
@@ -61,23 +63,79 @@ export default function AuthLoginForm() {
   const onSubmit = async (data: FormValuesProps) => {
     try {
       setLocalError(null);
+      setShowNotification(false);
+      
       await login(data.email, data.password);
-      // Redirect to the e-commerce landing page after successful login
-      router.push(paths.eCommerce.landing);
+      
+      // Only show success and redirect after successful login
+      setIsSuccess(true);
+      setShowNotification(true);
+      window.location.href = paths.eCommerce.landing;
     } catch (error) {
-      console.error('Login error:', error);
-      setLocalError(error instanceof Error ? error.message : 'Login failed');
+      let errorMessage = 'Incorrect email or password';
+      
+      if (error instanceof Error) {
+        try {
+          const errorData = JSON.parse(error.message);
+          // Only show the essential error message
+          if (errorData.details?.email || errorData.details?.password || errorData.message) {
+            errorMessage = 'Incorrect email or password';
+          }
+        } catch {
+          if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+          } else if (error.message.includes('timeout')) {
+            errorMessage = 'The request timed out. Please try again.';
+          }
+        }
+      }
+      
+      setLocalError(errorMessage);
+      setShowNotification(true);
     }
+  };
+
+  const handleCloseNotification = () => {
+    setShowNotification(false);
+    clearError();
+    setLocalError(null);
+    setIsSuccess(false);
   };
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={2.5}>
-        {(error || localError) && (
-          <Alert severity="error" onClose={() => { clearError(); setLocalError(null); }}>
-            {error || localError}
-          </Alert>
-        )}
+        <Snackbar
+          open={showNotification}
+          autoHideDuration={6000}
+          onClose={handleCloseNotification}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Box
+            sx={{
+              bgcolor: isSuccess ? 'success.main' : 'error.main',
+              color: isSuccess ? 'success.contrastText' : 'error.contrastText',
+              px: 3,
+              py: 2,
+              borderRadius: 1,
+              boxShadow: (theme) => theme.shadows[3],
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              minWidth: 300,
+              maxWidth: 400,
+            }}
+          >
+            <Iconify 
+              icon={isSuccess ? 'carbon:checkmark' : 'carbon:warning'} 
+              width={24} 
+              height={24} 
+            />
+            <Box sx={{ typography: 'body2' }}>
+              {isSuccess ? 'Logging in...' : (error || localError)}
+            </Box>
+          </Box>
+        </Snackbar>
 
         <RHFTextField name="email" label="Email address" />
 
@@ -97,11 +155,24 @@ export default function AuthLoginForm() {
         />
 
         <Link
-          component={NextLink}
-          href={paths.resetPassword}
+          component="button"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = paths.auth.resetPassword;
+          }}
           variant="body2"
           underline="always"
           color="text.secondary"
+          sx={{ 
+            border: 'none', 
+            background: 'none', 
+            cursor: 'pointer', 
+            p: 0,
+            textAlign: 'left',
+            '&:hover': {
+              textDecoration: 'underline'
+            }
+          }}
         >
           Forgot password?
         </Link>

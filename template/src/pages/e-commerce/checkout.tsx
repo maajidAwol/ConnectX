@@ -4,6 +4,7 @@ import Head from 'next/head';
 import MainLayout from 'src/layouts/main';
 // sections
 import { EcommerceCheckoutView } from 'src/sections/_e-commerce/view';
+import { useCartStore } from 'src/store/cart';
 
 // ----------------------------------------------------------------------
 
@@ -12,13 +13,14 @@ EcommerceCheckoutPage.getLayout = (page: React.ReactElement) => <MainLayout>{pag
 // ----------------------------------------------------------------------
 
 export default function EcommerceCheckoutPage() {
+  const { items } = useCartStore();
   return (
     <>
       <Head>
         <title>Checkout | ConnectX</title>
       </Head>
 
-      <EcommerceCheckoutView />
+      <EcommerceCheckoutView products={items} />
     </>
   );
 }
