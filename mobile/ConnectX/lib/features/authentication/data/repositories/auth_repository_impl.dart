@@ -49,6 +49,8 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     required String role,
+    int? age,
+    String? gender,
   }) async {
     if (await networkInfo.isConnected) {
       try {
@@ -58,6 +60,8 @@ class AuthRepositoryImpl implements AuthRepository {
           email: email,
           password: password,
           role: role,
+          age: age,
+          gender: gender,
         );
         // Return the user object on success
         return Right(user);

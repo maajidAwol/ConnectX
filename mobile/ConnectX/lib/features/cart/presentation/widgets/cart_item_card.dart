@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:korecha/constants.dart';
+import 'package:korecha/components/network_image_with_loader.dart';
 import '../../domain/entities/cart_item.dart';
 
 class CartItemCard extends StatelessWidget {
@@ -78,38 +79,10 @@ class CartItemCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  item.coverUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[200],
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: Colors.grey[400],
-                        size: 28,
-                      ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: Colors.grey[100],
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          value:
-                              loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              child: NetworkImageWithLoader(
+                item.coverUrl,
+                fit: BoxFit.cover,
+                radius: 8,
               ),
             ),
             const SizedBox(width: 12),

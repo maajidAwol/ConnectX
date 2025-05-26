@@ -10,12 +10,16 @@ class SignUpParams {
   final String email;
   final String password;
   final String role;
+  final int? age;
+  final String? gender;
 
   SignUpParams({
     required this.name,
     required this.email,
     required this.password,
     this.role = 'customer',
+    this.age,
+    this.gender,
   });
 }
 
@@ -31,6 +35,8 @@ class SignUp implements UseCase<User, SignUpParams> {
       email: params.email,
       password: params.password,
       role: params.role,
+      age: params.age,
+      gender: params.gender,
     );
   }
 }
