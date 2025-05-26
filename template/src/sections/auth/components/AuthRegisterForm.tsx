@@ -1,12 +1,25 @@
 import * as Yup from 'yup';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useState, useEffect } from 'react';
 // next
 import { useRouter } from 'next/router';
 // @mui
 import { LoadingButton } from '@mui/lab';
-import { Typography, Stack, Link, IconButton, InputAdornment, Snackbar, Box } from '@mui/material';
+import { 
+  Typography, 
+  Stack, 
+  Link, 
+  IconButton, 
+  InputAdornment, 
+  Snackbar, 
+  Box,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormControl,
+  FormLabel,
+} from '@mui/material';
 // components
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
@@ -16,10 +29,12 @@ import { useAuthStore } from 'src/store/auth';
 // ----------------------------------------------------------------------
 
 type FormValuesProps = {
-  fullName: string;
+  name: string;
   email: string;
   password: string;
   confirmPassword: string;
+  gender: string;
+  age: number;
 };
 
 export default function AuthRegisterForm() {
@@ -31,40 +46,66 @@ export default function AuthRegisterForm() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const RegisterSchema = Yup.object().shape({
-    fullName: Yup.string()
+    name: Yup.string()
       .required('Full name is required')
       .min(2, 'Minimum 2 characters')
       .max(50, 'Maximum 50 characters'),
-    email: Yup.string().required('Email is required').email('That is not an email'),
+    email: Yup.string()
+      .required('Email is required')
+      .email('That is not an email'),
     password: Yup.string()
       .required('Password is required')
-      .min(6, 'Password should be of minimum 6 characters length')
+      .min(8, 'Password must be at least 8 characters')
       .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
         'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
       ),
     confirmPassword: Yup.string()
       .required('Confirm password is required')
-      .oneOf([Yup.ref('password')], "Password's not match"),
+      .oneOf([Yup.ref('password')], "Passwords don't match"),
+    gender: Yup.string()
+      .required('Gender is required')
+      .oneOf(['male', 'female'], 'Please select a valid gender'),
+    age: Yup.number()
+      .required('Age is required')
+      .min(13, 'You must be at least 13 years old')
+      .max(120, 'Please enter a valid age'),
   });
 
   const defaultValues = {
-    fullName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
+    gender: '',
+    age: 18,
   };
 
   const methods = useForm<FormValuesProps>({
     resolver: yupResolver(RegisterSchema),
     defaultValues,
+    mode: 'onChange',
+    criteriaMode: 'all',
   });
 
   const {
     reset,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isValid, errors },
+    watch,
+    trigger,
   } = methods;
+
+  // Add watcher for form values
+  const formValues = watch();
+  
+  // Watch password to trigger confirm password validation
+  const password = watch('password');
+  useEffect(() => {
+    if (formValues.confirmPassword) {
+      trigger('confirmPassword');
+    }
+  }, [password, trigger]);
 
   useEffect(() => {
     // Clear any previous errors when component mounts
@@ -73,14 +114,24 @@ export default function AuthRegisterForm() {
   }, [clearError]);
 
   const onSubmit = async (data: FormValuesProps) => {
+    console.log('Form submitted with data:', data);
+    console.log('Form validation state:', {
+      isValid,
+      errors,
+      isSubmitting,
+      isLoading
+    });
+
     try {
       setLocalError(null);
       setShowNotification(false);
       
-      // Register the user under the tenant
-      await registerUser(data.fullName, data.email, data.password);
+      console.log('Attempting to register user...');
+      // Register the user
+      await registerUser(data.name, data.email, data.password);
+      console.log('Registration successful');
       
-      // Only show success after successful registration
+      // Show success message
       setIsSuccess(true);
       setShowNotification(true);
       
@@ -89,28 +140,28 @@ export default function AuthRegisterForm() {
       
       // Redirect to login page after a short delay
       setTimeout(() => {
+        console.log('Redirecting to login page...');
         router.push('/auth/login-illustration');
       }, 2000);
       
     } catch (error) {
+      console.error('Registration error:', error);
       let errorMessage = 'Unable to register. Please try again.';
       
       if (error instanceof Error) {
         try {
           const errorData = JSON.parse(error.message);
-          // Only show the essential error message
-          if (errorData.details?.email) {
+          console.log('Parsed error data:', errorData);
+          if (errorData.detail) {
+            errorMessage = errorData.detail;
+          } else if (errorData.email) {
             errorMessage = 'This email is already registered';
-          } else if (errorData.details?.password) {
+          } else if (errorData.password) {
             errorMessage = 'Password does not meet requirements';
-          } else if (errorData.message) {
-            errorMessage = 'Unable to register. Please try again.';
           }
         } catch {
           if (error.message.includes('Failed to fetch')) {
             errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-          } else if (error.message.includes('timeout')) {
-            errorMessage = 'The request timed out. Please try again.';
           }
         }
       }
@@ -119,6 +170,19 @@ export default function AuthRegisterForm() {
       setShowNotification(true);
     }
   };
+
+  // Add console log for form state changes
+  useEffect(() => {
+    console.log('Form state:', {
+      isSubmitting,
+      isValid,
+      isLoading,
+      error,
+      localError,
+      formValues,
+      errors
+    });
+  }, [isSubmitting, isValid, isLoading, error, localError, formValues, errors]);
 
   const handleCloseNotification = () => {
     setShowNotification(false);
@@ -162,14 +226,26 @@ export default function AuthRegisterForm() {
           </Box>
         </Snackbar>
 
-        <RHFTextField name="fullName" label="Full Name" />
+        <RHFTextField 
+          name="name" 
+          label="Full Name" 
+          error={!!errors.name}
+          helperText={errors.name?.message}
+        />
 
-        <RHFTextField name="email" label="Email address" />
+        <RHFTextField 
+          name="email" 
+          label="Email address" 
+          error={!!errors.email}
+          helperText={errors.email?.message}
+        />
 
         <RHFTextField
           name="password"
           label="Password"
           type={showPassword ? 'text' : 'password'}
+          error={!!errors.password}
+          helperText={errors.password?.message}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -185,6 +261,8 @@ export default function AuthRegisterForm() {
           name="confirmPassword"
           label="Confirm Password"
           type={showPassword ? 'text' : 'password'}
+          error={!!errors.confirmPassword}
+          helperText={errors.confirmPassword?.message}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -196,6 +274,38 @@ export default function AuthRegisterForm() {
           }}
         />
 
+        <Controller
+          name="gender"
+          control={methods.control}
+          render={({ field }) => (
+            <FormControl component="fieldset" error={!!errors.gender}>
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                {...field}
+                value={field.value || ''}
+              >
+                <FormControlLabel value="male" control={<Radio />} label="Male" />
+                <FormControlLabel value="female" control={<Radio />} label="Female" />
+              </RadioGroup>
+              {errors.gender && (
+                <Typography color="error" variant="caption">
+                  {errors.gender.message}
+                </Typography>
+              )}
+            </FormControl>
+          )}
+        />
+
+        <RHFTextField
+          name="age"
+          label="Age"
+          type="number"
+          error={!!errors.age}
+          helperText={errors.age?.message}
+          inputProps={{ min: 13, max: 120 }}
+        />
+
         <LoadingButton
           fullWidth
           color="inherit"
@@ -203,7 +313,7 @@ export default function AuthRegisterForm() {
           type="submit"
           variant="contained"
           loading={isSubmitting || isLoading}
-          disabled={isSubmitting || isLoading}
+          disabled={isSubmitting || isLoading || !isValid}
         >
           Register
         </LoadingButton>

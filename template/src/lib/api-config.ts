@@ -134,11 +134,13 @@ export const handleApiError = async (response: Response) => {
       errorMessage = response.statusText || errorMessage;
     }
 
-    throw new Error(JSON.stringify({
+    const error = {
       status: response.status,
       message: errorMessage,
       details: errorDetails
-    }));
+    };
+
+    throw new Error(JSON.stringify(error));
   }
   return response;
 };
@@ -165,6 +167,7 @@ export const apiRequest = async <T>(
     // Use the proxy endpoint
     const url = `/api/proxy/${endpointWithSlash}`;
 
+   
 
     // Generate cache key for GET requests
     const cacheKey = options.method === 'GET' ? generateCacheKey(url, options) : null;
@@ -179,18 +182,28 @@ export const apiRequest = async <T>(
 
     const headers = getApiHeaders(includeAuth, accessToken || undefined);
     
+
+    
     const response = await fetch(url, {
       ...options,
       headers: {
         ...headers,
         ...options.headers,
       },
+      redirect: 'follow', // Follow redirects
     });
+
+    
+    // Try to get response body for error cases
+    let responseBody;
+    try {
+      responseBody = await response.clone().text();
+    } catch (e) {
+    }
 
     // Handle 401 Unauthorized error
     if (response.status === 401 && includeAuth && accessToken) {
       try {
-        console.log('Token expired, attempting to refresh...');
         // Try to refresh the token
         const { refreshAccessToken } = useAuthStore.getState();
         const newAccessToken = await refreshAccessToken();
@@ -199,7 +212,6 @@ export const apiRequest = async <T>(
           throw new Error('Your session has expired. Please log in again.');
         }
 
-        console.log('Token refreshed successfully, retrying request...');
         // Retry the request with the new token
         const retryResponse = await fetch(url, {
           ...options,
@@ -208,6 +220,7 @@ export const apiRequest = async <T>(
             ...options.headers,
             'Authorization': `Bearer ${newAccessToken}`,
           },
+          redirect: 'follow', // Follow redirects
         });
 
         await handleApiError(retryResponse);
@@ -220,7 +233,6 @@ export const apiRequest = async <T>(
 
         return data;
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
         throw new Error('Your session has expired. Please log in again.');
       }
     }
@@ -235,16 +247,23 @@ export const apiRequest = async <T>(
 
     return data;
   } catch (error) {
-    console.error('API request failed:', error);
     if (error instanceof Error) {
       try {
         const errorData = JSON.parse(error.message);
-        throw new Error(errorData.message || 'An unexpected error occurred');
+        throw new Error(JSON.stringify(errorData));
       } catch {
-        throw new Error(error.message || 'An unexpected error occurred');
+        throw new Error(JSON.stringify({
+          status: 500,
+          message: error.message || 'An unexpected error occurred',
+          details: null
+        }));
       }
     }
-    throw new Error('An unexpected error occurred');
+    throw new Error(JSON.stringify({
+      status: 500,
+      message: 'An unexpected error occurred',
+      details: null
+    }));
   }
 };
 
