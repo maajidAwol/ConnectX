@@ -8,6 +8,8 @@ class User {
   final String? avatar_url;
   final String? bio;
   final String? phoneNumber;
+  final int? age;
+  final String? gender;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -21,6 +23,8 @@ class User {
     this.avatar_url,
     this.bio,
     this.phoneNumber,
+    this.age,
+    this.gender,
     required this.createdAt,
     required this.updatedAt,
   });

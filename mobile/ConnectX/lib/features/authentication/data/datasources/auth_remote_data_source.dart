@@ -14,6 +14,8 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
     required String role,
+    int? age,
+    String? gender,
   });
   Future<void> logout();
   // Future<UserModel> getCurrentUser();
@@ -90,6 +92,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String email,
     required String password,
     required String role,
+    int? age,
+    String? gender,
   }) async {
     print(role);
     print(baseUrl);
@@ -106,6 +110,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'email': email,
         'password': password,
         'role': role,
+        if (age != null) 'age': age,
+        if (gender != null) 'gender': gender,
       }),
     );
     print(response.body);

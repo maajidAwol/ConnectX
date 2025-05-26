@@ -11,6 +11,8 @@ class UserModel extends User {
     super.avatar_url,
     super.bio,
     super.phoneNumber,
+    super.age,
+    super.gender,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -34,6 +36,8 @@ class UserModel extends User {
       bio: userData['bio']?.toString(), // Added bio field
       phoneNumber:
           userData['phone_number']?.toString(), // Added phone_number field
+      age: userData['age'] as int?, // Added age field
+      gender: userData['gender']?.toString(), // Added gender field
       createdAt: DateTime.parse(
         userData['created_at']?.toString() ?? DateTime.now().toIso8601String(),
       ), // Changed name
@@ -54,6 +58,8 @@ class UserModel extends User {
       'avatar_url': avatar_url,
       'bio': bio,
       'phone_number': phoneNumber,
+      'age': age,
+      'gender': gender,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

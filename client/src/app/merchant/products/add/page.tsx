@@ -22,6 +22,7 @@ import useProductStore from "@/store/useProductStore"
 import useCategoryStore from "@/store/useCategoryStore"
 import { toast } from "sonner"
 import { useAuthStore } from "@/store/authStore"
+import { useTenantStore } from "@/store/tenantStore"
 
 interface FormErrors {
   name?: string
@@ -100,7 +101,9 @@ export default function ProductPage() {
   const { createProduct, updateProduct, getProductById } = useProductStore((state: any) => state)
   const { categories, fetchCategories, isLoading: isCategoriesLoading } = useCategoryStore()
   const { isTenantVerified } = useAuthStore()
-  const isVerified = isTenantVerified()
+  const { tenantData} = useTenantStore()
+  // const isVerified = isTenantVerified()
+  const isVerified = tenantData?.is_verified || false
   
   // Fetch categories when component mounts
   useEffect(() => {

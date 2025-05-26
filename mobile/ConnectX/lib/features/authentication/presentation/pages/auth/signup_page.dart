@@ -19,6 +19,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _ageController = TextEditingController();
+  final _genderController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +112,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         emailController: _emailController,
                         passwordController: _passwordController,
                         confirmPasswordController: _confirmPasswordController,
+                        ageController: _ageController,
+                        genderController: _genderController,
                       ),
                       const SizedBox(height: defaultPadding * 1.5),
                       if (state is AuthLoading)
@@ -124,6 +128,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   name: _nameController.text,
                                   email: _emailController.text,
                                   password: _passwordController.text,
+                                  age: int.tryParse(_ageController.text),
+                                  gender: _genderController.text,
                                 ),
                               );
                             }
@@ -159,6 +165,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _ageController.dispose();
+    _genderController.dispose();
     super.dispose();
   }
 }

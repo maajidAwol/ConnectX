@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:chapasdk/chapasdk.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:korecha/components/network_image_with_loader.dart';
 import 'package:korecha/features/authentication/domain/entities/address.dart';
 import 'package:korecha/features/authentication/presentation/state/address/bloc/address_bloc.dart';
 import 'package:korecha/features/cart/data/models/chapa_order_request_model.dart';
@@ -91,56 +92,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: NetworkImageWithLoader(
                           item.coverUrl,
-                          width: 40,
-                          height: 40,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.image_not_supported,
-                                color: Colors.grey[400],
-                                size: 20,
-                              ),
-                            );
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    value:
-                                        loadingProgress.expectedTotalBytes !=
-                                                null
-                                            ? loadingProgress
-                                                    .cumulativeBytesLoaded /
-                                                loadingProgress
-                                                    .expectedTotalBytes!
-                                            : null,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                          radius: 8,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -743,7 +701,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                               );
 
                               context.read<OrderBloc>().add(
-                                  CreateCashOnDeliveryOrderEvent(cashOnDeliveryOrder),
+                                CreateCashOnDeliveryOrderEvent(
+                                  cashOnDeliveryOrder,
+                                ),
                               );
                               setState(() {
                                 _isProcessing = true;
