@@ -224,8 +224,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   ProductImages(
                     images: [
-                      state.product.coverUrl,
-                      ...state.product.images.map((e) => e.url),
+                      if (state.product.coverUrl.isNotEmpty)
+                        state.product.coverUrl,
+                      ...state.product.images
+                          .map((e) => e.url)
+                          .where((url) => url.isNotEmpty),
                     ],
                   ),
                   ProductInfo(

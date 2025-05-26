@@ -59,7 +59,9 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }) async {
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/?filter_type=listed&page=$page&page_size=$pageSize'),
+        Uri.parse(
+          '$baseUrl/products/?filter_type=listed&page=$page&page_size=$pageSize',
+        ),
         headers: _headers,
       );
       print(response.body);
@@ -114,14 +116,28 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       print(response.body);
       print(response.statusCode);
       if (response.statusCode == 200) {
-        final productJson = json.decode(response.body);
-        return ProductModel.fromJson(productJson);
+        final decodedResponse = json.decode(response.body);
+
+        // Handle paginated response - extract the first product from results
+        if (decodedResponse is Map<String, dynamic> &&
+            decodedResponse.containsKey('results') &&
+            decodedResponse['results'] is List &&
+            (decodedResponse['results'] as List).isNotEmpty) {
+          final productJson = (decodedResponse['results'] as List).first;
+          print(
+            'ProductRemoteDataSource: Extracted product from results: $productJson',
+          );
+          return ProductModel.fromJson(productJson);
+        } else {
+          throw ServerException('No product found with ID: $productId');
+        }
       } else {
         throw ServerException(
           'Failed to load product details: ${response.statusCode}',
         );
       }
     } catch (e) {
+      print('Error in getProductById: $e');
       throw ServerException(e.toString());
     }
   }
@@ -288,7 +304,9 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }) async {
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/?filter_type=listed&page=$page&page_size=$pageSize'),
+        Uri.parse(
+          '$baseUrl/products/?filter_type=listed&page=$page&page_size=$pageSize',
+        ),
         headers: _headers,
       );
 
@@ -315,7 +333,9 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     try {
       for (int page = 1; page <= maxPages; page++) {
         final response = await client.get(
-          Uri.parse('$baseUrl/products/?filter_type=listed&page=$page&page_size=20'),
+          Uri.parse(
+            '$baseUrl/products/?filter_type=listed&page=$page&page_size=20',
+          ),
           headers: _headers,
         );
 

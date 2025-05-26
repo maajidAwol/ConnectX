@@ -4,10 +4,7 @@ import '/components/network_image_with_loader.dart';
 import '../../../../constants.dart';
 
 class ProductImages extends StatefulWidget {
-  const ProductImages({
-    super.key,
-    required this.images,
-  });
+  const ProductImages({super.key, required this.images});
 
   final List<String> images;
 
@@ -22,8 +19,10 @@ class _ProductImagesState extends State<ProductImages> {
 
   @override
   void initState() {
-    _controller =
-        PageController(viewportFraction: 0.9, initialPage: _currentPage);
+    _controller = PageController(
+      viewportFraction: 0.9,
+      initialPage: _currentPage,
+    );
     super.initState();
   }
 
@@ -35,6 +34,31 @@ class _ProductImagesState extends State<ProductImages> {
 
   @override
   Widget build(BuildContext context) {
+    // Handle empty images list
+    if (widget.images.isEmpty) {
+      return SliverToBoxAdapter(
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            margin: const EdgeInsets.only(right: defaultPadding),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: const BorderRadius.all(
+                Radius.circular(defaultBorderRadious * 2),
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.image_not_supported,
+                color: Colors.grey[400],
+                size: 50,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return SliverToBoxAdapter(
       child: AspectRatio(
         aspectRatio: 1,
@@ -48,15 +72,16 @@ class _ProductImagesState extends State<ProductImages> {
                 });
               },
               itemCount: widget.images.length,
-              itemBuilder: (context, index) => Padding(
-                padding: const EdgeInsets.only(right: defaultPadding),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(defaultBorderRadious * 2),
+              itemBuilder:
+                  (context, index) => Padding(
+                    padding: const EdgeInsets.only(right: defaultPadding),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(defaultBorderRadious * 2),
+                      ),
+                      child: NetworkImageWithLoader(widget.images[index]),
+                    ),
                   ),
-                  child: NetworkImageWithLoader(widget.images[index]),
-                ),
-              ),
             ),
             if (widget.images.length > 1)
               Positioned(
@@ -76,9 +101,11 @@ class _ProductImagesState extends State<ProductImages> {
                       widget.images.length,
                       (index) => Padding(
                         padding: EdgeInsets.only(
-                            right: index == (widget.images.length - 1)
-                                ? 0
-                                : defaultPadding / 4),
+                          right:
+                              index == (widget.images.length - 1)
+                                  ? 0
+                                  : defaultPadding / 4,
+                        ),
                         child: CircleAvatar(
                           radius: 3,
                           backgroundColor: Theme.of(context)
@@ -91,7 +118,7 @@ class _ProductImagesState extends State<ProductImages> {
                     ),
                   ),
                 ),
-              )
+              ),
           ],
         ),
       ),
