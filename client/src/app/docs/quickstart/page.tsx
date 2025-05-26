@@ -204,8 +204,8 @@ export default function Home() {
       </div>
 
       <DocsPager
-        prev={{ title: "Installation", href: "/docs/installation" }}
-        next={{ title: "Authentication", href: "/docs/authentication/overview" }}
+        prev={{ label: "Installation", href: "/docs/installation" }}
+        next={{ label: "Authentication", href: "/docs/authentication/overview" }}
       />
     </div>
   )

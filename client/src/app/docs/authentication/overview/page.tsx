@@ -14,7 +14,7 @@ export default function AuthenticationOverviewPage() {
 
       <DocSection title="Introduction" defaultOpen={true}>
         <p className="text-gray-700 dark:text-gray-300 mb-4">
-          ConnectX uses JWT (json web tokens)for authentication. The authentication system supports user registration, login, email verification, and password management. Each user is associated with a tenant and has a specific role that determines their access level.
+          ConnectX uses JWT tokens for authentication. The authentication system supports user registration, login, email verification, and password management. 
         </p>
       </DocSection>
 
