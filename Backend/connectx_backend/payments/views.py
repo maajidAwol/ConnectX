@@ -676,7 +676,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 @csrf_exempt
 @api_view(['POST'])
 @authentication_classes([])
-@permission_classes([])
+@permission_classes([permissions.AllowAny])
 def chapa_webhook_standalone(request):
     """
     Standalone Chapa webhook handler that bypasses all authentication.
