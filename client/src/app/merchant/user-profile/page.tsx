@@ -14,6 +14,7 @@ import { useAuthStore } from "@/store/authStore"
 import { toast } from "sonner"
 import { Bell, Eye, EyeOff, Key, Lock, Mail, Shield, User, UserCog, Loader2, Upload } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function UserProfilePage() {
   const router = useRouter()
@@ -52,6 +53,8 @@ export default function UserProfilePage() {
     phone_number: user?.phone_number || "",
     bio: user?.bio || "",
     role: user?.role || "",
+    age: user?.age || null,
+    gender: user?.gender || "male",
   })
 
   // Update form data when user data changes
@@ -63,6 +66,8 @@ export default function UserProfilePage() {
         phone_number: user.phone_number || "",
         bio: user.bio || "",
         role: user.role || "",
+        age: user.age || null,
+        gender: user.gender || "male",
       })
       setPreviewUrl(user.avatar_url)
     }
@@ -72,7 +77,7 @@ export default function UserProfilePage() {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'age' ? (value ? parseInt(value) : null) : value
     }))
     // Clear errors when user starts typing
     setProfileErrors([])
@@ -88,6 +93,14 @@ export default function UserProfilePage() {
     }
   }
 
+  const handleGenderChange = (value: "male" | "female") => {
+    setFormData(prev => ({
+      ...prev,
+      gender: value
+    }))
+    setProfileErrors([])
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -98,6 +111,8 @@ export default function UserProfilePage() {
       formDataToSend.append('name', formData.name)
       formDataToSend.append('bio', formData.bio)
       formDataToSend.append('phone_number', formData.phone_number)
+      formDataToSend.append('age', formData.age?.toString() || '')
+      formDataToSend.append('gender', formData.gender)
       if (selectedFile) {
         formDataToSend.append('avatar', selectedFile)
       }
@@ -284,6 +299,36 @@ export default function UserProfilePage() {
                       disabled={!isEditing}
                       className={profileErrors.length > 0 ? "border-red-500" : ""}
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="age">Age</Label>
+                    <Input
+                      id="age"
+                      name="age"
+                      type="number"
+                      min="18"
+                      max="100"
+                      value={formData.age || ""}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className={profileErrors.length > 0 ? "border-red-500" : ""}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <Select
+                      value={formData.gender}
+                      onValueChange={handleGenderChange}
+                      disabled={!isEditing}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>

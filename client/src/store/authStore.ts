@@ -17,6 +17,8 @@ interface User {
   tenant_id: string
   is_active: boolean
   groups: string[]
+  age: number | null
+  gender: 'male' | 'female'
 }
 
 interface TenantData {
@@ -48,7 +50,7 @@ interface SignupData {
   email: string
   password: string
   fullname: string
-  age: string
+  age: number | null
   gender: 'male' | 'female'
 }
 
@@ -142,7 +144,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       formData.append('email', data.email)
       formData.append('password', data.password)
       formData.append('fullname', data.fullname)
-      formData.append('age', data.age)
+      formData.append('age', data.age?.toString() || '')
       formData.append('gender', data.gender)
 
       const response = await axios.post(
