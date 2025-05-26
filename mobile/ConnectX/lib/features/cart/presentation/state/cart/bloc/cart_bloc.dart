@@ -23,6 +23,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<AddToCart>(_onAddToCart);
     on<UpdateCartItem>(_onUpdateCartItem);
     on<RemoveFromCart>(_onRemoveFromCart);
+    on<RemoveMultipleFromCart>(_onRemoveMultipleFromCart);
     on<ClearCart>(_onClearCart);
   }
 
@@ -41,13 +42,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
       // Add item to cart
       final addResult = await addToCartUseCase(event.item);
-      final addSuccess = await addResult.fold(
-        (failure) async {
-          emit(CartError(failure.toString()));
-          return false;
-        },
-        (_) async => true,
-      );
+      final addSuccess = await addResult.fold((failure) async {
+        emit(CartError(failure.toString()));
+        return false;
+      }, (_) async => true);
 
       if (!addSuccess) return;
 
@@ -63,7 +61,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   Future<void> _onUpdateCartItem(
-      UpdateCartItem event, Emitter<CartState> emit) async {
+    UpdateCartItem event,
+    Emitter<CartState> emit,
+  ) async {
     try {
       final currentState = state;
       if (currentState is! CartLoaded) return;
@@ -72,13 +72,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
       // Update the cart item with the provided quantity
       final updateResult = await repository.updateCartItem(event.item);
-      final updateSuccess = await updateResult.fold(
-        (failure) async {
-          emit(CartError('Failed to update cart item'));
-          return false;
-        },
-        (_) async => true,
-      );
+      final updateSuccess = await updateResult.fold((failure) async {
+        emit(CartError('Failed to update cart item'));
+        return false;
+      }, (_) async => true);
 
       if (!updateSuccess) return;
 
@@ -94,7 +91,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   Future<void> _onRemoveFromCart(
-      RemoveFromCart event, Emitter<CartState> emit) async {
+    RemoveFromCart event,
+    Emitter<CartState> emit,
+  ) async {
     try {
       final currentState = state;
       if (currentState is! CartLoaded) return;
@@ -103,15 +102,51 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
       // Remove the cart item
       final removeResult = await repository.removeCartItem(event.id);
-      final removeSuccess = await removeResult.fold(
-        (failure) async {
-          emit(CartError('Failed to remove item from cart'));
-          return false;
-        },
-        (_) async => true,
-      );
+      final removeSuccess = await removeResult.fold((failure) async {
+        emit(CartError('Failed to remove item from cart'));
+        return false;
+      }, (_) async => true);
 
       if (!removeSuccess) return;
+
+      // Get updated cart items
+      final cartItemsResult = await repository.getCartItems();
+      await cartItemsResult.fold(
+        (failure) async => emit(CartError('Failed to update cart')),
+        (items) async => emit(CartLoaded(items)),
+      );
+    } catch (e) {
+      emit(CartError('An error occurred while managing cart'));
+    }
+  }
+
+  Future<void> _onRemoveMultipleFromCart(
+    RemoveMultipleFromCart event,
+    Emitter<CartState> emit,
+  ) async {
+    try {
+      final currentState = state;
+      if (currentState is! CartLoaded) return;
+
+      emit(CartLoading());
+
+      // Remove all items in the list
+      bool allRemoved = true;
+      for (final id in event.ids) {
+        final removeResult = await repository.removeCartItem(id);
+        final removeSuccess = await removeResult.fold((failure) async {
+          allRemoved = false;
+          return false;
+        }, (_) async => true);
+        if (!removeSuccess) {
+          allRemoved = false;
+        }
+      }
+
+      if (!allRemoved) {
+        emit(CartError('Failed to remove some items from cart'));
+        return;
+      }
 
       // Get updated cart items
       final cartItemsResult = await repository.getCartItems();

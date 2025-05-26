@@ -5,6 +5,7 @@ import 'package:korecha/constants.dart';
 import 'package:korecha/route/route_constants.dart';
 
 import 'package:korecha/features/onboarding/presentation/widgets/onbording_content.dart';
+
 class OnBordingScreen extends StatefulWidget {
   const OnBordingScreen({super.key});
 
@@ -19,36 +20,30 @@ class _OnBordingScreenState extends State<OnBordingScreen> {
     Onbord(
       image: "assets/Illustration/Illustration-0.png",
       imageDarkTheme: "assets/Illustration/Illustration_darkTheme_0.png",
-      title: "Find the item you’ve \nbeen looking for",
+      title: "Welcome to \nConnectX",
       description:
-          "Here you’ll see rich varieties of goods, carefully classified for seamless browsing experience.",
+          "Discover amazing products from local sellers and connect with your community through our marketplace.",
     ),
     Onbord(
       image: "assets/Illustration/Illustration-1.png",
       imageDarkTheme: "assets/Illustration/Illustration_darkTheme_1.png",
-      title: "Get those shopping \nbags filled",
+      title: "Shop with \nconfidence",
       description:
-          "Add any item you want to your cart, or save it on your wishlist, so you don’t miss it in your future purchases.",
+          "Browse through carefully curated products, add items to your cart, and save favorites to your wishlist for later.",
     ),
     Onbord(
       image: "assets/Illustration/Illustration-2.png",
       imageDarkTheme: "assets/Illustration/Illustration_darkTheme_2.png",
-      title: "Fast & secure \npayment",
-      description: "There are many payment options available for your ease.",
-    ),
-    Onbord(
-      image: "assets/Illustration/Illustration-3.png",
-      imageDarkTheme: "assets/Illustration/Illustration_darkTheme_3.png",
-      title: "Package tracking",
+      title: "Secure & easy \npayments",
       description:
-          "In particular, Shoplon can pack your orders, and help you seamlessly manage your shipments.",
+          "Multiple payment options ensure safe and convenient transactions for all your purchases.",
     ),
     Onbord(
       image: "assets/Illustration/Illustration-4.png",
       imageDarkTheme: "assets/Illustration/Illustration_darkTheme_4.png",
-      title: "Nearby stores",
+      title: "Connect with \nlocal sellers",
       description:
-          "Easily track nearby shops, browse through their items and get information about their prodcuts.",
+          "Discover nearby stores, explore their unique products, and support your local community through ConnectX.",
     ),
   ];
 
@@ -81,7 +76,8 @@ class _OnBordingScreenState extends State<OnBordingScreen> {
                   child: Text(
                     "Skip",
                     style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge!.color),
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
+                    ),
                   ),
                 ),
               ),
@@ -94,15 +90,17 @@ class _OnBordingScreenState extends State<OnBordingScreen> {
                       _pageIndex = value;
                     });
                   },
-                  itemBuilder: (context, index) => OnbordingContent(
-                    title: _onbordData[index].title,
-                    description: _onbordData[index].description,
-                    image: (Theme.of(context).brightness == Brightness.dark &&
-                            _onbordData[index].imageDarkTheme != null)
-                        ? _onbordData[index].imageDarkTheme!
-                        : _onbordData[index].image,
-                    isTextOnTop: index.isOdd,
-                  ),
+                  itemBuilder:
+                      (context, index) => OnbordingContent(
+                        title: _onbordData[index].title,
+                        description: _onbordData[index].description,
+                        image:
+                            (Theme.of(context).brightness == Brightness.dark &&
+                                    _onbordData[index].imageDarkTheme != null)
+                                ? _onbordData[index].imageDarkTheme!
+                                : _onbordData[index].image,
+                        isTextOnTop: index.isOdd,
+                      ),
                 ),
               ),
               Row(
@@ -122,7 +120,9 @@ class _OnBordingScreenState extends State<OnBordingScreen> {
                       onPressed: () {
                         if (_pageIndex < _onbordData.length - 1) {
                           _pageController.nextPage(
-                              curve: Curves.ease, duration: defaultDuration);
+                            curve: Curves.ease,
+                            duration: defaultDuration,
+                          );
                         } else {
                           Navigator.pushNamed(context, logInScreenRoute);
                         }

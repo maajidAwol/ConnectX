@@ -110,7 +110,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     print(productId);
     try {
       final response = await client.get(
-        Uri.parse('$baseUrl/products/?filter_type=listed&id=$productId/'),
+        Uri.parse('$baseUrl/products/$productId/'),
         headers: _headers,
       );
       print(response.body);
@@ -118,18 +118,14 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
 
-        // Handle paginated response - extract the first product from results
-        if (decodedResponse is Map<String, dynamic> &&
-            decodedResponse.containsKey('results') &&
-            decodedResponse['results'] is List &&
-            (decodedResponse['results'] as List).isNotEmpty) {
-          final productJson = (decodedResponse['results'] as List).first;
-          print(
-            'ProductRemoteDataSource: Extracted product from results: $productJson',
-          );
-          return ProductModel.fromJson(productJson);
+        // The API returns a single product object directly, not a paginated response
+        if (decodedResponse is Map<String, dynamic>) {
+          print('ProductRemoteDataSource: Product details: $decodedResponse');
+          return ProductModel.fromJson(decodedResponse);
         } else {
-          throw ServerException('No product found with ID: $productId');
+          throw ServerException(
+            'Invalid product data format for ID: $productId',
+          );
         }
       } else {
         throw ServerException(
