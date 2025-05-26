@@ -1553,6 +1553,8 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
 
         # Calculate gender-age distribution
         gender_age_distribution = {}
+
+        # First, handle users with complete demographic data
         for gender in ["male", "female"]:
             for age_min, age_max in age_groups:
                 # Build the query for this gender-age group
@@ -1573,6 +1575,17 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
                 key = f"{gender}_{age_key}"
 
                 gender_age_distribution[key] = round(percentage, 1)
+
+        # Handle users with missing demographic data
+        users_with_missing_data = users.filter(
+            Q(gender__isnull=True) | Q(gender="") | Q(age__isnull=True)
+        ).count()
+
+        # Calculate percentage for users with missing data
+        others_percentage = (
+            (users_with_missing_data / total_users * 100) if total_users > 0 else 0
+        )
+        gender_age_distribution["others"] = round(others_percentage, 1)
 
         data = {
             "total_users": total_users,
