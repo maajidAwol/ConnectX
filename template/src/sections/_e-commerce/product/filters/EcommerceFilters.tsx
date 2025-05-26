@@ -1,6 +1,6 @@
 import { useState } from 'react';
 // @mui
-import { Stack, Drawer, Button, Collapse, Typography, StackProps } from '@mui/material';
+import { Stack, Drawer, Button, Collapse, Typography, StackProps, Box } from '@mui/material';
 // hooks
 import useResponsive from 'src/hooks/useResponsive';
 // config
@@ -9,6 +9,8 @@ import { NAV } from 'src/config-global';
 import { IProductFiltersProps } from 'src/types/product';
 // components
 import Iconify from 'src/components/iconify';
+// store
+import { useProductStore } from 'src/store/product';
 //
 import {
   EcommerceFilterTag,
@@ -17,14 +19,11 @@ import {
   EcommerceFilterStock,
   EcommerceFilterRating,
   EcommerceFilterCategory,
-  EcommerceFilterShipping,
 } from './components';
 
 // ----------------------------------------------------------------------
 
 const BRAND_OPTIONS = ['Apple', 'Samsung', 'Xiaomi', 'Honor'];
-
-const SHIPPING_OPTIONS = ['Fast', 'Saving', 'Free'];
 
 const TAG_OPTIONS = ['Books and Media', 'Pet', 'Electronics', 'Food', 'Automotive and Industrial'];
 
@@ -35,12 +34,12 @@ const defaultValues = {
   filterCategories: '',
   filterRating: null,
   filterStock: false,
-  filterShipping: [],
   filterTag: [],
   filterPrice: {
     start: 0,
     end: 0,
   },
+  filterShipping: [],
 };
 
 interface Category {
@@ -58,14 +57,16 @@ type Props = {
   mobileOpen: boolean;
   onMobileClose: VoidFunction;
   categories: Category[];
-  onSelectCategory: (categoryId: string | null) => void;
-  selectedCategoryId: string | null;
 };
 
-export default function EcommerceFilters({ mobileOpen, onMobileClose, categories = [], onSelectCategory, selectedCategoryId }: Props) {
+export default function EcommerceFilters({ mobileOpen, onMobileClose, categories = [] }: Props) {
   const isMdUp = useResponsive('up', 'md');
+  const { selectedCategoryId, setSelectedCategory, fetchProducts, currentPage } = useProductStore();
 
-  const [filters, setFilters] = useState<IProductFiltersProps>(defaultValues);
+  const [filters, setFilters] = useState<IProductFiltersProps>({
+    ...defaultValues,
+    filterCategories: selectedCategoryId || '',
+  });
 
   const getSelected = (selectedItems: string[], item: string) =>
     selectedItems.includes(item)
@@ -73,20 +74,20 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
       : [...selectedItems, item];
 
   const handleChangeCategories = (categoryId: string) => {
-    onSelectCategory(categoryId);
+    const newCategoryId = categoryId === 'all' ? null : categoryId;
+    setSelectedCategory(newCategoryId);
+    setFilters({
+      ...filters,
+      filterCategories: categoryId,
+    });
+    // Fetch products with the new category
+    fetchProducts(currentPage, 'listed', newCategoryId);
   };
 
   const handleChangeBrand = (name: string) => {
     setFilters({
       ...filters,
       filterBrand: getSelected(filters.filterBrand, name),
-    });
-  };
-
-  const handleChangeShipping = (name: string) => {
-    setFilters({
-      ...filters,
-      filterShipping: getSelected(filters.filterShipping, name),
     });
   };
 
@@ -132,7 +133,13 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
   };
 
   const handleClearAll = () => {
-    setFilters(defaultValues);
+    setFilters({
+      ...defaultValues,
+      filterCategories: '',
+    });
+    setSelectedCategory(null);
+    // Fetch products with no category filter
+    fetchProducts(currentPage, 'listed', null);
   };
 
   const renderContent = (
@@ -142,53 +149,59 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
       sx={{
         flexShrink: 0,
         width: { xs: 1, md: NAV.W_DRAWER },
+        bgcolor: 'background.neutral',
+        borderRadius: 1,
+        p: 3,
       }}
     >
       <Block title="Category">
         <EcommerceFilterCategory
-          filterCategories={selectedCategoryId || ''}
+          filterCategories={selectedCategoryId || 'all'}
           onChangeCategories={handleChangeCategories}
-          options={categories}
+          options={[
+            { 
+              id: 'all', 
+              name: 'All Categories',
+              icon: null,
+              description: 'View all products',
+              created_at: '',
+              updated_at: '',
+              tenant: '',
+              parent: null
+            },
+            ...categories
+          ]}
           sx={{ mt: 2 }}
         />
       </Block>
 
-      <Block title="Brand">
+      {/* <Block title="Brand">
         <EcommerceFilterBrand
           filterBrand={filters.filterBrand}
           onChangeBrand={handleChangeBrand}
           options={BRAND_OPTIONS}
           sx={{ mt: 1 }}
         />
-      </Block>
-
-      {/* <Block title="Price">
-        <EcommerceFilterPrice
-          filterPrice={filters.filterPrice}
-          onChangeStartPrice={handleChangeStartPrice}
-          onChangeEndPrice={handleChangeEndPrice}
-          sx={{ mt: 2 }}
-        />
       </Block> */}
 
-      <Block title="Shipping">
-        <EcommerceFilterShipping
-          filterShipping={filters.filterShipping}
-          onChangeShipping={handleChangeShipping}
-          options={SHIPPING_OPTIONS}
-          sx={{ mt: 1 }}
-        />
-      </Block>
-
-      <Block title="Ratings">
+      {/* <Block title="Ratings">
         <EcommerceFilterRating
           filterRating={filters.filterRating}
           onChangeRating={handleChangeRating}
           sx={{ mt: 2 }}
         />
-      </Block>
+      </Block> */}
 
-      <EcommerceFilterStock filterStock={filters.filterStock} onChangeStock={handleChangeStock} />
+      {/* <EcommerceFilterStock 
+        filterStock={filters.filterStock} 
+        onChangeStock={handleChangeStock}
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 1,
+          p: 2,
+          width: '100%',
+        }}
+      /> */}
 
       <Block title="Tags">
         <EcommerceFilterTag
@@ -201,11 +214,17 @@ export default function EcommerceFilters({ mobileOpen, onMobileClose, categories
 
       <Button
         fullWidth
-        color="inherit"
         size="large"
         variant="contained"
         startIcon={<Iconify icon="carbon:trash-can" />}
         onClick={handleClearAll}
+        sx={{
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          '&:hover': {
+            bgcolor: 'primary.dark',
+          },
+        }}
       >
         Clear All
       </Button>
@@ -252,23 +271,51 @@ function Block({ title, children, ...other }: BlockProps) {
   };
 
   return (
-    <Stack alignItems="flex-start" sx={{ width: 1 }} {...other}>
+    <Stack 
+      alignItems="flex-start" 
+      sx={{ 
+        width: 1,
+        bgcolor: 'background.paper',
+        borderRadius: 1,
+        p: 2,
+      }} 
+      {...other}
+    >
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
         onClick={handleOpen}
-        sx={{ width: 1, cursor: 'pointer' }}
+        sx={{ 
+          width: 1, 
+          cursor: 'pointer',
+          '&:hover': {
+            '& .MuiTypography-root': {
+              color: 'primary.main',
+            },
+          },
+        }}
       >
-        <Typography variant="h6">{title}</Typography>
+        <Typography 
+          variant="h6"
+          sx={{
+            transition: 'color 0.2s ease-in-out',
+          }}
+        >
+          {title}
+        </Typography>
 
         <Iconify
           icon={checked ? 'carbon:subtract' : 'carbon:add'}
-          sx={{ color: 'text.secondary' }}
+          sx={{ 
+            color: 'text.secondary',
+            transition: 'transform 0.2s ease-in-out',
+            transform: checked ? 'rotate(0deg)' : 'rotate(90deg)',
+          }}
         />
       </Stack>
 
-      <Collapse unmountOnExit in={checked} sx={{ px: 0.5 }}>
+      <Collapse unmountOnExit in={checked} sx={{ px: 0.5, width: 1 }}>
         {children}
       </Collapse>
     </Stack>

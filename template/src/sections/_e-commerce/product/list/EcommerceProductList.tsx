@@ -78,9 +78,27 @@ export default function EcommerceProductList({ loading, viewMode, products }: Pr
 
   return (
     <>
-      <Stack direction="row" spacing={2} sx={{ mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Stack 
+        direction="row" 
+        spacing={2} 
+        sx={{ 
+          mb: 3, 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
         {Array.isArray(categories) && categories.length > 0 && (
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Stack 
+            direction="row" 
+            spacing={1} 
+            sx={{ 
+              flexWrap: 'wrap', 
+              gap: 1,
+              flex: 1,
+            }}
+          >
             {categories.map((category) => (
               <Chip
                 key={category.id}
@@ -90,13 +108,32 @@ export default function EcommerceProductList({ loading, viewMode, products }: Pr
                   handleCategoryClick(category.id);
                 }}
                 color={selectedCategoryId === category.id ? 'primary' : 'default'}
-                sx={{ m: 0.5 }}
+                sx={{ 
+                  m: 0.5,
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: (theme) => theme.customShadows.z8,
+                  },
+                }}
               />
             ))}
           </Stack>
         )}
 
-        <FormControl sx={{ minWidth: 200 }}>
+        <FormControl 
+          sx={{ 
+            minWidth: 200,
+            '& .MuiOutlinedInput-root': {
+              bgcolor: 'background.paper',
+              '&:hover': {
+                '& > fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+            },
+          }}
+        >
           <InputLabel>Sort By</InputLabel>
           <Select<string>
             value={sortBy}
@@ -117,6 +154,14 @@ export default function EcommerceProductList({ loading, viewMode, products }: Pr
           columnGap={3}
           display="grid"
           gridTemplateColumns={{ xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' }}
+          sx={{
+            '& > *': {
+              transition: 'transform 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+              },
+            },
+          }}
         >
           {(loading ? [...Array(PAGE_SIZE)] : products).map((product, index) =>
             product ? (
@@ -164,6 +209,15 @@ export default function EcommerceProductList({ loading, viewMode, products }: Pr
             mb: 5,
             '& .MuiPagination-ul': {
               justifyContent: 'center',
+            },
+            '& .MuiPaginationItem-root': {
+              '&.Mui-selected': {
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              },
             },
           }}
         />

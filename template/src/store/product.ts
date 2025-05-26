@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import { apiRequest } from '../lib/api-config';
 
 export interface Product {
+  tags: any;
+  rating: number;
+  price: number;
+  inventory: number;
   id: string;
   tenant: string[];
   owner: string;
@@ -85,6 +89,7 @@ interface ProductState {
   minPrice: number | null;
   maxPrice: number | null;
   minRating: number | null;
+  filteredProducts: Product[];
   fetchProducts: (page?: number, status?: string, categoryId?: string | null, sortBy?: string, searchQuery?: string, minPrice?: number | null, maxPrice?: number | null, minRating?: number | null) => Promise<ProductResponse | undefined>;
   fetchProductById: (id: string) => Promise<void>;
   fetchListedCategories: () => Promise<void>;
@@ -93,6 +98,7 @@ interface ProductState {
   setSortBy: (sortBy: string) => void;
   setPriceRange: (min: number | null, max: number | null) => void;
   setMinRating: (rating: number | null) => void;
+  setFilteredProducts: (products: Product[]) => void;
 }
 
 export const useProductStore = create<ProductState>((set, get) => ({
@@ -109,6 +115,11 @@ export const useProductStore = create<ProductState>((set, get) => ({
   minPrice: null,
   maxPrice: null,
   minRating: null,
+  filteredProducts: [],
+
+  setFilteredProducts: (products: Product[]) => {
+    set({ filteredProducts: products });
+  },
 
   setSelectedCategory: (categoryId: string | null) => {
     set({ selectedCategoryId: categoryId });

@@ -71,13 +71,10 @@ export default function Footer() {
                   Shop
                 </Link>
                 <Link href="/about" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
-                  About Us
+                  About
                 </Link>
                 <Link href="/contact" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
                   Contact Us
-                </Link>
-                <Link href="/merchant" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
-                  Become a Merchant
                 </Link>
               </Stack>
 

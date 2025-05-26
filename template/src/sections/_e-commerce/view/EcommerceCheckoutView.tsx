@@ -377,16 +377,16 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
   const onSubmit = async (data: typeof defaultValues) => {
     try {
       setSubmitting(true);
-
+      
       // Create shipping address
       const newAddress = await createShippingAddress(data);
       if (!newAddress) {
         throw new Error('Failed to create shipping address');
       }
-
+      
       // Calculate total amount
       const totalAmount = getTotalPrice().toString();
-
+      
       // Create order
       const orderData = {
         shipping_address: newAddress.id,
@@ -510,7 +510,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
 
         // Redirect to Chapa checkout after a short delay
         setTimeout(() => {
-          window.location.href = chapaResponse.data.checkout_url;
+        window.location.href = chapaResponse.data.checkout_url;
         }, 5000); // 5 seconds delay
       } else if (paymentMethod === 'cod') {
         const paymentResponse = await createPayment(orderResponse.id, totalAmount);
@@ -681,7 +681,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
 
         // Redirect to Chapa checkout after a short delay
         setTimeout(() => {
-          window.location.href = chapaResponse.data.checkout_url;
+        window.location.href = chapaResponse.data.checkout_url;
         }, 5000); // 5 seconds delay
       } else if (paymentMethod === 'cod') {
         const paymentResponse = await createPayment(orderResponse.id, totalAmount);
