@@ -69,13 +69,13 @@ export function MerchantSidebar({ className }: SidebarProps) {
       title: "Order Management",
       href: "/merchant/orders",
       icon: ShoppingCart,
-      isActive: pathname.startsWith("/merchant/orders"),
-      submenu: [
-        { title: "All Orders", href: "/merchant/orders" },
-        { title: "Returns & Refunds", href: "/merchant/orders/returns" },
-        // { title: "Customers", href: "/merchant/orders/customers" },
-        // { title: "Email Templates", href: "/merchant/orders/emails" },
-      ],
+      // isActive: pathname.startsWith("/merchant/orders"),
+      // submenu: [
+      //   { title: "All Orders", href: "/merchant/orders" },
+      //   { title: "Returns & Refunds", href: "/merchant/orders/returns" },
+      //   // { title: "Customers", href: "/merchant/orders/customers" },
+      //   // { title: "Email Templates", href: "/merchant/orders/emails" },
+      // ], 
     },
     {
       title: "Analytics",

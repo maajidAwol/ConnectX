@@ -39,7 +39,7 @@ export default function MerchantDetailsPage() {
     }
   }, [params.id, fetchMerchantDetails])
 
-  const handleStatusChange = async (newStatus: "pending" | "under_review" | "rejected") => {
+  const handleStatusChange = async (newStatus: "pending" | "under_review") => {
     if (!merchant) return
 
     try {
@@ -56,12 +56,25 @@ export default function MerchantDetailsPage() {
     if (!merchant) return
 
     try {
-      await approveMerchant(merchant.id)
+      await approveMerchant(merchant.id, true)
       toast.success("Merchant approved successfully")
       // Reload the merchant details
       await fetchMerchantDetails(merchant.id)
     } catch (error) {
       toast.error("Failed to approve merchant")
+    }
+  }
+
+  const handleReject = async () => {
+    if (!merchant) return
+
+    try {
+      await approveMerchant(merchant.id, false)
+      toast.success("Merchant rejected successfully")
+      // Reload the merchant details
+      await fetchMerchantDetails(merchant.id)
+    } catch (error) {
+      toast.error("Failed to reject merchant")
     }
   }
 
@@ -420,18 +433,18 @@ export default function MerchantDetailsPage() {
                     <SelectItem value="under_review">Under Review</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="destructive" onClick={() => handleStatusChange("rejected")}>
+                <Button variant="destructive" onClick={handleReject}>
                   <XCircle className="mr-2 h-4 w-4" />
                   Reject Application
                 </Button>
-                <Button onClick={handleApprove}>
+                <Button onClick={handleApprove} className="bg-blue-600 hover:bg-blue-700 hover:cursor-pointer">
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Approve Application
                 </Button>
               </>
             )}
             {merchant.tenant_verification_status === "approved" && (
-              <Button variant="destructive" onClick={() => handleStatusChange("rejected")}>
+              <Button variant="destructive" onClick={handleReject}>
                 <XCircle className="mr-2 h-4 w-4" />
                 Revoke Approval
               </Button>
