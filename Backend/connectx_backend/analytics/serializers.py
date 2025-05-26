@@ -163,3 +163,29 @@ class AdminDashboardSerializer(serializers.Serializer):
     recent_activities = serializers.ListField(
         child=serializers.DictField(child=serializers.CharField())
     )
+
+
+class ReviewAnalyticsSerializer(serializers.Serializer):
+    """Serializer for review analytics data"""
+
+    average_rating = serializers.FloatField()
+    total_reviews = serializers.IntegerField()
+    rating_distribution = serializers.DictField(
+        child=serializers.FloatField(),
+        help_text="Percentage distribution of ratings (1-5 stars)",
+    )
+
+    class Meta:
+        swagger_schema_fields = {
+            "example": {
+                "average_rating": 4.8,
+                "total_reviews": 1248,
+                "rating_distribution": {
+                    "5": 85.0,
+                    "4": 10.0,
+                    "3": 3.0,
+                    "2": 1.0,
+                    "1": 1.0,
+                },
+            }
+        }

@@ -35,7 +35,7 @@ from .models import (
     APIUsage,
     SystemHealth,
     ActivityLog,
-    APIUsageLog,
+    APIUsageLog,   
 )
 from .serializers import (
     AnalyticsSerializer,
@@ -53,7 +53,9 @@ from .serializers import (
     RecentOrderSerializer,
     SalesOverviewSerializer,
     TopProductSerializer,
+    ReviewAnalyticsSerializer,
 )
+from reviews.models import Review
 from tenants.models import Tenant
 from orders.models import Order
 from users.models import User
@@ -1437,6 +1439,66 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         }
 
         return Response(data)
+
+    @swagger_auto_schema(
+        operation_description="Get review analytics for the tenant",
+        manual_parameters=[
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
+        responses={200: ReviewAnalyticsSerializer()},
+    )
+    @action(detail=False, methods=["get"])
+    def review_analytics(self, request):
+        """Get review analytics for the tenant."""
+        tenant = self.get_tenant(request)
+
+        # Get date filters
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # Base queryset
+        reviews = Review.objects.filter(tenant=tenant)
+
+        # Apply date filters if provided
+        if start_date:
+            reviews = reviews.filter(created_at__gte=start_date)
+        if end_date:
+            reviews = reviews.filter(created_at__lte=end_date)
+
+        # Calculate total reviews
+        total_reviews = reviews.count()
+
+        # Calculate average rating
+        avg_rating = reviews.aggregate(avg_rating=Avg("rating"))["avg_rating"] or 0
+
+        # Calculate rating distribution
+        rating_distribution = {}
+        for i in range(1, 6):
+            count = reviews.filter(rating=i).count()
+            percentage = (count / total_reviews * 100) if total_reviews > 0 else 0
+            rating_distribution[str(i)] = round(percentage, 1)
+
+        data = {
+            "average_rating": round(avg_rating, 1),
+            "total_reviews": total_reviews,
+            "rating_distribution": rating_distribution,
+        }
+
+        serializer = ReviewAnalyticsSerializer(data)
+        return Response(serializer.data)
 
 
 class APIUsageLogViewSet(viewsets.ViewSet):
