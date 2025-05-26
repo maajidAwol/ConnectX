@@ -16,6 +16,7 @@ import { Mail } from "lucide-react"
 export default function LoginPage() {
   const router = useRouter()
   const login = useAuthStore((state) => state.login)
+  const resendVerification = useAuthStore((state) => state.resendVerification)
   const getRedirectPath = useAuthStore((state) => state.getRedirectPath)
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
@@ -67,25 +68,11 @@ export default function LoginPage() {
 
     setIsResending(true)
     try {
-      const response = await fetch("https://connectx-9agd.onrender.com/api/auth/resend-verification/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: unverifiedEmail }),
+      await resendVerification(unverifiedEmail)
+      toast.success("Verification email sent successfully!", {
+        className: "bg-[#02569B] text-white",
       })
-
-      if (response.ok) {
-        toast.success("Verification email sent successfully!", {
-          className: "bg-[#02569B] text-white",
-        })
-        setShowVerificationPrompt(false)
-      } else {
-        const data = await response.json()
-        toast.error(data.message || "Failed to resend verification email", {
-          className: "bg-red-500 text-white",
-        })
-      }
+      setShowVerificationPrompt(false)
     } catch (error) {
       toast.error("Failed to resend verification email", {
         className: "bg-red-500 text-white",
