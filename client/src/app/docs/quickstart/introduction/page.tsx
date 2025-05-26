@@ -94,7 +94,28 @@ export default function IntroductionPage() {
             <li>Clean architecture</li>
           </ul>
         </div>
+        
       </DocSection>
+
+      <DocSection title="Get Started" defaultOpen={true}>
+        <div className="space-y-4">
+          <ol className="list-decimal ml-6 space-y-4">
+            <li>
+              <h4 className="font-semibold">Create an Account</h4>
+              <p className="text-gray-700 dark:text-gray-300">Sign up at <a href="https://connect-x-peach.vercel.app/" className="text-[#02569B] hover:underline">connect-x-peach.vercel.app</a> and create your first project.</p>
+            </li>
+            <li>
+              <h4 className="font-semibold">Get Your API Keys</h4>
+              <p className="text-gray-700 dark:text-gray-300">Generate API keys from your project dashboard.</p>
+            </li>
+            <li>
+              <h4 className="font-semibold">Make Your First Request</h4>
+              <p className="text-gray-700 dark:text-gray-300">Start building your application with our comprehensive API.</p>
+            </li>
+          </ol>
+        </div>
+      </DocSection>
+
       <DocsPager />
     </div>
   );
