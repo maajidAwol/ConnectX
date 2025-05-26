@@ -45,6 +45,7 @@ export default function VerifyBusiness() {
     bank_account_name: "",
     bank_branch: "",
     business_bio: "",
+    tenant_verification_status: "pending" as const,
   })
 
   // File upload state
@@ -71,7 +72,8 @@ export default function VerifyBusiness() {
   // Update form data when tenant data is loaded
   useEffect(() => {
     if (tenantData) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         legal_name: tenantData.legal_name || "",
         business_type: tenantData.business_type || "",
         address: tenantData.address || "",
@@ -85,7 +87,7 @@ export default function VerifyBusiness() {
         bank_account_name: tenantData.bank_account_name || "",
         bank_branch: tenantData.bank_branch || "",
         business_bio: tenantData.business_bio || "",
-      })
+      }))
     }
   }, [tenantData])
 
@@ -152,6 +154,15 @@ export default function VerifyBusiness() {
       Object.entries(formData).forEach(([key, value]) => {
         if (value) submitData.append(key, value)
       })
+
+      // Ensure verification status is set to pending
+      submitData.set('tenant_verification_status', 'pending')
+
+      // Debug: Log what's being submitted
+      console.log('Form data being submitted:')
+      for (const [key, value] of submitData.entries()) {
+        console.log(`${key}:`, value)
+      }
 
       // Add files
       if (selectedFiles.business_registration_certificate) {
@@ -437,6 +448,7 @@ export default function VerifyBusiness() {
                     onChange={(e) => handleFileChange(e, 'business_registration_certificate')}
                   />
                   <Button 
+                    type="button"
                     variant="outline" 
                     size="sm"
                     onClick={() => businessRegRef.current?.click()}
@@ -480,6 +492,7 @@ export default function VerifyBusiness() {
                     onChange={(e) => handleFileChange(e, 'tax_registration_certificate')}
                   />
                   <Button 
+                    type="button"
                     variant="outline" 
                     size="sm"
                     onClick={() => taxRegRef.current?.click()}
@@ -523,6 +536,7 @@ export default function VerifyBusiness() {
                     onChange={(e) => handleFileChange(e, 'id_card')}
                   />
                   <Button 
+                    type="button"
                     variant="outline" 
                     size="sm"
                     onClick={() => idCardRef.current?.click()}
@@ -577,15 +591,14 @@ export default function VerifyBusiness() {
                 className="rounded border-gray-300"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                required
               />
               <Label htmlFor="terms" className="text-sm font-normal">
-                I agree to the terms and conditions
+                I agree to the terms and conditions *
               </Label>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-            <Button variant="outline" asChild>
+            <Button type="button" variant="outline" asChild>
               <Link href="/merchant/profile">Cancel</Link>
             </Button>
             <Button

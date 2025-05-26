@@ -787,10 +787,10 @@ export default function AnalyticsDashboard() {
                           <div className="text-2xl font-bold">
                             {reviewAnalytics ? `${reviewAnalytics.average_rating}/5` : '4.8/5'}
                           </div>
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          {/* <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                             <ArrowUp className="mr-1 h-3 w-3" />
                             <span>+0.2</span>
-                          </Badge>
+                          </Badge> */}
                         </div>
 
                         <div className="space-y-2">
@@ -816,12 +816,12 @@ export default function AnalyticsDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-center">
+                      {/* <div className="flex items-center justify-center">
                         <Button variant="outline" className="gap-2">
                           <ArrowRight className="h-4 w-4" />
                           <span>View All Reviews</span>
                         </Button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 )}
