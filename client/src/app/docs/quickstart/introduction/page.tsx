@@ -95,6 +95,32 @@ export default function IntroductionPage() {
           </ul>
         </div>
       </DocSection>
+
+      <DocSection title="Getting Started" defaultOpen={true}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">1. Create an Account</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Sign up at <a href="https://connect-x-peach.vercel.app/" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">connect-x-peach.vercel.app</a> and create your first project.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">2. Get Your API Keys</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Generate API keys from your project dashboard. Keep these keys secure as they provide access to your account.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">3. Make Your First Request</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Start building your application with our comprehensive API. Check out our API reference for detailed endpoints and examples.
+            </p>
+          </div>
+        </div>
+      </DocSection>
+
       <DocsPager />
     </div>
   );

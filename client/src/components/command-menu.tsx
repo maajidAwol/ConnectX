@@ -15,6 +15,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
+import { docsConfig } from "@/config/docs"
 
 export function CommandMenu({ ...props }: DialogProps) {
   const router = useRouter()
@@ -57,24 +58,19 @@ export function CommandMenu({ ...props }: DialogProps) {
         <CommandInput placeholder="Type a command or search..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Documentation">
-            <CommandItem onSelect={() => runCommand(() => router.push("/docs"))}>
-              <Search className="mr-2 h-4 w-4" />
-              <span>Introduction</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/docs/authentication/overview"))}>
-              <Search className="mr-2 h-4 w-4" />
-              <span>Authentication</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/docs/products/overview"))}>
-              <Search className="mr-2 h-4 w-4" />
-              <span>Product APIs</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => router.push("/docs/orders/overview"))}>
-              <Search className="mr-2 h-4 w-4" />
-              <span>Order APIs</span>
-            </CommandItem>
-          </CommandGroup>
+          {docsConfig.sidebarNav.map((group) => (
+            <CommandGroup key={group.title} heading={group.title}>
+              {group.items?.map((item) => item.href && (
+                <CommandItem
+                  key={item.href}
+                  onSelect={() => runCommand(() => router.push(item.href as string))}
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  <span>{item.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
         </CommandList>
       </CommandDialog>
     </>
