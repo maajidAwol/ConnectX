@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
+import { ChevronDown, ChevronUp } from "lucide-react"
 
 interface DocSectionProps {
   title: string
@@ -13,19 +13,19 @@ export function DocSection({ title, children, defaultOpen = false }: DocSectionP
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border-b border-gray-200 dark:border-gray-800">
       <button
+        className="flex w-full items-center justify-between py-4 text-left"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
-        <h3 className="text-lg font-semibold">{title}</h3>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
         {isOpen ? (
-          <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+          <ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400" />
         ) : (
-          <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+          <ChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-400" />
         )}
       </button>
-      {isOpen && <div className="p-6">{children}</div>}
+      {isOpen && <div className="pb-4">{children}</div>}
     </div>
   )
 } 

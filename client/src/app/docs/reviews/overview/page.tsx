@@ -16,131 +16,120 @@ interface CurlExample {
 
 const curlExamples: CurlExample[] = [
   {
-    title: "List Reviews",
-    description: "Get a list of reviews. You can filter reviews by product ID.",
-    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/reviews/?product=123e4567-e89b-12d3-a456-426614174000' \\
-  -H 'Content-Type: application/json'`,
-    response: `[
-  {
-    "id": "123e4567-e89b-12d3-a456-426614174000",
-    "user": "123e4567-e89b-12d3-a456-426614174001",
-    "product": "123e4567-e89b-12d3-a456-426614174000",
-    "rating": 5,
-    "comment": "Excellent product! Very satisfied with the quality.",
-    "is_purchased": true,
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:00:00Z"
-  },
-  {
-    "id": "123e4567-e89b-12d3-a456-426614174002",
-    "user": "123e4567-e89b-12d3-a456-426614174003",
-    "product": "123e4567-e89b-12d3-a456-426614174000",
-    "rating": 4,
-    "comment": "Good product, but could be better.",
-    "is_purchased": true,
-    "created_at": "2024-01-02T00:00:00Z",
-    "updated_at": "2024-01-02T00:00:00Z"
-  }
-]`
-  },
-  {
-    title: "Get My Reviews",
-    description: "Get all reviews created by the current authenticated user.",
-    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/reviews/my_reviews/' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
-  -H 'Content-Type: application/json'`,
-    response: `[
-  {
-    "id": "123e4567-e89b-12d3-a456-426614174000",
-    "user": "123e4567-e89b-12d3-a456-426614174001",
-    "product": "123e4567-e89b-12d3-a456-426614174000",
-    "rating": 5,
-    "comment": "Excellent product! Very satisfied with the quality.",
-    "is_purchased": true,
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:00:00Z"
-  }
-]`
-  },
-  {
-    title: "Get Product Reviews",
-    description: "Get all reviews for a specific product.",
-    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/reviews/product_reviews/?product=123e4567-e89b-12d3-a456-426614174000' \\
-  -H 'Content-Type: application/json'`,
-    response: `[
-  {
-    "id": "123e4567-e89b-12d3-a456-426614174000",
-    "user": "123e4567-e89b-12d3-a456-426614174001",
-    "product": "123e4567-e89b-12d3-a456-426614174000",
-    "rating": 5,
-    "comment": "Excellent product! Very satisfied with the quality.",
-    "is_purchased": true,
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:00:00Z"
-  },
-  {
-    "id": "123e4567-e89b-12d3-a456-426614174002",
-    "user": "123e4567-e89b-12d3-a456-426614174003",
-    "product": "123e4567-e89b-12d3-a456-426614174000",
-    "rating": 4,
-    "comment": "Good product, but could be better.",
-    "is_purchased": true,
-    "created_at": "2024-01-02T00:00:00Z",
-    "updated_at": "2024-01-02T00:00:00Z"
-  }
-]`
-  },
-  {
     title: "Create Review",
-    description: "Create a new review for a product. You must have purchased the product before reviewing it.",
+    description: "Create a new review for a product. You must have purchased the product to review it.",
     command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/reviews/' \\
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
   -H 'Content-Type: application/json' \\
   -d '{
     "product": "123e4567-e89b-12d3-a456-426614174000",
     "rating": 5,
-    "comment": "Excellent product! Very satisfied with the quality."
-  }'`,
-    response: `{
-  "id": "123e4567-e89b-12d3-a456-426614174004",
-  "user": "123e4567-e89b-12d3-a456-426614174001",
-  "product": "123e4567-e89b-12d3-a456-426614174000",
-  "rating": 5,
-  "comment": "Excellent product! Very satisfied with the quality.",
-  "is_purchased": true,
-  "created_at": "2024-01-03T00:00:00Z",
-  "updated_at": "2024-01-03T00:00:00Z"
-}`
-  },
-  {
-    title: "Update Review",
-    description: "Update an existing review. You can only update your own reviews.",
-    command: `curl -X PATCH 'https://connectx-backend-4o0i.onrender.com/api/reviews/123e4567-e89b-12d3-a456-426614174000/' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-    "rating": 4,
-    "comment": "Updated review comment"
+    "title": "Great Product!",
+    "comment": "This product exceeded my expectations."
   }'`,
     response: `{
   "id": "123e4567-e89b-12d3-a456-426614174000",
-  "user": "123e4567-e89b-12d3-a456-426614174001",
   "product": "123e4567-e89b-12d3-a456-426614174000",
-  "rating": 4,
-  "comment": "Updated review comment",
-  "is_purchased": true,
+  "user": "123e4567-e89b-12d3-a456-426614174001",
+  "rating": 5,
+  "title": "Great Product!",
+  "comment": "This product exceeded my expectations.",
   "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-04T00:00:00Z"
+  "updated_at": "2024-01-01T00:00:00Z"
 }`
   },
   {
-    title: "Delete Review",
-    description: "Delete a review. You can only delete your own reviews.",
-    command: `curl -X DELETE 'https://connectx-backend-4o0i.onrender.com/api/reviews/123e4567-e89b-12d3-a456-426614174000/' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'`,
+    title: "Get Product Reviews",
+    description: "Get all reviews for a specific product with pagination.",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/reviews/product-reviews/?product_id=123e4567-e89b-12d3-a456-426614174000' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json'`,
     response: `{
-  "message": "Review deleted successfully"
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "product": "123e4567-e89b-12d3-a456-426614174000",
+      "user": "123e4567-e89b-12d3-a456-426614174001",
+      "rating": 5,
+      "title": "Great Product!",
+      "comment": "This product exceeded my expectations.",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ]
 }`
+  },
+  {
+    title: "Get Product Review Statistics",
+    description: "Get comprehensive review statistics for a specific product.",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/reviews/product-stats/?product_id=123e4567-e89b-12d3-a456-426614174000' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json'`,
+    response: `{
+  "total_reviews": 10,
+  "average_rating": 4.5,
+  "rating_distribution": {
+    "1": 1,
+    "2": 0,
+    "3": 1,
+    "4": 3,
+    "5": 5
+  }
+}`
+  },
+  {
+    title: "Get Product Review Summary",
+    description: "Get both reviews and statistics for a product in a single response.",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/reviews/product-summary/?product_id=123e4567-e89b-12d3-a456-426614174000&limit=5' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json'`,
+    response: `{
+  "reviews": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "product": "123e4567-e89b-12d3-a456-426614174000",
+      "user": "123e4567-e89b-12d3-a456-426614174001",
+      "rating": 5,
+      "title": "Great Product!",
+      "comment": "This product exceeded my expectations.",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "stats": {
+    "total_reviews": 10,
+    "average_rating": 4.5,
+    "rating_distribution": {
+      "1": 1,
+      "2": 0,
+      "3": 1,
+      "4": 3,
+      "5": 5
+    }
+  }
+}`
+  },
+  {
+    title: "Get My Reviews",
+    description: "Get all reviews created by the authenticated user.",
+    command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/reviews/my_reviews/' \\
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Content-Type: application/json'`,
+    response: `[
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "product": "123e4567-e89b-12d3-a456-426614174000",
+    "user": "123e4567-e89b-12d3-a456-426614174001",
+    "rating": 5,
+    "title": "Great Product!",
+    "comment": "This product exceeded my expectations.",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+]`
   }
 ];
 
@@ -215,19 +204,19 @@ export default function ReviewsOverviewPage() {
 
       <DocSection title="Introduction" defaultOpen={true}>
         <p className="text-gray-700 dark:text-gray-300 mb-4">
-          The Reviews API allows you to manage product reviews in ConnectX. Users can create, update, and delete reviews for products they have purchased. Reviews help other users make informed decisions about products.
+          The Reviews API allows you to manage product reviews in ConnectX. Users can create, read, update, and delete their reviews, as well as view review statistics for products.
         </p>
       </DocSection>
 
       <DocSection title="Authentication" defaultOpen={true}>
         <p className="text-gray-700 dark:text-gray-300 mb-4">
-          Most API requests require authentication using a Bearer token. Include your access token in the Authorization header:
+          Most API requests require authentication using an API key. Include your API key in the Authorization header:
         </p>
         <pre className="mt-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 overflow-x-auto border border-gray-200 dark:border-gray-700">
-          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">Authorization: Bearer YOUR_ACCESS_TOKEN</code>
+          <code className="text-gray-900 dark:text-gray-100 font-mono text-sm">Authorization: Bearer YOUR_API_KEY</code>
         </pre>
         <p className="text-gray-700 dark:text-gray-300 mt-4">
-          Note: Some endpoints like listing reviews and getting product reviews do not require authentication.
+          Note: Some endpoints like viewing product reviews and statistics are publicly accessible without authentication.
         </p>
       </DocSection>
 
@@ -245,12 +234,11 @@ export default function ReviewsOverviewPage() {
           <div>
             <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Reviews</h3>
             <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
-              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /reviews/</code> - List reviews (filter by product)</li>
-              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /reviews/my_reviews/</code> - Get current user's reviews</li>
-              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /reviews/product_reviews/</code> - Get reviews for a specific product</li>
               <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /reviews/</code> - Create a new review</li>
-              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">PATCH /reviews/{'{id}'}/</code> - Update a review</li>
-              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">DELETE /reviews/{'{id}'}/</code> - Delete a review</li>
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /reviews/product-reviews/</code> - Get product reviews</li>
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /reviews/product-stats/</code> - Get product review statistics</li>
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /reviews/product-summary/</code> - Get product review summary</li>
+              <li><code className="text-gray-900 dark:text-gray-100 font-mono text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /reviews/my_reviews/</code> - Get user's reviews</li>
             </ul>
           </div>
         </div>
@@ -259,21 +247,21 @@ export default function ReviewsOverviewPage() {
       <DocSection title="Access Control" defaultOpen={true}>
         <div className="space-y-4">
           <div>
-            <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Review Permissions</h3>
+            <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">User Permissions</h3>
             <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
-              <li>Anyone can view reviews for products</li>
-              <li>Only authenticated users who have purchased the product can create reviews</li>
+              <li>Users can only create reviews for products they have purchased</li>
               <li>Users can only update or delete their own reviews</li>
-              <li>Users cannot review the same product multiple times</li>
+              <li>Anyone can view product reviews and statistics</li>
+              <li>Users can only view their own reviews through the my_reviews endpoint</li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Review Requirements</h3>
             <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
-              <li>Reviews must include a rating (1-5 stars)</li>
-              <li>Reviews can include an optional comment</li>
-              <li>Users must have purchased the product before reviewing it</li>
-              <li>Reviews are automatically marked as verified purchases</li>
+              <li>Rating must be between 1 and 5</li>
+              <li>Comment is required for all reviews</li>
+              <li>Title is optional but recommended</li>
+              <li>Users can only review a product once</li>
             </ul>
           </div>
         </div>
@@ -285,7 +273,16 @@ export default function ReviewsOverviewPage() {
         </div>
       </DocSection>
 
-      <DocsPager />
+      <DocsPager
+        prev={{
+          label: "Shipping",
+          href: "/docs/shipping/overview",
+        }}
+        next={{
+          label: "Products",
+          href: "/docs/products/overview",
+        }}
+      />
     </div>
   );
 } 

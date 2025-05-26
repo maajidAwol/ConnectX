@@ -19,7 +19,7 @@ const productApiExamples: CurlExample[] = [
     title: "Get All Products",
     description: "Retrieve a list of all products with optional filtering",
     command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/products/' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -H 'Content-Type: application/json'`,
     response: `{
   "count": 50,
@@ -42,7 +42,7 @@ const productApiExamples: CurlExample[] = [
     title: "Get Product by ID",
     description: "Retrieve a specific product by its ID",
     command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/products/123e4567-e89b-12d3-a456-426614174000/' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -H 'Content-Type: application/json'`,
     response: `{
   "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -58,7 +58,7 @@ const productApiExamples: CurlExample[] = [
     title: "Create Product",
     description: "Create a new product",
     command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/products/' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -H 'Content-Type: application/json' \\
   -d '{
     "name": "New Product",
