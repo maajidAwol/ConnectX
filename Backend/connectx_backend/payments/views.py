@@ -796,6 +796,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 'charge.cancelled',
                 'charge.refunded'
             ],
+             
             'webhook_processing': {
                 'signature_verification': 'Temporarily disabled for testing',
                 'product_statistics_update': 'Enabled - updates total_sold on successful payments',
