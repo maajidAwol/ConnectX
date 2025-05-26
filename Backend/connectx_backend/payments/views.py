@@ -340,7 +340,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             )
         }
     )
-    @action(detail=False, methods=['post'], authentication_classes=[], permission_classes=[])
+    @action(detail=False, methods=['post'], authentication_classes=[], permission_classes=[permissions.AllowAny])
     def simulate_webhook(self, request):
         """Simulate a Chapa webhook for testing purposes."""
         tx_ref = request.data.get('tx_ref')
@@ -392,21 +392,34 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         mock_request.data = MockData()
         
-        # Call the actual webhook handler
+        # Call the standalone webhook handler
         try:
-            webhook_response = self.chapa_webhook(mock_request)
+            # Import the standalone function
+            from .views import chapa_webhook_standalone
+            
+            # Create a mock request for the standalone function
+            from django.http import HttpRequest
+            import json
+            
+            standalone_request = HttpRequest()
+            standalone_request.method = 'POST'
+            standalone_request.META = request.META.copy()
+            standalone_request._body = json.dumps(mock_webhook_data).encode('utf-8')
+            
+            webhook_response = chapa_webhook_standalone(standalone_request)
+            
             return Response({
                 'status': 'success',
                 'message': f'Webhook simulation completed for {tx_ref}',
                 'webhook_data': mock_webhook_data,
-                'webhook_response': webhook_response.data
+                'webhook_response': webhook_response.data if hasattr(webhook_response, 'data') else 'Processed successfully'
             })
         except Exception as e:
-                         return Response({
-                 'status': 'error',
-                 'message': f'Webhook simulation failed: {str(e)}',
-                 'webhook_data': mock_webhook_data
-             })
+            return Response({
+                'status': 'error',
+                'message': f'Webhook simulation failed: {str(e)}',
+                'webhook_data': mock_webhook_data
+            })
     
     @swagger_auto_schema(
         operation_summary="Verify Chapa payment",
@@ -504,160 +517,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    @swagger_auto_schema(
-        operation_summary="Handle Chapa webhook",
-        operation_description="Handle payment status updates from Chapa payment gateway.",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['tx_ref', 'status'],
-            properties={
-                'tx_ref': openapi.Schema(
-                    type=openapi.TYPE_STRING,
-                    description="Transaction reference"
-                ),
-                'status': openapi.Schema(
-                    type=openapi.TYPE_STRING,
-                    description="Payment status",
-                    enum=['success', 'failed']
-                ),
-                'transaction_id': openapi.Schema(
-                    type=openapi.TYPE_STRING,
-                    description="Chapa transaction ID"
-                )
-            }
-        ),
-        responses={
-            200: openapi.Response(
-                description="Webhook processed successfully",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'status': openapi.Schema(type=openapi.TYPE_STRING, enum=['success'])
-                    }
-                )
-            ),
-            400: "Bad Request - Invalid webhook data",
-            404: "Not Found - Payment not found",
-            500: "Internal Server Error - Webhook processing failed"
-        }
-    )
-    @action(detail=False, methods=['post'], authentication_classes=[], permission_classes=[])
-    def chapa_webhook(self, request):
-        """Handle Chapa payment webhooks."""
-        try:
-            # Parse JSON body manually for webhook
-            import json
-            if hasattr(request, 'body'):
-                webhook_data = json.loads(request.body.decode('utf-8'))
-            else:
-                webhook_data = request.data
-                
-            print(f"Webhook received: {webhook_data}")
-            print(f"Webhook headers: {dict(request.META)}")
-            
-            # Verify webhook signature for security using hardcoded secret
-            from .chapa import CHAPA_WEBHOOK_SECRET_DEMO
-            webhook_secret = CHAPA_WEBHOOK_SECRET_DEMO
-            
-            # Get signature from headers
-            chapa_signature = request.META.get('HTTP_CHAPA_SIGNATURE')
-            x_chapa_signature = request.META.get('HTTP_X_CHAPA_SIGNATURE')
-            
-            print(f"Chapa-Signature: {chapa_signature}")
-            print(f"x-chapa-signature: {x_chapa_signature}")
-            
-            # For now, skip signature verification for testing but log it
-            # if chapa_signature or x_chapa_signature:
-            #     if not ChapaPayment.verify_webhook_signature(
-            #         request.body.decode('utf-8'), 
-            #         chapa_signature or x_chapa_signature, 
-            #         webhook_secret
-            #     ):
-            #         print("Invalid webhook signature - request rejected")
-            #         return Response(
-            #             {"error": "Invalid webhook signature"},
-            #             status=status.HTTP_401_UNAUTHORIZED
-            #         )
-            
-            # Get transaction reference from webhook data
-            tx_ref = webhook_data.get('tx_ref')
-            if not tx_ref:
-                print(f"No tx_ref found in webhook data: {webhook_data}")
-                return Response(
-                    {"error": "tx_ref not found in webhook data"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-                
-            # Get the payment
-            try:
-                payment = Payment.objects.get(transaction_id=tx_ref)
-            except Payment.DoesNotExist:
-                print(f"Payment not found for tx_ref: {tx_ref}")
-                return Response(
-                    {"error": f"Payment not found for tx_ref: {tx_ref}"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Process webhook based on event and status
-            event_type = webhook_data.get('event', '')
-            webhook_status = webhook_data.get('status', '').lower()
-            payment_method = webhook_data.get('payment_method', '')
-            amount = webhook_data.get('amount', '')
-            
-            print(f"Processing webhook - Event: {event_type}, Status: {webhook_status}, TX Ref: {tx_ref}, Method: {payment_method}, Amount: {amount}")
-            
-            # Handle successful payment
-            if event_type == 'charge.success' or webhook_status == 'success':
-                payment.status = 'completed'
-                payment.webhook_data = webhook_data
-                payment.save()
-                
-                # Update order status
-                order = payment.order
-                order.status = 'processing'
-                order.save()
-                
-                # Update product statistics for successful payment
-                self._update_product_statistics(order)
-                
-                print(f"✅ Payment {tx_ref} marked as completed - Amount: {amount} ETB via {payment_method}")
-                
-            # Handle failed payment
-            elif event_type in ['charge.failed', 'charge.cancelled'] or webhook_status in ['failed', 'cancelled']:
-                payment.status = 'failed'
-                payment.webhook_data = webhook_data
-                payment.save()
-                
-                print(f"❌ Payment {tx_ref} marked as failed")
-                
-            # Handle refunded payment
-            elif event_type == 'charge.refunded' or webhook_status == 'refunded':
-                payment.status = 'refunded'
-                payment.webhook_data = webhook_data
-                payment.save()
-                
-                print(f"🔄 Payment {tx_ref} marked as refunded")
-                
-            else:
-                print(f"⚠️ Unhandled webhook event: {event_type} with status: {webhook_status}")
-            
-            # Always return 200 OK to acknowledge receipt
-            return Response({
-                'status': 'success',
-                'message': f'Webhook processed for {tx_ref}',
-                'event': event_type,
-                'payment_status': webhook_status
-            }, status=status.HTTP_200_OK)
-            
-        except json.JSONDecodeError as e:
-            print(f"JSON decode error: {str(e)}")
-            return Response({'status': 'error', 'message': 'Invalid JSON'}, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(f"Webhook processing error: {str(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
-            # Still return 200 to prevent Chapa from retrying
-            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_200_OK)
+        # NOTE: The chapa_webhook ViewSet method has been temporarily removed
+    # to avoid decorator syntax issues in production. Use the standalone
+    # chapa_webhook_standalone function instead.
+    # 
+    # The standalone function provides the same functionality without
+    # authentication issues and is accessible at:
+    # /api/payments/chapa_webhook_standalone/
+    pass
     
     def _update_product_statistics(self, order):
         """Update product statistics when payment is successful."""
