@@ -54,13 +54,27 @@ interface TopProductsResponse {
 export default function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState("30d")
   const { topProducts, isLoading: isLoadingProducts, error, fetchTopProducts } = useProductAnalyticsStore()
-  const { overview, isLoading: isLoadingOverview, error: overviewError, fetchOverview } = useMerchantAnalyticsStore()
-  const { accessToken } = useAuthStore.getState()
+  const { 
+    overview, 
+    revenueOverview, 
+    reviewAnalytics,
+    demographicAnalytics,
+    isLoading: isLoadingOverview, 
+    error: overviewError, 
+    fetchOverview, 
+    fetchRevenueOverview,
+    fetchReviewAnalytics,
+    fetchDemographicAnalytics
+  } = useMerchantAnalyticsStore()
+  // const { accessToken } = useAuthStore.getState()
 
   useEffect(() => {
     fetchTopProducts()
     fetchOverview()
-  }, [fetchTopProducts, fetchOverview])
+    fetchRevenueOverview()
+    fetchReviewAnalytics()
+    fetchDemographicAnalytics()
+  }, [fetchTopProducts, fetchOverview, fetchRevenueOverview, fetchReviewAnalytics, fetchDemographicAnalytics])
 
   // Show error toast if there's an error
   useEffect(() => {
@@ -72,8 +86,43 @@ export default function AnalyticsDashboard() {
     }
   }, [error, overviewError])
 
-  // Dummy chart data
-  const revenueData = [
+  // Utility function to convert date format from "2025-05" to "May"
+  const formatDateLabel = (dateString: string) => {
+    const [year, month] = dateString.split('-')
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ]
+    return monthNames[parseInt(month) - 1] || dateString
+  }
+
+  // Transform rating distribution data from API
+  const getRatingDistribution = () => {
+    if (reviewAnalytics) {
+      return [
+        { stars: 5, percentage: reviewAnalytics.rating_distribution["5"] },
+        { stars: 4, percentage: reviewAnalytics.rating_distribution["4"] },
+        { stars: 3, percentage: reviewAnalytics.rating_distribution["3"] },
+        { stars: 2, percentage: reviewAnalytics.rating_distribution["2"] },
+        { stars: 1, percentage: reviewAnalytics.rating_distribution["1"] },
+      ]
+    }
+    return [
+      { stars: 5, percentage: 85 },
+      { stars: 4, percentage: 10 },
+      { stars: 3, percentage: 3 },
+      { stars: 2, percentage: 1 },
+      { stars: 1, percentage: 1 },
+    ]
+  }
+
+  // Transform revenue overview data from API
+  const revenueData = revenueOverview?.labels?.map((label, index) => ({
+    date: formatDateLabel(label),
+    revenue: revenueOverview.revenue[index],
+    orders: 0, // Orders data not available in the API response
+  })) || [
+    // Fallback dummy data if API data is not available
     { date: "Jan", revenue: 12000, orders: 145 },
     { date: "Feb", revenue: 15000, orders: 178 },
     { date: "Mar", revenue: 18000, orders: 210 },
@@ -94,7 +143,21 @@ export default function AnalyticsDashboard() {
     { name: "Affiliate", value: 25, color: "#f59e0b" },
   ]
 
-  const demographicsData = [
+  // Transform demographic analytics data from API
+  const demographicsData = demographicAnalytics ? [
+    { name: "Male 18-24", value: demographicAnalytics.gender_age_distribution.male_18_24, color: "#3b82f6" },
+    { name: "Female 18-24", value: demographicAnalytics.gender_age_distribution.female_18_24, color: "#93c5fd" },
+    { name: "Male 25-34", value: demographicAnalytics.gender_age_distribution.male_25_34, color: "#10b981" },
+    { name: "Female 25-34", value: demographicAnalytics.gender_age_distribution.female_25_34, color: "#6ee7b7" },
+    { name: "Male 35-44", value: demographicAnalytics.gender_age_distribution.male_35_44, color: "#f59e0b" },
+    { name: "Female 35-44", value: demographicAnalytics.gender_age_distribution.female_35_44, color: "#fbbf24" },
+    { name: "Male 45-54", value: demographicAnalytics.gender_age_distribution.male_45_54, color: "#ef4444" },
+    { name: "Female 45-54", value: demographicAnalytics.gender_age_distribution.female_45_54, color: "#fca5a5" },
+    { name: "Male 55+", value: demographicAnalytics.gender_age_distribution.male_55_plus, color: "#8b5cf6" },
+    { name: "Female 55+", value: demographicAnalytics.gender_age_distribution.female_55_plus, color: "#c4b5fd" },
+    { name: "Others", value: demographicAnalytics.gender_age_distribution.others, color: "#6b7280" },
+  ].filter(item => item.value > 0) : [
+    // Fallback dummy data if API data is not available
     { name: "Male 18-24", value: 8, color: "#3b82f6" },
     { name: "Female 18-24", value: 7, color: "#93c5fd" },
     { name: "Male 25-34", value: 18, color: "#10b981" },
@@ -283,68 +346,81 @@ export default function AnalyticsDashboard() {
               <CardHeader>
                 <CardTitle>Revenue Overview</CardTitle>
                 <CardDescription>
-                  Revenue breakdown for the past{" "}
-                  {dateRange === "7d"
+                  Revenue breakdown for the past 12 months
+                  
+                  {/* {dateRange === "7d"
                     ? "7 days"
                     : dateRange === "30d"
                       ? "30 days"
                       : dateRange === "90d"
                         ? "90 days"
-                        : "year"}
+                        : "year"} */}
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <ChartContainer
-                  config={{
-                    revenue: {
-                      label: "Revenue",
-                      color: "#6366f1",
-                    },
-                    orders: {
-                      label: "Orders",
-                      color: "#10b981",
-                    },
-                  }}
-                  className="h-full w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueData}>
-                      <defs>
-                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis
-                        stroke="#64748b"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(value) => `$${value.toLocaleString()}`}
-                      />
-                      <ChartTooltip
-                        content={<ChartTooltipContent />}
-                        contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="revenue"
-                        stroke="#6366f1"
-                        strokeWidth={3}
-                        fill="url(#revenueGradient)"
-                        dot={{ fill: "#6366f1", strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "white" }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                {isLoadingOverview ? (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <div className="space-y-4 w-full">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                    </div>
+                  </div>
+                ) : (
+                  <ChartContainer
+                    config={{
+                      revenue: {
+                        label: "Revenue",
+                        color: "#6366f1",
+                      },
+                      orders: {
+                        label: "Orders",
+                        color: "#10b981",
+                      },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={revenueData}>
+                        <defs>
+                          <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis
+                          stroke="#64748b"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => `${value.toLocaleString()} ETB`}
+                        />
+                        <ChartTooltip
+                          content={<ChartTooltipContent />}
+                          contentStyle={{
+                            backgroundColor: "white",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#6366f1"
+                          strokeWidth={3}
+                          fill="url(#revenueGradient)"
+                          dot={{ fill: "#6366f1", strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "white" }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                )}
               </CardContent>
             </Card>
 
@@ -591,37 +667,48 @@ export default function AnalyticsDashboard() {
                 <CardDescription>Age and gender distribution</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <ChartContainer
-                  config={{
-                    demographics: {
-                      label: "Demographics",
-                      color: "hsl(var(--chart-1))",
-                    },
-                  }}
-                  className="h-full w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie
-                        data={demographicsData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: ${value}%`}
-                        labelLine={false}
-                      >
-                        {demographicsData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip
-                        content={<ChartTooltipContent />}
-                        formatter={(value, name) => [`${value}%`, name]}
-                      />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                {isLoadingOverview ? (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <div className="space-y-4 w-full">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+                    </div>
+                  </div>
+                ) : (
+                  <ChartContainer
+                    config={{
+                      demographics: {
+                        label: "Demographics",
+                        color: "hsl(var(--chart-1))",
+                      },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={demographicsData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}%`}
+                          labelLine={false}
+                        >
+                          {demographicsData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip
+                          content={<ChartTooltipContent />}
+                          formatter={(value, name) => [`${value}%`, name]}
+                        />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                )}
               </CardContent>
             </Card>
 
@@ -682,52 +769,62 @@ export default function AnalyticsDashboard() {
                 <CardDescription>Ratings and reviews</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
-                <div className="h-full w-full rounded-md border p-4">
-                  <div className="flex h-full flex-col justify-between">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold">4.8/5</div>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          <ArrowUp className="mr-1 h-3 w-3" />
-                          <span>+0.2</span>
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-2">
-                        {[
-                          { stars: 5, percentage: 85 },
-                          { stars: 4, percentage: 10 },
-                          { stars: 3, percentage: 3 },
-                          { stars: 2, percentage: 1 },
-                          { stars: 1, percentage: 1 },
-                        ].map((rating) => (
-                          <div key={rating.stars} className="flex items-center gap-2">
-                            <div className="text-sm font-medium w-3">{rating.stars}</div>
-                            <div className="h-2 flex-1 rounded-full bg-gray-100">
-                              <div
-                                className="h-full rounded-full bg-yellow-400"
-                                style={{ width: `${rating.percentage}%` }}
-                              ></div>
-                            </div>
-                            <div className="text-xs text-muted-foreground w-8">{rating.percentage}%</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-2">
-                        <div className="text-sm font-medium">Total Reviews</div>
-                        <div className="text-2xl font-bold">1,248</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-center">
-                      <Button variant="outline" className="gap-2">
-                        <ArrowRight className="h-4 w-4" />
-                        <span>View All Reviews</span>
-                      </Button>
+                {isLoadingOverview ? (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <div className="space-y-4 w-full">
+                      <div className="h-8 w-24 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="h-full w-full rounded-md border p-4">
+                    <div className="flex h-full flex-col justify-between">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="text-2xl font-bold">
+                            {reviewAnalytics ? `${reviewAnalytics.average_rating}/5` : '4.8/5'}
+                          </div>
+                          {/* <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <ArrowUp className="mr-1 h-3 w-3" />
+                            <span>+0.2</span>
+                          </Badge> */}
+                        </div>
+
+                        <div className="space-y-2">
+                          {getRatingDistribution().map((rating) => (
+                            <div key={rating.stars} className="flex items-center gap-2">
+                              <div className="text-sm font-medium w-3">{rating.stars}</div>
+                              <div className="h-2 flex-1 rounded-full bg-gray-100">
+                                <div
+                                  className="h-full rounded-full bg-yellow-400"
+                                  style={{ width: `${rating.percentage}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-muted-foreground w-8">{rating.percentage}%</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="pt-2">
+                          <div className="text-sm font-medium">Total Reviews</div>
+                          <div className="text-2xl font-bold">
+                            {reviewAnalytics ? reviewAnalytics.total_reviews.toLocaleString() : '1,248'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* <div className="flex items-center justify-center">
+                        <Button variant="outline" className="gap-2">
+                          <ArrowRight className="h-4 w-4" />
+                          <span>View All Reviews</span>
+                        </Button>
+                      </div> */}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

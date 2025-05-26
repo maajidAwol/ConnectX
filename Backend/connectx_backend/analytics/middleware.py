@@ -4,6 +4,7 @@ from django.utils import timezone
 from .models import APIUsageLog
 from django.conf import settings
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -122,4 +123,6 @@ class APIUsageLoggingMiddleware:
             }
         elif isinstance(data, list):
             return [self._filter_sensitive_data(item) for item in data]
+        elif isinstance(data, uuid.UUID):
+            return str(data)
         return data

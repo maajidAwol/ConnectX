@@ -31,7 +31,7 @@ export default function SignUpPage() {
     email: "",
     password: "",
     fullname: "",
-    age: "",
+    age: null as number | null,
     gender: "male" as "male" | "female",
   })
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
@@ -139,7 +139,10 @@ export default function SignUpPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'age' ? (value ? parseInt(value) : null) : value
+    }))
   }
 
   const handleResendVerification = async () => {
@@ -188,14 +191,14 @@ export default function SignUpPage() {
               <Button
                 onClick={handleResendVerification}
                 disabled={!canResend}
-                className="w-full bg-[#02569B] hover:bg-[#02569B]/90"
+                className="w-full bg-blue-600 hover:bg-blue-700 hover:cursor-pointer"
               >
                 {canResend ? "Resend Verification Email" : `Resend in ${cooldown}s`}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => router.push("/login")}
-                className="w-full"
+                className="w-full border border-blue-600 hover:border-blue-700 hover:cursor-pointer"
               >
                 Return to login
               </Button>
@@ -271,7 +274,7 @@ export default function SignUpPage() {
                   name="age"
                   type="number"
                   placeholder="Enter your age"
-                  value={formData.age}
+                  value={formData.age ? formData.age.toString() : ""}
                   onChange={handleChange}
                   required
                   min="18"
@@ -395,7 +398,7 @@ export default function SignUpPage() {
               )}
             </div>
             <Button 
-              className="w-full bg-[#02569B] hover:bg-[#02569B]/90" 
+              className="w-full bg-blue-600 hover:bg-blue-700 hover:cursor-pointer" 
               type="submit" 
               disabled={isLoading || !isFormValid}
             >
@@ -411,7 +414,7 @@ export default function SignUpPage() {
           </form>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/login" className="text-[#02569B] hover:underline">
+            <Link href="/login" className="text-blue-600 hover:underline">
               Sign in
             </Link>
           </div>

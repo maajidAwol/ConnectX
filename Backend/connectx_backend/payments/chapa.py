@@ -2,11 +2,16 @@ import requests
 from django.conf import settings
 from typing import Dict, Any, Optional
 import json
+import hmac
+import hashlib
 
 # Chapa API Configuration
 CHAPA_AUTH_KEY = "CHASECK_TEST-3bTAj1IjcC4lIu11VrNq9gTmVys659FA"  # Test Secret Key
 CHAPA_PUBLIC_KEY = "CHAPUBK_TEST-vPyKZqPWCT6EPYB1wPZ6QvPuJSpBrU"  # Test Public Key
 CHAPA_API_BASE_URL = "https://api.chapa.co/v1"
+
+# Hardcoded webhook secret for demo (use environment variable in production)
+CHAPA_WEBHOOK_SECRET_DEMO = "ConnectX_Demo_Webhook_Secret_2024_abc123def456"
 
 class ChapaError(Exception):
     """Custom exception for Chapa API errors"""
@@ -182,4 +187,70 @@ class ChapaPayment:
         try:
             return checkout_data['data']['checkout_url']
         except (KeyError, TypeError):
-            raise Exception("Invalid checkout data format") 
+            raise Exception("Invalid checkout data format")
+
+    @staticmethod
+    def verify_webhook_signature(payload: str, signature: str, secret_key: str) -> bool:
+        """
+        Verify webhook signature from Chapa.
+        
+        Args:
+            payload: The raw webhook payload as string
+            signature: The signature from Chapa-Signature or x-chapa-signature header
+            secret_key: Your webhook secret key
+            
+        Returns:
+            bool: True if signature is valid, False otherwise
+        """
+        try:
+            # Create HMAC SHA256 hash of the payload using the secret key
+            expected_signature = hmac.new(
+                secret_key.encode('utf-8'),
+                payload.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+            
+            # Compare signatures (constant time comparison to prevent timing attacks)
+            return hmac.compare_digest(expected_signature, signature)
+        except Exception as e:
+            print(f"Webhook signature verification error: {str(e)}")
+            return False
+    
+    @staticmethod
+    def verify_webhook_request(request, secret_key: str) -> bool:
+        """
+        Verify webhook request from Chapa using either Chapa-Signature or x-chapa-signature header.
+        
+        Args:
+            request: Django request object
+            secret_key: Your webhook secret key
+            
+        Returns:
+            bool: True if request is valid, False otherwise
+        """
+        try:
+            # Get the raw body as string
+            if hasattr(request, 'body'):
+                payload = request.body.decode('utf-8')
+            else:
+                payload = json.dumps(request.data)
+            
+            # Check for Chapa-Signature header
+            chapa_signature = request.META.get('HTTP_CHAPA_SIGNATURE')
+            x_chapa_signature = request.META.get('HTTP_X_CHAPA_SIGNATURE')
+            
+            # Verify using either signature (at least one must be valid)
+            if chapa_signature:
+                if ChapaPayment.verify_webhook_signature(payload, chapa_signature, secret_key):
+                    return True
+            
+            if x_chapa_signature:
+                if ChapaPayment.verify_webhook_signature(payload, x_chapa_signature, secret_key):
+                    return True
+            
+            print("No valid webhook signature found")
+            return False
+            
+        except Exception as e:
+            print(f"Webhook verification error: {str(e)}")
+            return False 

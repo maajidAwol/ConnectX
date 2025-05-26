@@ -1531,7 +1531,7 @@ class TenantAnalyticsViewSet(viewsets.ViewSet):
         end_date = request.query_params.get("end_date")
 
         # Base queryset
-        users = User.objects.filter(tenant=tenant)
+        users = User.objects.filter(tenant=tenant, role="customer")
 
         # Apply date filters if provided
         if start_date:
