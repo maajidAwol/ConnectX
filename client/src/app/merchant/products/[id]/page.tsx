@@ -4,13 +4,14 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Edit, Loader2, Tag, Ruler, InfoIcon, Box, Globe, Clock, Star } from "lucide-react"
+import { ArrowLeft, Edit, Tag, Ruler, InfoIcon, Globe, Clock, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import useProductStore from "@/store/useProductStore"
 import { useAuthStore } from "@/store/authStore"
 import { Separator } from "@/components/ui/separator"
@@ -20,24 +21,24 @@ export default function ProductDetails() {
   const router = useRouter()
   const { id } = useParams()
   const productId = id as string
-  
+
   const [product, setProduct] = useState<any>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [activeImage, setActiveImage] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
-  
+
   const { getProductById } = useProductStore()
   const { user } = useAuthStore()
-  
+
   const isProductOwner = product && user?.tenant === product.owner
-  
+
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
         setIsLoading(true)
         const data = await getProductById(productId)
         setProduct(data)
-        
+
         // Set first image as active image
         if (data.cover_url) {
           setActiveImage(data.cover_url)
@@ -50,34 +51,157 @@ export default function ProductDetails() {
         setIsLoading(false)
       }
     }
-    
+
     if (productId) {
       fetchProductDetails()
     }
   }, [productId, getProductById])
-  
+
   // Function to format date string
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }).format(date)
   }
-  
+
   // If loading
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Loading product details...</p>
+      <div className="container mx-auto py-8">
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-24" />
+            </div>
+            <Skeleton className="h-9 w-80 mb-2" />
+            <Skeleton className="h-5 w-96" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        {/* Product content skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Image gallery skeleton - first column on large screens */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardContent className="p-0 overflow-hidden">
+                <Skeleton className="w-full aspect-square" />
+              </CardContent>
+            </Card>
+
+            {/* Thumbnails skeleton */}
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="w-20 h-20 rounded" />
+              ))}
+            </div>
+          </div>
+
+          {/* Product details skeleton - second column on large screens */}
+          <div className="space-y-6">
+            {/* Price and stock info skeleton */}
+            <Card>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-6 w-28" />
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-5 w-12" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-5 w-8" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Product specifications skeleton */}
+            <Card>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <Skeleton className="h-5 w-5 mt-0.5" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-16 mb-1" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
+                  </div>
+                ))}
+                <Separator />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-40" />
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="grid grid-cols-2 gap-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Meta information skeleton */}
+            <Card>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-6 w-36" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <Skeleton className="h-5 w-5 mt-0.5" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-20 mb-1" />
+                      <Skeleton className="h-5 w-32" />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Description section skeleton */}
+        <div className="mt-8">
+          <div className="w-full">
+            <div className="flex space-x-1 mb-4">
+              <Skeleton className="h-10 w-24" />
+            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     )
   }
-  
+
   // If error
   if (error) {
     return (
@@ -88,7 +212,7 @@ export default function ProductDetails() {
             <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
         </div>
-        
+
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
@@ -96,7 +220,7 @@ export default function ProductDetails() {
       </div>
     )
   }
-  
+
   // If no product
   if (!product) {
     return (
@@ -107,7 +231,7 @@ export default function ProductDetails() {
             <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
         </div>
-        
+
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>Product not found</AlertDescription>
@@ -115,7 +239,7 @@ export default function ProductDetails() {
       </div>
     )
   }
-  
+
   return (
     <div className="container mx-auto py-8">
       {/* Header */}
@@ -134,12 +258,14 @@ export default function ProductDetails() {
                 Private
               </Badge>
             )}
-            <Badge variant="outline" className="bg-gray-100">SKU: {product.sku}</Badge>
+            <Badge variant="outline" className="bg-gray-100 dark:text-gray-900">
+              SKU: {product.sku}
+            </Badge>
           </div>
           <h1 className="text-3xl font-bold">{product.name}</h1>
           <p className="text-muted-foreground mt-1">{product.short_description}</p>
         </div>
-        
+
         {isProductOwner && (
           <Link href={`/merchant/products/add?id=${product.id}`}>
             <Button className="gap-2">
@@ -149,7 +275,7 @@ export default function ProductDetails() {
           </Link>
         )}
       </div>
-      
+
       {/* Product content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Image gallery - first column on large screens */}
@@ -157,8 +283,8 @@ export default function ProductDetails() {
           <Card>
             <CardContent className="p-0 overflow-hidden">
               <div className="relative w-full aspect-square">
-                <Image 
-                  src={activeImage || product.cover_url || "/placeholder.svg"} 
+                <Image
+                  src={activeImage || product.cover_url || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-contain p-2"
@@ -166,16 +292,16 @@ export default function ProductDetails() {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Thumbnails */}
           <div className="flex flex-wrap gap-2">
             {product.cover_url && (
-              <div 
-                className={`w-20 h-20 border rounded overflow-hidden ${activeImage === product.cover_url ? 'ring-2 ring-primary' : ''}`}
+              <div
+                className={`w-20 h-20 border rounded overflow-hidden ${activeImage === product.cover_url ? "ring-2 ring-primary" : ""}`}
                 onClick={() => setActiveImage(product.cover_url)}
               >
                 <Image
-                  src={product.cover_url}
+                  src={product.cover_url || "/placeholder.svg"}
                   alt="Cover"
                   width={80}
                   height={80}
@@ -183,24 +309,25 @@ export default function ProductDetails() {
                 />
               </div>
             )}
-            {product.images && product.images.map((image: string, index: number) => (
-              <div 
-                key={index}
-                className={`w-20 h-20 border rounded overflow-hidden ${activeImage === image ? 'ring-2 ring-primary' : ''}`}
-                onClick={() => setActiveImage(image)}
-              >
-                <Image
-                  src={image}
-                  alt={`Product image ${index + 1}`}
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover cursor-pointer"
-                />
-              </div>
-            ))}
+            {product.images &&
+              product.images.map((image: string, index: number) => (
+                <div
+                  key={index}
+                  className={`w-20 h-20 border rounded overflow-hidden ${activeImage === image ? "ring-2 ring-primary" : ""}`}
+                  onClick={() => setActiveImage(image)}
+                >
+                  <Image
+                    src={image || "/placeholder.svg"}
+                    alt={`Product image ${index + 1}`}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover cursor-pointer"
+                  />
+                </div>
+              ))}
           </div>
         </div>
-        
+
         {/* Product details - second column on large screens */}
         <div className="space-y-6">
           {/* Price and stock info */}
@@ -213,28 +340,28 @@ export default function ProductDetails() {
                 <span className="text-muted-foreground">Base Price:</span>
                 <span className="text-xl font-semibold">{product.base_price} ETB</span>
               </div>
-              
+
               {product.selling_price && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Selling Price:</span>
                   <span className="text-xl font-semibold">{product.selling_price} ETB</span>
                 </div>
               )}
-              
+
               <Separator />
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Quantity Available:</span>
                 <span className="font-medium">{product.quantity}</span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Total Sold:</span>
                 <span className="font-medium">{product.total_sold || 0}</span>
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Product specifications */}
           <Card>
             <CardHeader className="pb-2">
@@ -248,7 +375,7 @@ export default function ProductDetails() {
                   <p className="font-medium">{product.category?.name || "Uncategorized"}</p>
                 </div>
               </div>
-              
+
               {product.brand && (
                 <div className="flex items-start gap-3">
                   <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -258,7 +385,7 @@ export default function ProductDetails() {
                   </div>
                 </div>
               )}
-              
+
               {product.colors && product.colors.length > 0 && (
                 <div className="flex items-start gap-3">
                   <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -266,13 +393,15 @@ export default function ProductDetails() {
                     <p className="text-sm text-muted-foreground">Colors</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {product.colors.map((color: string, index: number) => (
-                        <Badge key={index} variant="outline">{color}</Badge>
+                        <Badge key={index} variant="outline">
+                          {color}
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
-              
+
               {product.sizes && product.sizes.length > 0 && (
                 <div className="flex items-start gap-3">
                   <Ruler className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -280,13 +409,15 @@ export default function ProductDetails() {
                     <p className="text-sm text-muted-foreground">Sizes</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {product.sizes.map((size: string, index: number) => (
-                        <Badge key={index} variant="outline">{size}</Badge>
+                        <Badge key={index} variant="outline">
+                          {size}
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
-              
+
               {product.warranty && (
                 <div className="flex items-start gap-3">
                   <InfoIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -296,7 +427,7 @@ export default function ProductDetails() {
                   </div>
                 </div>
               )}
-              
+
               {product.tag && product.tag.length > 0 && (
                 <div className="flex items-start gap-3">
                   <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -304,13 +435,15 @@ export default function ProductDetails() {
                     <p className="text-sm text-muted-foreground">Tags</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {product.tag.map((tag: string, index: number) => (
-                        <Badge key={index} variant="outline">{tag}</Badge>
+                        <Badge key={index} variant="outline">
+                          {tag}
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
-              
+
               {Object.keys(product.additional_info || {}).length > 0 && (
                 <>
                   <Separator />
@@ -327,7 +460,7 @@ export default function ProductDetails() {
               )}
             </CardContent>
           </Card>
-          
+
           {/* Meta information */}
           <Card>
             <CardHeader className="pb-2">
@@ -341,7 +474,7 @@ export default function ProductDetails() {
                   <p className="font-medium">{product.is_public ? "Public" : "Private"}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
@@ -349,7 +482,7 @@ export default function ProductDetails() {
                   <p className="font-medium">{formatDate(product.created_at)}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
@@ -357,19 +490,21 @@ export default function ProductDetails() {
                   <p className="font-medium">{formatDate(product.updated_at)}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <Star className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Ratings</p>
-                  <p className="font-medium">{product.total_ratings || 0} ratings, {product.total_reviews || 0} reviews</p>
+                  <p className="font-medium">
+                    {product.review.average_rating || 0} ({product.review.total_reviews || 0} reviews)
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-      
+
       {/* Description section */}
       <div className="mt-8">
         <Tabs defaultValue="description" className="w-full">
@@ -394,4 +529,4 @@ export default function ProductDetails() {
       </div>
     </div>
   )
-} 
+}

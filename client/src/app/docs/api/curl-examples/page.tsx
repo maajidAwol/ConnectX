@@ -50,7 +50,7 @@ const curlExamples: Record<string, CurlExample[]> = {
       title: "List Users",
       description: "Get a list of users with pagination",
       command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/users/?page=1&size=10' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'`,
+  -H 'Authorization: Bearer YOUR_API_KEY'`,
       response: `{
   "count": 100,
   "next": "https://connectx-backend-4o0i.onrender.com/api/users/?page=2",
@@ -72,7 +72,7 @@ const curlExamples: Record<string, CurlExample[]> = {
       description: "Create a new user account",
       command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/users/' \\
   -H 'Content-Type: application/json' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -d '{
     "name": "John Doe",
     "email": "john@example.com",
@@ -94,7 +94,7 @@ const curlExamples: Record<string, CurlExample[]> = {
       title: "List Products",
       description: "Get a list of products with filters",
       command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/products/?filter_type=public&min_price=100&max_price=1000&category=electronics' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'`,
+  -H 'Authorization: Bearer YOUR_API_KEY'`,
       response: `{
   "count": 50,
   "next": "https://connectx-backend-4o0i.onrender.com/api/products/?page=2",
@@ -116,7 +116,7 @@ const curlExamples: Record<string, CurlExample[]> = {
       description: "Create a new product",
       command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/products/' \\
   -H 'Content-Type: application/json' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -d '{
     "name": "Product Name",
     "description": "Product Description",
@@ -141,7 +141,7 @@ const curlExamples: Record<string, CurlExample[]> = {
       description: "Create a new order with items",
       command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/orders/' \\
   -H 'Content-Type: application/json' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -d '{
     "items": [
       {
@@ -172,7 +172,7 @@ const curlExamples: Record<string, CurlExample[]> = {
       description: "Initialize a payment transaction with Chapa",
       command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/payments/initialize_chapa_payment/' \\
   -H 'Content-Type: application/json' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -d '{
     "order_id": "123e4567-e89b-12d3-a456-426614174000",
     "phone_number": "+251912345678",

@@ -271,3 +271,14 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Let Django trust forwarded host (e.g., for correct redirect and URL generation)
 USE_X_FORWARDED_HOST = True
 SECURE_SSL_REDIRECT = True
+
+
+IS_PRODUCTION = os.getenv('DJANGO_ENV') == 'production'
+
+if IS_PRODUCTION:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    SECURE_SSL_REDIRECT = True
+else:
+    # Disable HTTPS redirection in development
+    SECURE_SSL_REDIRECT = False

@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 // next
 import { useRouter } from 'next/router';
 // @mui
-import { List, Drawer, IconButton, Button, Stack } from '@mui/material';
+import { List, Drawer, IconButton, Button, Stack, Divider } from '@mui/material';
 // config
 import { NAV } from 'src/config-global';
 // components
 import Logo from 'src/components/logo';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
+// store
+import { useAuthStore } from 'src/store/auth';
+// routes
+import { paths } from 'src/routes/paths';
 //
 import { NavProps } from '../types';
 import NavList from './NavList';
@@ -17,7 +21,7 @@ import NavList from './NavList';
 
 export default function NavMobile({ data }: NavProps) {
   const { pathname } = useRouter();
-
+  const { isAuthenticated, logout } = useAuthStore();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -33,6 +37,11 @@ export default function NavMobile({ data }: NavProps) {
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleClose();
   };
 
   return (
@@ -52,8 +61,8 @@ export default function NavMobile({ data }: NavProps) {
         }}
       >
         <Scrollbar>
-          {/* <Logo sx={{ mx: 2.5, my: 3 }} /> */}
-          LOGO
+          <Logo sx={{ mx: 2.5, my: 3 }} />
+        
 
           <List component="nav" disablePadding>
             {data.map((link) => (
@@ -61,11 +70,62 @@ export default function NavMobile({ data }: NavProps) {
             ))}
           </List>
 
-          <Stack spacing={1.5} sx={{ p: 3 }}>
-            <Button fullWidth variant="contained" color="inherit">
-              Buy Now
-            </Button>
-          </Stack>
+          {isAuthenticated && (
+            <>
+              <Divider sx={{ my: 2 }} />
+              <List component="nav" disablePadding>
+                <NavList
+                  item={{
+                    title: 'Account',
+                    path: paths.eCommerce.account.personal,
+                    children: [
+                      {
+                        subheader: 'Account',
+                        items: [
+                          { title: 'Profile', path: paths.eCommerce.account.personal },
+                          { title: 'Orders', path: paths.eCommerce.account.orders },
+                          { title: 'Wishlist', path: paths.eCommerce.account.wishlist },
+                          { title: 'Payment', path: paths.eCommerce.account.payment },
+                        ],
+                      },
+                    ],
+                  }}
+                />
+              </List>
+              <Stack spacing={1.5} sx={{ p: 3 }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="error"
+                  onClick={handleLogout}
+                  startIcon={<Iconify icon="carbon:logout" />}
+                >
+                  Logout
+                </Button>
+              </Stack>
+            </>
+          )}
+
+          {!isAuthenticated && (
+            <Stack spacing={1.5} sx={{ p: 3 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                href={paths.auth.loginIllustration}
+                startIcon={<Iconify icon="carbon:user" />}
+              >
+                Login
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                href={paths.auth.registerIllustration}
+                startIcon={<Iconify icon="carbon:add" />}
+              >
+                Get Started
+              </Button>
+            </Stack>
+          )}
         </Scrollbar>
       </Drawer>
     </>

@@ -17,7 +17,7 @@ export default function EcommerceAccountPersonalPage() {
   return (
     <>
       <Head>
-        <title>Account: Personal | ZONE UI</title>
+        <title>Account: Personal | ConnectX</title>
       </Head>
 
       <EcommerceAccountPersonalView />

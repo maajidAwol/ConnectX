@@ -100,12 +100,12 @@ export function SiteHeader() {
               <ModeToggle />
               <div className="flex space-x-2">
                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="text-sm">
+                  <Button variant="ghost" className="text-sm hover:border hover:border-blue-600 px-4 py-2">
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-sm" name="Sign Up">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-sm" name="Sign Up">
                     Sign Up
                   </Button>
                 </Link>

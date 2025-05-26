@@ -9,10 +9,6 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
           title: "Introduction",
           href: "/docs/quickstart/introduction",
         },
-        {
-          title: "Installation",
-          href: "/docs/quickstart/installation",
-        },
       ],
     },
     {
@@ -82,10 +78,6 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
         {
           title: "Chapa Integration",
           href: "/docs/payments/chapa",
-        },
-        {
-          title: "Cash on Delivery",
-          href: "/docs/payments/cod",
         },
       ],
     },

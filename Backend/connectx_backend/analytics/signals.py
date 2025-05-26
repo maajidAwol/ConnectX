@@ -38,18 +38,28 @@ def log_order_activity(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Product)
 def log_product_activity(sender, instance, created, **kwargs):
+    # Try to get the user who performed the action, fallback to None
+    user = getattr(instance, 'created_by', None)
+    if not user or not isinstance(user, User):
+        user = None
     if created:
         log_activity(
-            user=instance.owner,
+            user=user,
             action=f"Created new product {instance.name}",
-            details={"product_id": str(instance.id), "price": float(instance.price)},
+            details={
+                "product_id": str(instance.id),
+                "price": float(instance.selling_price),
+            },
             tenant=instance.owner,
         )
     else:
         log_activity(
-            user=instance.owner,
+            user=user,
             action=f"Updated product {instance.name}",
-            details={"product_id": str(instance.id), "price": float(instance.price)},
+            details={
+                "product_id": str(instance.id),
+                "price": float(instance.selling_price),
+            },
             tenant=instance.owner,
         )
 

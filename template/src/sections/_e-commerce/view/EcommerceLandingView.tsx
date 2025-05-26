@@ -9,7 +9,6 @@ import {
   EcommerceLandingTopProducts,
   EcommerceLandingHotDealToday,
   EcommerceLandingSpecialOffer,
-  EcommerceLandingFeaturedBrands,
   EcommerceLandingPopularProducts,
   EcommerceLandingFeaturedProducts,
 } from '../landing';
@@ -31,11 +30,9 @@ export default function EcommerceLandingView() {
 
       <EcommerceLandingSpecialOffer />
 
-      <EcommerceLandingFeaturedBrands />
-
       <EcommerceLandingPopularProducts />
 
-      <EcommerceLandingTopProducts />
+      {/* <EcommerceLandingTopProducts /> */}
 
       <TestimonialEcommerce testimonials={_testimonials} />
     </>

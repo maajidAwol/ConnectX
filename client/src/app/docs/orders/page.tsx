@@ -20,7 +20,7 @@ const orderExamples: CurlExample[] = [
     description: "Create a new order with items",
     command: `curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/orders/' \\
   -H 'Content-Type: application/json' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\
+  -H 'Authorization: Bearer YOUR_API_KEY' \\
   -d '{
     "items": [
       {
@@ -48,7 +48,7 @@ const orderExamples: CurlExample[] = [
     title: "List Orders",
     description: "Get a list of orders with pagination",
     command: `curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/orders/?page=1&size=10' \\
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'`,
+  -H 'Authorization: Bearer YOUR_API_KEY'`,
     response: `{
   "count": 25,
   "next": "https://connectx-backend-4o0i.onrender.com/api/orders/?page=2",

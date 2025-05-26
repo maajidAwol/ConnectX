@@ -123,3 +123,39 @@ class OrderHistory(models.Model):
 
     def __str__(self):
         return f"{self.order.order_number} - {self.status} at {self.created_at}"
+
+
+class RefundRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("completed", "Completed"),
+    ]
+
+    order = models.ForeignKey(
+        "Order", on_delete=models.CASCADE, related_name="refund_requests"
+    )
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    admin_notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Refund Request #{self.id} - Order #{self.order.id}"
+
+
+class Refund(models.Model):
+    refund_request = models.OneToOneField(
+        RefundRequest, on_delete=models.CASCADE, related_name="refund"
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    refunded_at = models.DateTimeField(auto_now_add=True)
+    payment_method = models.CharField(max_length=50)
+    status = models.CharField(max_length=20, default="pending")
+
+    def __str__(self):
+        return f"Refund #{self.id} - {self.amount}"

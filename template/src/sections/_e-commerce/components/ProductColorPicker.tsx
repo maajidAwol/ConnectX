@@ -8,16 +8,16 @@ import Iconify from 'src/components/iconify';
 interface Props extends StackProps {
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  options: {
+  options?: {
     label: string;
     value: string;
   }[];
 }
 
-export default function ProductColorPicker({ value, options, onChange, sx }: Props) {
+export default function ProductColorPicker({ value, options = [], onChange, sx }: Props) {
   return (
     <RadioGroup row value={value} onChange={onChange}>
-      {options.map((option) => (
+      {Array.isArray(options) && options.map((option) => (
         <Stack
           key={option.value}
           alignItems="center"

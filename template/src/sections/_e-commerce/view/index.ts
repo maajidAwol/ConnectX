@@ -3,7 +3,6 @@ export { default as EcommerceLandingView } from './EcommerceLandingView';
 export { default as EcommerceProductView } from './EcommerceProductView';
 export { default as EcommerceProductsView } from './EcommerceProductsView';
 export { default as EcommerceCheckoutView } from './EcommerceCheckoutView';
-export { default as EcommerceOrderCompletedView } from './EcommerceOrderCompletedView';
 export { default as EcommerceWishlistView } from './EcommerceWishlistView';
 export { default as EcommerceCompareView } from './EcommerceCompareView';
 //

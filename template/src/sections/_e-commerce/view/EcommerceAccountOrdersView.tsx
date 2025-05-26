@@ -1,246 +1,338 @@
-import { useState } from 'react';
-// @mui
-import { DatePicker } from '@mui/x-date-pickers';
+import { useState, useEffect } from 'react';
 import {
-  Box,
-  Tab,
-  Tabs,
   Table,
-  Stack,
-  Switch,
-  TableRow,
   TableBody,
   TableCell,
-  TextField,
-  Typography,
   TableContainer,
-  InputAdornment,
-  TablePagination,
-  FormControlLabel,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Typography,
+  Box,
+  Card,
+  Stack,
+  Chip,
+  IconButton,
+  Tooltip,
+  Pagination,
+  Container,
+  Grid,
 } from '@mui/material';
-// _mock
-import { _productsTable } from 'src/_mock';
-// components
+import { useAuthStore } from 'src/store/auth';
+import { apiRequest } from 'src/lib/api-config';
 import Iconify from 'src/components/iconify';
-import Scrollbar from 'src/components/scrollbar';
-//
-import { EcommerceAccountLayout } from '../layout';
-import {
-  stableSort,
-  getComparator,
-  EcommerceAccountOrdersTableRow,
-  EcommerceAccountOrdersTableHead,
-  EcommerceAccountOrdersTableToolbar,
-} from '../account/orders';
+import { fDateTime } from 'src/utils/format-time';
+import { fCurrency } from 'src/utils/format-number';
 
-// ----------------------------------------------------------------------
+interface OrderItem {
+  product_name: string;
+  product_id: string;
+  cover_url: string;
+}
 
-const TABS = ['All Orders', 'Completed', 'To Process', 'Cancelled', 'Return & Refund'];
+interface PaymentStatus {
+  display_status: string;
+  method: string;
+}
 
-export const TABLE_HEAD = [
-  { id: 'orderId', label: 'Order ID' },
-  { id: 'item', label: 'Item' },
-  { id: 'deliveryDate', label: 'Delivery date', width: 160 },
-  { id: 'price', label: 'Price', width: 100 },
-  { id: 'status', label: 'Status', width: 100 },
-  { id: '' },
-];
+interface Order {
+  id: string;
+  order_number: string;
+  seller_tenant_id: string;
+  seller_tenant_name: string;
+  status: string;
+  total_amount: string;
+  created_at: string;
+  items_count: number;
+  total_quantity: number;
+  first_item: OrderItem;
+  payment_status: PaymentStatus;
+}
 
-// ----------------------------------------------------------------------
+export default function EcommerceAccountOrdersView() {
+  const { accessToken } = useAuthStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-export default function EcommerceAccountOrdersPage() {
-  const [tab, setTab] = useState('All Orders');
+  const fetchOrders = async () => {
+    try {
+      if (!accessToken) return;
 
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+      const response = await apiRequest<{ results: Order[]; count: number }>(`/orders/my-orders/?page=${page}&page_size=10`, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }, true, accessToken);
 
-  const [orderBy, setOrderBy] = useState('orderId');
-
-  const [selected, setSelected] = useState<string[]>([]);
-
-  const [page, setPage] = useState(0);
-
-  const [dense, setDense] = useState(false);
-
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  const handleChangeTab = (event: React.SyntheticEvent, newValue: string) => {
-    setTab(newValue);
-  };
-
-  const handleSort = (id: string) => {
-    const isAsc = orderBy === id && order === 'asc';
-    if (id !== '') {
-      setOrder(isAsc ? 'desc' : 'asc');
-      setOrderBy(id);
+      if (response?.results) {
+        setOrders(response.results);
+        setTotalPages(Math.ceil(response.count / 10));
+      }
+    } catch (error) {
+      // Handle error silently
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSelectAllRows = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      const newSelected = _productsTable.map((n) => n.id);
-      setSelected(newSelected);
-      return;
+  useEffect(() => {
+    fetchOrders();
+  }, [page, accessToken]);
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      if (!accessToken) return;
+
+      await apiRequest(`/orders/${orderId}/cancel/`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }, true, accessToken);
+
+      fetchOrders();
+    } catch (error) {
+      // Handle error silently
     }
-    setSelected([]);
   };
 
-  const handleSelectRow = (id: string) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected: string[] = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'warning';
+      case 'processing':
+        return 'info';
+      case 'completed':
+        return 'success';
+      case 'cancelled':
+        return 'error';
+      default:
+        return 'default';
     }
-
-    setSelected(newSelected);
   };
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+  if (selectedOrder) {
+  return (
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, boxShadow: (theme) => theme.customShadows?.z16 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
+            <Typography variant="h4">Order Details</Typography>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="eva:arrow-back-fill" />}
+              onClick={() => setSelectedOrder(null)}
+              sx={{ borderRadius: 2 }}
+            >
+              Back to Orders
+            </Button>
+          </Stack>
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+          <Grid container spacing={4}>
+            {/* Order Information */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ p: 3, height: '100%', bgcolor: 'background.neutral' }}>
+                <Typography variant="h6" gutterBottom>
+                  Order Information
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Order Number</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.order_number}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Date</Typography>
+                    <Typography variant="subtitle2">{fDateTime(selectedOrder.created_at)}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Status</Typography>
+                    <Chip 
+                      label={selectedOrder.status} 
+                      color={getStatusColor(selectedOrder.status) as any}
+                      size="small"
+                    />
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Total Amount</Typography>
+                    <Typography variant="subtitle2" color="primary.main">
+                      {fCurrency(parseFloat(selectedOrder.total_amount))}
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Payment Method</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.payment_status.method}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Payment Status</Typography>
+                    <Chip 
+                      label={selectedOrder.payment_status.display_status}
+                      color={selectedOrder.payment_status.display_status === 'Pending' ? 'warning' : 'success'}
+                      size="small"
+        />
+      </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Items Count</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.items_count}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Total Quantity</Typography>
+                    <Typography variant="subtitle2">{selectedOrder.total_quantity}</Typography>
+                  </Stack>
+                </Stack>
+              </Card>
+            </Grid>
 
-  const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDense(event.target.checked);
-  };
+            {/* Product Information */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ p: 3, height: '100%', bgcolor: 'background.neutral' }}>
+                <Typography variant="h6" gutterBottom>
+                  Product Information
+                </Typography>
+                <Stack spacing={3}>
+                  <Box
+                    component="img"
+                    src={selectedOrder.first_item.cover_url}
+        sx={{
+                      width: '100%',
+                      height: 300,
+                      borderRadius: 2,
+                      objectFit: 'cover',
+                      boxShadow: (theme) => theme.customShadows?.z8,
+        }}
+                  />
+                  <Stack spacing={2}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {selectedOrder.first_item.product_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Product ID: {selectedOrder.first_item.product_id}
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </Card>
+            </Grid>
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - _productsTable.length) : 0;
+            {/* Action Buttons */}
+            {selectedOrder.status === 'pending' && (
+              <Grid item xs={12}>
+                <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleCancelOrder(selectedOrder.id)}
+                    startIcon={<Iconify icon="eva:close-circle-fill" />}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Cancel Order
+                  </Button>
+                </Stack>
+              </Grid>
+            )}
+          </Grid>
+        </Card>
+      </Container>
+    );
+  }
 
   return (
-    <EcommerceAccountLayout>
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        Orders
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Card sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, boxShadow: (theme) => theme.customShadows?.z16 }}>
+        <Typography variant="h4" sx={{ mb: 4 }}>
+          My Orders
+        </Typography>
 
-      <Tabs
-        value={tab}
-        scrollButtons="auto"
-        variant="scrollable"
-        allowScrollButtonsMobile
-        onChange={handleChangeTab}
-      >
-        {TABS.map((category) => (
-          <Tab key={category} value={category} label={category} />
-        ))}
-      </Tabs>
-
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 5, mb: 3 }}>
-        <TextField
-          fullWidth
-          hiddenLabel
-          placeholder="Search..."
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Iconify icon="carbon:search" width={24} sx={{ color: 'text.disabled' }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Stack spacing={2} direction={{ xs: 'column', md: 'row' }} alignItems="center">
-          <DatePicker label="Start Date" sx={{ width: 1, minWidth: 180 }} />
-          <DatePicker label="End Date" sx={{ width: 1, minWidth: 180 }} />
-        </Stack>
-      </Stack>
-
-      <TableContainer
-        sx={{
-          overflow: 'unset',
-          '& .MuiTableCell-head': {
-            color: 'text.primary',
-          },
-          '& .MuiTableCell-root': {
-            bgcolor: 'background.default',
-            borderBottomColor: (theme) => theme.palette.divider,
-          },
-        }}
-      >
-        <EcommerceAccountOrdersTableToolbar
-          rowCount={_productsTable.length}
-          numSelected={selected.length}
-          onSelectAllRows={handleSelectAllRows}
-        />
-
-        <Scrollbar>
-          <Table
-            sx={{
-              minWidth: 720,
-            }}
-            size={dense ? 'small' : 'medium'}
-          >
-            <EcommerceAccountOrdersTableHead
-              order={order}
-              orderBy={orderBy}
-              onSort={handleSort}
-              headCells={TABLE_HEAD}
-              rowCount={_productsTable.length}
-              numSelected={selected.length}
-              onSelectAllRows={handleSelectAllRows}
-            />
-
+        <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Order Number</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Total</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
             <TableBody>
-              {stableSort(_productsTable, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => (
-                  <EcommerceAccountOrdersTableRow
-                    key={row.id}
-                    row={row}
-                    selected={selected.includes(row.id)}
-                    onSelectRow={() => handleSelectRow(row.id)}
-                  />
-                ))}
-
-              {emptyRows > 0 && (
-                <TableRow
-                  sx={{
-                    height: (dense ? 36 : 57) * emptyRows,
-                  }}
-                >
-                  <TableCell colSpan={9} />
-                </TableRow>
-              )}
+              {orders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.order_number}</TableCell>
+                  <TableCell>{fDateTime(order.created_at)}</TableCell>
+                    <TableCell>
+                    <Chip
+                      label={order.status}
+                      color={getStatusColor(order.status) as any}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="right">{fCurrency(parseFloat(order.total_amount))}</TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Tooltip title="View Details">
+                        <IconButton 
+                          onClick={() => handleViewOrder(order)}
+                          sx={{ 
+                            '&:hover': { 
+                              bgcolor: 'primary.lighter',
+                              color: 'primary.main'
+                            }
+                          }}
+                        >
+                          <Iconify icon="eva:eye-fill" />
+                        </IconButton>
+                      </Tooltip>
+                      {order.status === 'pending' && (
+                        <Tooltip title="Cancel Order">
+                          <IconButton 
+                            color="error"
+                            onClick={() => handleCancelOrder(order.id)}
+                            sx={{ 
+                              '&:hover': { 
+                                bgcolor: 'error.lighter',
+                                color: 'error.main'
+                              }
+                            }}
+                          >
+                            <Iconify icon="eva:close-circle-fill" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+              ))}
             </TableBody>
           </Table>
-        </Scrollbar>
       </TableContainer>
 
-      <Box sx={{ position: 'relative' }}>
-        <TablePagination
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+          <Pagination
+            count={totalPages}
           page={page}
-          component="div"
-          count={_productsTable.length}
-          rowsPerPage={rowsPerPage}
-          onPageChange={handleChangePage}
-          rowsPerPageOptions={[5, 10, 25]}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-
-        <FormControlLabel
-          control={<Switch checked={dense} onChange={handleChangeDense} />}
-          label="Dense padding"
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+            shape="rounded"
           sx={{
-            pl: 2,
-            py: 1.5,
-            top: 0,
-            position: {
-              sm: 'absolute',
+              '& .MuiPaginationItem-root': {
+                borderRadius: 1,
             },
           }}
         />
       </Box>
-    </EcommerceAccountLayout>
+      </Card>
+    </Container>
   );
 }

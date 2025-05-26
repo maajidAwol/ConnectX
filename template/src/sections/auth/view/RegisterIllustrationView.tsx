@@ -56,7 +56,7 @@ export default function RegisterIllustrationView() {
                 {`Already have an account? `}
                 <Link
                   component={NextLink}
-                  href={paths.loginIllustration}
+                  href={paths.auth.loginIllustration}
                   variant="subtitle2"
                   color="primary"
                 >

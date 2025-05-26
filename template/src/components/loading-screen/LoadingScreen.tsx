@@ -47,8 +47,8 @@ export default function LoadingScreen({ sx }: Props) {
             repeat: Infinity,
           }}
         >
-          {/* <Logo single sx={{ width: 128, height: 128 }} /> */}
-          <h1> ConnectX </h1>
+          <Logo sx={{ width: 128, height: 128 }} />
+          
 
         </m.div>
       </StyledRoot>

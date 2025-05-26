@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 // @mui
 import {
   Box,
@@ -13,19 +14,30 @@ import {
   ToggleButton,
   SelectChangeEvent,
   ToggleButtonGroup,
+  Grid,
 } from '@mui/material';
+// hooks
+import useResponsive from 'src/hooks/useResponsive';
 // config
 import { NAV } from 'src/config-global';
-// _mock
-import { _products } from 'src/_mock';
 // components
 import Iconify from 'src/components/iconify';
+// store
+import { useProductStore } from 'src/store/product';
+import { useAuthStore } from 'src/store/auth';
+// api
+import { apiRequest } from 'src/lib/api-config';
 //
-import { EcommerceHeader } from '../layout';
 import EcommerceFilters from '../product/filters';
 import { EcommerceProductList, EcommerceProductListBestSellers } from '../product/list';
+import LoadingScreen from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 const VIEW_OPTIONS = [
   { value: 'list', icon: <Iconify icon="carbon:list-boxes" /> },
@@ -42,27 +54,24 @@ const SORT_OPTIONS = [
 
 export default function EcommerceProductsView() {
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const [sort, setSort] = useState('latest');
-
-  const [loading, setLoading] = useState(true);
-
   const [viewMode, setViewMode] = useState('grid');
+  const [sort, setSort] = useState('latest');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const router = useRouter();
 
+  const { products, loading, error, fetchProducts } = useProductStore();
+
+  // Add a separate effect for initial load
   useEffect(() => {
-    const fakeLoading = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setLoading(false);
-    };
-    fakeLoading();
-  }, []);
+    // Reset to initial state when component mounts
+    setSelectedCategoryId(null);
+    setSort('latest');
+    fetchProducts(1, 'listed', null, 'latest');
+  }, [fetchProducts]);
 
-  const handleChangeViewMode = (
-    event: React.MouseEvent<HTMLElement>,
-    newAlignment: string | null
-  ) => {
-    if (newAlignment !== null) {
-      setViewMode(newAlignment);
+  const handleChangeViewMode = (event: React.MouseEvent<HTMLElement>, newMode: string | null) => {
+    if (newMode !== null) {
+      setViewMode(newMode);
     }
   };
 
@@ -78,99 +87,98 @@ export default function EcommerceProductsView() {
     setMobileOpen(false);
   };
 
+  const handleCategorySelect = (categoryId: string | null) => {
+    setSelectedCategoryId(categoryId);
+  };
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ minHeight: '50vh' }}>
+          <Typography color="error" variant="h6">
+            {error}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => router.back()}
+            startIcon={<Iconify icon="carbon:arrow-left" />}
+          >
+            Go Back
+          </Button>
+        </Stack>
+      </Container>
+    );
+  }
+
   return (
     <>
-      <EcommerceHeader />
-
       <Container>
         <Stack
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{
-            py: 5,
-          }}
+          sx={{ mb: 5 }}
         >
-          <Typography variant="h3">Catalog</Typography>
-
-          <Button
-            color="inherit"
-            variant="contained"
-            startIcon={<Iconify icon="carbon:filter" width={18} />}
-            onClick={handleMobileOpen}
-            sx={{
-              display: { md: 'none' },
-            }}
-          >
-            Filters
-          </Button>
-        </Stack>
-
-        <Stack
-          direction={{
-            xs: 'column-reverse',
-            md: 'row',
-          }}
-          sx={{ mb: { xs: 8, md: 10 } }}
-        >
-          <Stack spacing={5} divider={<Divider sx={{ borderStyle: 'dashed' }} />}>
-            <EcommerceFilters mobileOpen={mobileOpen} onMobileClose={handleMobileClose} />
-            <EcommerceProductListBestSellers products={_products.slice(0, 3)} />
+          <Stack direction="row" spacing={1} flexShrink={0}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={handleChangeViewMode}
+              aria-label="view mode"
+            >
+              <ToggleButton value="grid" aria-label="grid view">
+                <Iconify icon="carbon:grid-view" />
+              </ToggleButton>
+              <ToggleButton value="list" aria-label="list view">
+                <Iconify icon="carbon:list" />
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Stack>
 
-          <Box
-            sx={{
-              flexGrow: 1,
-              pl: { md: 8 },
-              width: { md: `calc(100% - ${NAV.W_DRAWER}px)` },
-            }}
-          >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 5 }}
+          <Stack direction="row" spacing={2} alignItems="center">
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+              <Select value={sort} onChange={handleChangeSort}>
+                <MenuItem value="latest">Latest</MenuItem>
+                <MenuItem value="price-asc">Price: Low to High</MenuItem>
+                <MenuItem value="price-desc">Price: High to Low</MenuItem>
+                <MenuItem value="rating">Top Rated</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button
+              color="inherit"
+              variant="outlined"
+              startIcon={<Iconify icon="carbon:filter" />}
+              onClick={handleMobileOpen}
+              sx={{ display: { md: 'none' } }}
             >
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={viewMode}
-                onChange={handleChangeViewMode}
-                sx={{ borderColor: 'transparent' }}
-              >
-                {VIEW_OPTIONS.map((option) => (
-                  <ToggleButton key={option.value} value={option.value}>
-                    {option.icon}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
+              Filters
+            </Button>
+          </Stack>
+        </Stack>
 
-              <FormControl size="small" hiddenLabel variant="filled" sx={{ width: 120 }}>
-                <Select
-                  value={sort}
-                  onChange={handleChangeSort}
-                  MenuProps={{
-                    PaperProps: {
-                      sx: { px: 1 },
-                    },
-                  }}
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={3}>
+            <EcommerceFilters
+              mobileOpen={mobileOpen}
+              onMobileClose={handleMobileClose}
+              onSelectCategory={handleCategorySelect}
+              selectedCategoryId={selectedCategoryId}
+            />
+          </Grid>
 
+          <Grid item xs={12} md={9}>
             <EcommerceProductList
               loading={loading}
               viewMode={viewMode}
-              products={_products.slice(0, 16)}
+              products={products}
             />
-          </Box>
-        </Stack>
+          </Grid>
+        </Grid>
       </Container>
     </>
   );

@@ -1,10 +1,14 @@
 // ----------------------------------------------------------------------
 
 export type IProductItemHeroProps = {
+  id: string;
   title: string;
   caption: string;
   coverImg: string;
   label: string;
+  price: number;
+  priceSale?: number;
+  colors?: string[];
 };
 
 export type IProductItemCompareProps = {
@@ -16,22 +20,43 @@ export type IProductItemCompareProps = {
   details: string[];
 };
 
-export type IProductItemProps = {
+export interface IProductItemProps {
+  id: string;
+  tenant: string[];
+  owner: string;
+  sku: string;
+  name: string;
+  base_price: string;
+  profit_percentage: number | null;
+  selling_price: number | null;
+  quantity: number;
+  category: Category;
+  is_public: boolean;
+  description: string;
+  short_description: string;
+  tag: string[];
+  brand: string;
+  additional_info: Record<string, any>;
+  warranty: string;
+  cover_url: string;
+  images: string[];
+  colors: string[];
+  sizes: string[];
+  total_sold: number;
+  total_ratings: number;
+  total_reviews: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Category {
   id: string;
   name: string;
-  label: string;
-  caption: string;
   description: string;
-  coverImg: string;
-  category: string;
-  sold: number;
-  price: number;
-  rating: number;
-  priceSale: number;
-  inStock: number;
-  review: number;
-  images: string[];
-};
+  created_at: string;
+  updated_at: string;
+  icon: string | null;
+}
 
 export type IProductFiltersProps = {
   filterTag: string[];

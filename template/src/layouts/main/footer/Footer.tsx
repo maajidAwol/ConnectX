@@ -2,7 +2,6 @@
 // import { useRouter } from 'next/router';
 // @mui
 import { alpha, styled } from '@mui/material/styles';
-import Masonry from '@mui/lab/Masonry';
 import {
   Link,
   Stack,
@@ -23,10 +22,6 @@ import { _socials } from 'src/_mock';
 // components
 import Logo from 'src/components/logo';
 import Iconify from 'src/components/iconify';
-//
-import { pageLinks, navConfig } from '../nav/config-navigation';
-import ListDesktop from './ListDesktop';
-import ListMobile from './ListMobile';
 
 // ----------------------------------------------------------------------
 
@@ -47,14 +42,6 @@ const StyledAppStoreButton = styled(Button)(({ theme }) => ({
 export default function Footer() {
   const isMdUp = useResponsive('up', 'md');
 
-  // const { pathname } = useRouter();
-
-  const mobileList = navConfig.find((i) => i.title === 'Pages')?.children || [];
-
-  const desktopList = pageLinks.sort((listA, listB) => Number(listA.order) - Number(listB.order));
-
-  const renderLists = isMdUp ? desktopList : mobileList;
-
   const mainFooter = (
     <>
       <Divider />
@@ -69,8 +56,7 @@ export default function Footer() {
           <Grid xs={12} md={4}>
             <Stack spacing={{ xs: 3, md: 5 }}>
               <Stack alignItems="flex-start" spacing={3}>
-                {/* <Logo /> To be edited */}
-                LOGO 
+                <Logo isFooter />
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Your one-stop shop for all your needs. Discover the best deals and latest trends in our store.
                 </Typography>
@@ -78,17 +64,20 @@ export default function Footer() {
 
               <Stack spacing={1} alignItems="flex-start">
                 <Typography variant="h6">Quick Links</Typography>
-                <Link variant="body2" sx={{ color: 'text.primary' }}>
+                <Link href="/" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
                   Home
                 </Link>
-                <Link variant="body2" sx={{ color: 'text.primary' }}>
+                <Link href="/products" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
                   Shop
                 </Link>
-                <Link variant="body2" sx={{ color: 'text.primary' }}>
+                <Link href="/about" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
                   About Us
                 </Link>
-                <Link variant="body2" sx={{ color: 'text.primary' }}>
+                <Link href="/contact" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
                   Contact Us
+                </Link>
+                <Link href="/merchant" variant="body2" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline', color: 'primary.main' } }}>
+                  Become a Merchant
                 </Link>
               </Stack>
 
@@ -134,22 +123,6 @@ export default function Footer() {
               </Stack>
             </Stack>
           </Grid>
-
-          {/* <Grid xs={12} md={6}>
-            {isMdUp ? (
-              <Masonry columns={4} spacing={2} defaultColumns={4} defaultSpacing={2}>
-                {renderLists.map((list) => (
-                  <ListDesktop key={list.subheader} list={list} />
-                ))}
-              </Masonry>
-            ) : (
-              <Stack spacing={1.5}>
-                {renderLists.map((list) => (
-                  <ListMobile key={list.subheader} list={list} />
-                ))}
-              </Stack>
-            )}
-          </Grid> */}
         </Grid>
       </Container>
       <Divider />
@@ -161,7 +134,7 @@ export default function Footer() {
           sx={{ py: 3, textAlign: 'center' }}
         >
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            © 2025. All rights reserved
+            © {new Date().getFullYear()}. All rights reserved
           </Typography>
 
           <Stack direction="row" spacing={3} justifyContent="center">
@@ -183,7 +156,9 @@ export default function Footer() {
 
 // ----------------------------------------------------------------------
 
-function AppStoreButton({ ...other }: StackProps) {
+interface AppStoreButtonProps extends StackProps {}
+
+function AppStoreButton({ ...other }: AppStoreButtonProps) {
   return (
     <Stack direction="row" flexWrap="wrap" {...other}>
       <StyledAppStoreButton startIcon={<Iconify icon="ri:apple-fill" width={28} />}>

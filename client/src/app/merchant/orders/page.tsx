@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Download, ExternalLink, Printer, ShoppingBag } from "lucide-react"
@@ -24,11 +24,42 @@ import { AlertCircle } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function OrderManagement() {
-  const { orders, isLoading, error, currentPage, totalPages, fetchOrders, setCurrentPage, pageSize } = useOrderStore()
+  const {
+    orders,
+    isLoading,
+    error,
+    currentPage,
+    totalPages,
+    fetchOrders,
+    setCurrentPage,
+    pageSize,
+    status,
+    search,
+    dateFilter,
+    setStatus,
+    setSearch,
+    setDateFilter,
+  } = useOrderStore()
+
+  const [searchInput, setSearchInput] = useState("")
 
   useEffect(() => {
     fetchOrders(currentPage, pageSize)
   }, [fetchOrders, currentPage, pageSize])
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setSearch(searchInput)
+    }
+  }
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus)
+  }
+
+  const handleDateFilterChange = (newDateFilter: string) => {
+    setDateFilter(newDateFilter)
+  }
 
   // Generate pagination range with ellipsis for larger page sets
   const getPaginationRange = () => {
@@ -70,7 +101,7 @@ export default function OrderManagement() {
   return (
     <div className="space-y-6">
       <PageHeader title="Order Management" description="Manage orders from your e-commerce website">
-        <div className="flex flex-wrap gap-2">
+        {/* <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" className="gap-2">
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Export</span>
@@ -83,7 +114,7 @@ export default function OrderManagement() {
             <ExternalLink className="h-4 w-4" />
             <span className="hidden sm:inline">View Site</span>
           </Button>
-        </div>
+        </div> */}
       </PageHeader>
 
       <InfoAlert
@@ -100,24 +131,32 @@ export default function OrderManagement() {
       )}
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <SearchBar placeholder="Search orders by ID, customer, or email..." value="" onChange={() => {}} />
+        <SearchBar
+          placeholder="Search orders by ID, customer, or email..."
+          value={searchInput}
+          onChange={setSearchInput}
+          onKeyDown={handleSearch}
+        />
 
         <FilterBar>
           <FilterSelect
-            value="all"
-            onChange={() => {}}
+            value={status}
+            onChange={handleStatusChange}
             options={[
               { value: "all", label: "All Statuses" },
               { value: "pending", label: "Pending" },
               { value: "processing", label: "Processing" },
+              { value: "confirmed", label: "Confirmed" },
               { value: "shipped", label: "Shipped" },
               { value: "delivered", label: "Delivered" },
               { value: "cancelled", label: "Cancelled" },
+              { value: "refunded", label: "Refunded" },
+              { value: "failed", label: "Failed" },
             ]}
           />
           <FilterSelect
-            value="all"
-            onChange={() => {}}
+            value={dateFilter}
+            onChange={handleDateFilterChange}
             options={[
               { value: "all", label: "All Dates" },
               { value: "today", label: "Today" },
@@ -136,30 +175,35 @@ export default function OrderManagement() {
               <TabsTrigger
                 value="all"
                 className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none bg-transparent"
+                onClick={() => handleStatusChange("all")}
               >
                 All Orders
               </TabsTrigger>
               <TabsTrigger
                 value="processing"
                 className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none bg-transparent"
+                onClick={() => handleStatusChange("processing")}
               >
                 Processing
               </TabsTrigger>
               <TabsTrigger
                 value="shipped"
                 className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none bg-transparent"
+                onClick={() => handleStatusChange("shipped")}
               >
                 Shipped
               </TabsTrigger>
               <TabsTrigger
                 value="delivered"
                 className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none bg-transparent"
+                onClick={() => handleStatusChange("delivered")}
               >
                 Delivered
               </TabsTrigger>
               <TabsTrigger
                 value="returns"
                 className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none bg-transparent"
+                onClick={() => handleStatusChange("refunded")}
               >
                 Returns
               </TabsTrigger>
@@ -214,9 +258,18 @@ export default function OrderManagement() {
 
               <TabsContent value="shipped">
                 {isLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(pageSize || 10)].map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full rounded" />
+                  <div className="space-y-4">
+                    {[...Array(pageSize)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-3 w-[150px]" />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Skeleton className="h-4 w-[100px]" />
+                          <Skeleton className="h-4 w-[40px]" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -230,9 +283,18 @@ export default function OrderManagement() {
 
               <TabsContent value="delivered">
                 {isLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(pageSize || 10)].map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full rounded" />
+                  <div className="space-y-4">
+                    {[...Array(pageSize)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-3 w-[150px]" />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Skeleton className="h-4 w-[100px]" />
+                          <Skeleton className="h-4 w-[40px]" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -245,21 +307,28 @@ export default function OrderManagement() {
               </TabsContent>
 
               <TabsContent value="returns">
-                <div className="rounded-md border border-dashed p-4 md:p-8 text-center">
-                  <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center gap-2">
-                    <div className="rounded-full bg-muted p-4">
-                      <ShoppingBag className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-base md:text-lg font-semibold">No Returns or Refunds</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      There are currently no return or refund requests. When customers request returns, they will appear
-                      here.
-                    </p>
-                    <Button variant="outline" size="sm" className="mt-2 md:mt-4">
-                      View Return Policy
-                    </Button>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(pageSize)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-3 w-[150px]" />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Skeleton className="h-4 w-[100px]" />
+                          <Skeleton className="h-4 w-[40px]" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <OrderList
+                    orders={orders.filter((order) => order.status === "refunded")}
+                    isLoading={isLoading}
+                    emptyMessage="No returns or refunds found."
+                  />
+                )}
               </TabsContent>
             </div>
           </Tabs>

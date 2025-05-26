@@ -10,7 +10,12 @@ import MainLayout from 'src/layouts/main';
 
 // ----------------------------------------------------------------------
 
-const ITEMS = [
+interface ComponentItem {
+  title: string;
+  path: string;
+}
+
+const ITEMS: ComponentItem[] = [
 ];
 
 // ----------------------------------------------------------------------

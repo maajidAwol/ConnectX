@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Logo } from "@/components/logo"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/authStore"
+import { ModeToggle } from "./mode-toggle"
 
 interface SidebarProps {
   className?: string
@@ -72,7 +73,7 @@ export function MerchantSidebar({ className }: SidebarProps) {
       submenu: [
         { title: "All Orders", href: "/merchant/orders" },
         { title: "Returns & Refunds", href: "/merchant/orders/returns" },
-        { title: "Customers", href: "/merchant/orders/customers" },
+        // { title: "Customers", href: "/merchant/orders/customers" },
         // { title: "Email Templates", href: "/merchant/orders/emails" },
       ],
     },
@@ -283,7 +284,7 @@ export function MerchantSidebar({ className }: SidebarProps) {
             ))}
           </nav>
         </div>
-        <div className="border-t border-border p-4">
+        <div className="flex gap-2 p-4">
           <Button 
             variant="ghost" 
             className="w-full justify-start text-muted-foreground hover:text-foreground"
@@ -292,6 +293,7 @@ export function MerchantSidebar({ className }: SidebarProps) {
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </Button>
+          <ModeToggle />
         </div>
       </div>
     </>

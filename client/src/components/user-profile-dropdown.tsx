@@ -65,10 +65,10 @@ export function UserProfileDropdown() {
             <Users className="mr-2 h-4 w-4" />
             <span>Team Members</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push('/merchant/settings')}>
+          {/* <DropdownMenuItem onClick={() => router.push('/merchant/settings')}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

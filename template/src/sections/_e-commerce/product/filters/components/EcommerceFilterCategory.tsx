@@ -19,9 +19,9 @@ export default function EcommerceFilterCategory({
 }: Props) {
   return (
     <Stack spacing={1} alignItems="flex-start" {...other}>
-      {options.map((option) => (
+      {options.map((option, index) => (
         <Stack
-          key={option}
+          key={`${option}-${index}`}
           direction="row"
           alignItems="center"
           onClick={() => onChangeCategories(option)}
