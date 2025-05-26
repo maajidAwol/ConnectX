@@ -27,6 +27,8 @@ class TenantCreateRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     fullname = serializers.CharField(max_length=255, required=True)
+    age = serializers.IntegerField(required=True)
+    gender = serializers.ChoiceField(choices=['male', 'female'], required=True)
     # Add any other fields you expect in the request
 
 
@@ -277,6 +279,8 @@ class TenantViewSet(viewsets.ModelViewSet):
             password=data.get("password", ""),  # Password will be hashed in the model
             tenant=tenant,
             role="owner",
+            age=data.get("age", None),  # Optional field
+            gender=data.get("gender", "none"),
         )
         # send verification email
         send_verification_email(tenant_owner)

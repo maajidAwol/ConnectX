@@ -88,7 +88,18 @@ class UserSerializer(serializers.ModelSerializer):
                     "enum": [ "customer","admin", "owner"],
                     "description": "Role of the user in the system",
                 },
+                "age": {
+                    "type": "integer",
+                    "description": "Age of the user",
+                    "minimum": 0,
+                    "maximum": 120,
+                },
+                "gender": {
+                    "type": "string",
+                    "enum":["male", "female", "none"],
+                    "description":"user gender"
             },
+            }
         }
 
     def validate_password(self, value):
