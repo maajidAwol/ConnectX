@@ -45,7 +45,7 @@ export default function EcommerceAccountPersonalView() {
     bio: Yup.string().nullable(),
     gender: Yup.string()
       .required('Gender is required')
-      .oneOf(['male', 'female', 'none'], 'Please select a valid gender'),
+      .oneOf(['male', 'female'], 'Please select a valid gender'),
     age: Yup.number()
       .nullable()
       .min(13, 'You must be at least 13 years old')
@@ -62,14 +62,28 @@ export default function EcommerceAccountPersonalView() {
       is: true,
       then: (schema) => schema.oneOf([Yup.ref('newPassword')], 'Passwords must match'),
     }),
+    showPasswordSection: Yup.boolean(),
   });
 
-  const defaultValues = {
+  interface FormValues {
+    name: string;
+    email: string;
+    phone_number: string;
+    bio: string;
+    gender: 'male' | 'female';
+    age: number | null;
+    oldPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    showPasswordSection: boolean;
+  }
+
+  const defaultValues: FormValues = {
     name: user?.name || '',
     email: user?.email || '',
     phone_number: user?.phone_number || '',
     bio: user?.bio || '',
-    gender: user?.gender || 'none',
+    gender: user?.gender || 'male',
     age: user?.age || null,
     oldPassword: '',
     newPassword: '',
@@ -77,7 +91,7 @@ export default function EcommerceAccountPersonalView() {
     showPasswordSection: false,
   };
 
-  const methods = useForm({
+  const methods = useForm<FormValues>({
     resolver: yupResolver(EcommerceAccountPersonalSchema),
     defaultValues,
   });
@@ -96,7 +110,7 @@ export default function EcommerceAccountPersonalView() {
   }, [user, reset]);
 
   useEffect(() => {
-    setValue('showPasswordSection', showPasswordSection);
+    setValue('showPasswordSection', showPasswordSection as FormValues['showPasswordSection']);
   }, [showPasswordSection, setValue]);
 
   // Handlers for Avatar Update
@@ -459,11 +473,10 @@ export default function EcommerceAccountPersonalView() {
                 <RadioGroup
                   row
                   {...field}
-                  value={field.value || 'none'}
+                  value={field.value || 'male'}
                 >
                   <FormControlLabel value="male" control={<Radio />} label="Male" />
                   <FormControlLabel value="female" control={<Radio />} label="Female" />
-                  <FormControlLabel value="none" control={<Radio />} label="Prefer not to say" />
                 </RadioGroup>
                 {methods.formState.errors.gender && (
                   <Typography color="error" variant="caption">
