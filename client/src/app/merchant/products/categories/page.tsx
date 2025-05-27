@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search } from 'lucide-react'
@@ -10,9 +12,10 @@ import { AddCategoryDialog } from "@/components/categories/add-category-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from 'lucide-react'
 import useCategoryStore from "@/store/useCategoryStore"
-import { useAuthStore } from "@/store/authStore"
+// import { useAuthStore } from "@/store/authStore"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useTenantStore } from "@/store/tenantStore"
 
 export default function ProductCategories() {
   const { 
@@ -30,17 +33,20 @@ export default function ProductCategories() {
     deleteCategory
   } = useCategoryStore()
   
-  const { isAuthenticated, user, isTenantVerified } = useAuthStore()
-  const isVerified = isTenantVerified()
+  // const { isAuthenticated, user, isTenantVerified } = useAuthStore()
+  const { tenantData, fetchTenantData } = useTenantStore()
+  const isVerified = tenantData?.is_verified || false
+  const verificationStatus = tenantData?.tenant_verification_status || 'unverified'
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [localSearchValue, setLocalSearchValue] = useState(searchQuery)
 
   console.log(isVerified)
 
-  // Fetch categories on component mount
+  // Fetch categories and tenant data on component mount
   useEffect(() => {
     fetchCategories()
-  }, [fetchCategories])
+    fetchTenantData()
+  }, [fetchCategories, fetchTenantData])
 
   // Add a new category
   const handleAddCategory = async (data: {
@@ -163,11 +169,48 @@ export default function ProductCategories() {
       </div>
 
       {!isVerified && (
-        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+        <Alert className={
+          verificationStatus === 'under_review' 
+            ? "bg-blue-50 text-blue-800 border-blue-200"
+            : verificationStatus === 'rejected'
+            ? "bg-red-50 text-red-800 border-red-200"
+            : verificationStatus === 'pending'
+            ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+            : "bg-amber-50 text-amber-800 border-amber-200"
+        }>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Verification Required</AlertTitle>
+          <AlertTitle>
+            {verificationStatus === 'under_review' 
+              ? 'Business Under Review'
+              : verificationStatus === 'rejected'
+              ? 'Verification Rejected'
+              : verificationStatus === 'pending'
+              ? 'Verification Pending'
+              : 'Verification Required'
+            }
+          </AlertTitle>
           <AlertDescription>
-            Your business is not verified yet. Only verified merchants can manage categories.
+            {verificationStatus === 'under_review' 
+              ? 'Your business verification is currently under review. You cannot add new categories until the review is complete. You can still view existing categories.'
+              : verificationStatus === 'rejected'
+              ? 'Your business verification was rejected. Please review the feedback and resubmit your verification documents. Only verified merchants can manage categories.'
+              : verificationStatus === 'pending'
+              ? 'Your business verification is pending review. You cannot add new categories until verification is approved. You can still view existing categories.'
+              : 'Your business is not verified yet. Only verified merchants can manage categories.'
+            }
+            {(verificationStatus === 'unverified' || verificationStatus === 'rejected') && (
+              <div className="mt-2">
+                <Link href="/merchant/profile/verify">
+                  <Button variant="outline" className={
+                    verificationStatus === 'rejected'
+                      ? "bg-white border-red-300 text-red-800 hover:bg-red-100"
+                      : "bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                  }>
+                    {verificationStatus === 'rejected' ? 'Resubmit Verification' : 'Verify Your Business'}
+                  </Button>
+                </Link>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}

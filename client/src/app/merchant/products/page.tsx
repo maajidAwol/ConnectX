@@ -37,6 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useTenantStore } from "@/store/tenantStore"
 
 export default function ProductManagement() {
   const {
@@ -57,7 +58,9 @@ export default function ProductManagement() {
     deleteProduct,
   } = useProductStore()
   const { isAuthenticated, user, isTenantVerified } = useAuthStore()
-  const isVerified = isTenantVerified()
+  const { tenantData, fetchTenantData } = useTenantStore()
+  const isVerified = tenantData?.is_verified || false
+  const verificationStatus = tenantData?.tenant_verification_status || 'unverified'
   const [selectedTab, setSelectedTab] = useState<FilterType>("all")
 
   // Helper function to safely get category name
@@ -68,10 +71,11 @@ export default function ProductManagement() {
     return "Uncategorized"
   }
 
-  // Fetch products on component mount
+  // Fetch products and tenant data on component mount
   useEffect(() => {
     fetchProducts()
-  }, [fetchProducts])
+    fetchTenantData()
+  }, [fetchProducts, fetchTenantData])
 
   // Update filter type when tab changes
   const handleTabChange = (value: string) => {
@@ -184,7 +188,15 @@ export default function ProductManagement() {
             </Button>
           </Link>
         ) : (
-          <Button disabled className="gap-2">
+          <Button disabled className="gap-2" title={
+            verificationStatus === 'under_review' 
+              ? 'Your business is under review. You cannot add products at this time.'
+              : verificationStatus === 'rejected'
+              ? 'Your business verification was rejected. Please resubmit for verification.'
+              : verificationStatus === 'pending'
+              ? 'Your business verification is pending. You cannot add products until verified.'
+              : 'Your business is not verified. Please verify your business to add products.'
+          }>
             <Plus className="h-4 w-4" />
             <span>Add New Product</span>
           </Button>
@@ -192,18 +204,48 @@ export default function ProductManagement() {
       </div>
 
       {!isVerified && (
-        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+        <Alert className={
+          verificationStatus === 'under_review' 
+            ? "bg-blue-50 text-blue-800 border-blue-200"
+            : verificationStatus === 'rejected'
+            ? "bg-red-50 text-red-800 border-red-200"
+            : verificationStatus === 'pending'
+            ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+            : "bg-amber-50 text-amber-800 border-amber-200"
+        }>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Verification Required</AlertTitle>
+          <AlertTitle>
+            {verificationStatus === 'under_review' 
+              ? 'Business Under Review'
+              : verificationStatus === 'rejected'
+              ? 'Verification Rejected'
+              : verificationStatus === 'pending'
+              ? 'Verification Pending'
+              : 'Verification Required'
+            }
+          </AlertTitle>
           <AlertDescription>
-            Your business is not verified yet. Unverified merchants can only use public products.
-            <div className="mt-2">
-              <Link href="/merchant/profile/verify">
-                <Button variant="outline" className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100">
-                  Verify Your Business
-                </Button>
-              </Link>
-            </div>
+            {verificationStatus === 'under_review' 
+              ? 'Your business verification is currently under review. You cannot add new products until the review is complete. You can still manage existing products and use public products.'
+              : verificationStatus === 'rejected'
+              ? 'Your business verification was rejected. Please review the feedback and resubmit your verification documents. You can only use public products until verified.'
+              : verificationStatus === 'pending'
+              ? 'Your business verification is pending review. You cannot add new products until verification is approved. You can still use public products.'
+              : 'Your business is not verified yet. Unverified merchants can only use public products.'
+            }
+            {(verificationStatus === 'unverified' || verificationStatus === 'rejected') && (
+              <div className="mt-2">
+                <Link href="/merchant/profile/verify">
+                  <Button variant="outline" className={
+                    verificationStatus === 'rejected'
+                      ? "bg-white border-red-300 text-red-800 hover:bg-red-100"
+                      : "bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                  }>
+                    {verificationStatus === 'rejected' ? 'Resubmit Verification' : 'Verify Your Business'}
+                  </Button>
+                </Link>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -314,10 +356,27 @@ export default function ProductManagement() {
                   <CardTitle>My Products</CardTitle>
                   <CardDescription>Products you've added to your store</CardDescription>
                 </div>
-                <Button size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  <span>Add Product</span>
-                </Button>
+                {isVerified ? (
+                  <Link href="/merchant/products/add">
+                    <Button size="sm" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      <span>Add Product</span>
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button size="sm" className="gap-2" disabled title={
+                    verificationStatus === 'under_review' 
+                      ? 'Your business is under review. You cannot add products at this time.'
+                      : verificationStatus === 'rejected'
+                      ? 'Your business verification was rejected. Please resubmit for verification.'
+                      : verificationStatus === 'pending'
+                      ? 'Your business verification is pending. You cannot add products until verified.'
+                      : 'Your business is not verified. Please verify your business to add products.'
+                  }>
+                    <Plus className="h-4 w-4" />
+                    <span>Add Product</span>
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -438,10 +497,27 @@ export default function ProductManagement() {
                       <p className="text-sm text-muted-foreground">
                         You haven't added any of your own products yet. Add your first product to start selling.
                       </p>
-                      <Button className="mt-4 gap-2">
-                        <Plus className="h-4 w-4" />
-                        <span>Add Your First Product</span>
-                      </Button>
+                      {isVerified ? (
+                        <Link href="/merchant/products/add">
+                          <Button className="mt-4 gap-2">
+                            <Plus className="h-4 w-4" />
+                            <span>Add Your First Product</span>
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button className="mt-4 gap-2" disabled title={
+                          verificationStatus === 'under_review' 
+                            ? 'Your business is under review. You cannot add products at this time.'
+                            : verificationStatus === 'rejected'
+                            ? 'Your business verification was rejected. Please resubmit for verification.'
+                            : verificationStatus === 'pending'
+                            ? 'Your business verification is pending. You cannot add products until verified.'
+                            : 'Your business is not verified. Please verify your business to add products.'
+                        }>
+                          <Plus className="h-4 w-4" />
+                          <span>Add Your First Product</span>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}

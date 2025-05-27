@@ -101,14 +101,16 @@ export default function ProductPage() {
   const { createProduct, updateProduct, getProductById } = useProductStore((state: any) => state)
   const { categories, fetchCategories, isLoading: isCategoriesLoading } = useCategoryStore()
   const { isTenantVerified } = useAuthStore()
-  const { tenantData} = useTenantStore()
+  const { tenantData, fetchTenantData } = useTenantStore()
   // const isVerified = isTenantVerified()
   const isVerified = tenantData?.is_verified || false
+  const verificationStatus = tenantData?.tenant_verification_status || 'unverified'
   
-  // Fetch categories when component mounts
+  // Fetch categories and tenant data when component mounts
   useEffect(() => {
     fetchCategories()
-  }, [fetchCategories])
+    fetchTenantData()
+  }, [fetchCategories, fetchTenantData])
 
   // Fetch product data if in edit mode
   useEffect(() => {
@@ -137,6 +139,7 @@ export default function ProductPage() {
           
           // Set cover image
           if (product.cover_url) {
+            console.log("Setting cover image:", product.cover_url)
             setCoverImage({
               preview: product.cover_url,
               existing: true
@@ -145,6 +148,7 @@ export default function ProductPage() {
           
           // Set product images
           if (product.images && product.images.length > 0) {
+            console.log("Setting product images:", product.images)
             setImages(product.images.map((imageUrl: string) => ({
               preview: imageUrl,
               existing: true
@@ -553,6 +557,7 @@ export default function ProductPage() {
           />
         )
       case 2:
+        console.log("Rendering ProductImagesTab with:", { images, coverImage })
         return (
           <ProductImagesTab
             images={images}
@@ -594,18 +599,55 @@ export default function ProductPage() {
   if (!isVerified) {
     return (
       <div className="container mx-auto py-8">
-        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold">{isEditMode ? "Edit Product" : "Add New Product"}</h1>
+          <Button variant="outline" onClick={() => window.history.back()} size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back
+          </Button>
+        </div>
+
+        <Alert className={
+          verificationStatus === 'under_review' 
+            ? "bg-blue-50 text-blue-800 border-blue-200"
+            : verificationStatus === 'rejected'
+            ? "bg-red-50 text-red-800 border-red-200"
+            : verificationStatus === 'pending'
+            ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+            : "bg-amber-50 text-amber-800 border-amber-200"
+        }>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Verification Required</AlertTitle>
+          <AlertTitle>
+            {verificationStatus === 'under_review' 
+              ? 'Business Under Review'
+              : verificationStatus === 'rejected'
+              ? 'Verification Rejected'
+              : verificationStatus === 'pending'
+              ? 'Verification Pending'
+              : 'Verification Required'
+            }
+          </AlertTitle>
           <AlertDescription>
-            Your business is not verified yet. You need to verify your business before adding products.
-            <div className="mt-2">
-              <Link href="/merchant/profile/verify">
-                <Button variant="outline" className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100">
-                  Verify Your Business
-                </Button>
-              </Link>
-            </div>
+            {verificationStatus === 'under_review' 
+              ? 'Your business verification is currently under review. You cannot add or edit products until the review is complete. Please wait for the verification process to finish.'
+              : verificationStatus === 'rejected'
+              ? 'Your business verification was rejected. Please review the feedback and resubmit your verification documents. You cannot add or edit products until your business is verified.'
+              : verificationStatus === 'pending'
+              ? 'Your business verification is pending review. You cannot add or edit products until verification is approved. Please wait for the review process to complete.'
+              : 'Your business is not verified yet. You need to verify your business before adding or editing products. Only verified merchants can manage their product catalog.'
+            }
+            {(verificationStatus === 'unverified' || verificationStatus === 'rejected') && (
+              <div className="mt-2">
+                <Link href="/merchant/profile/verify">
+                  <Button variant="outline" className={
+                    verificationStatus === 'rejected'
+                      ? "bg-white border-red-300 text-red-800 hover:bg-red-100"
+                      : "bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                  }>
+                    {verificationStatus === 'rejected' ? 'Resubmit Verification' : 'Verify Your Business'}
+                  </Button>
+                </Link>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       </div>
