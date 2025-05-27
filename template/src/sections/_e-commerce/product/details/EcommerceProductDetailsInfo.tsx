@@ -77,20 +77,6 @@ export default function EcommerceProductDetailsInfo({
     });
   };
 
-  const handleBuyNow = () => {
-    addItem({
-      id,
-      name,
-      price,
-      quantity,
-      cover_url: '',
-      color,
-      colors: [],
-      sizes: [],
-      category: '',
-    });
-  };
-
   const handleOpenReviewForm = () => {
     setOpenReviewForm(true);
   };
@@ -147,50 +133,27 @@ export default function EcommerceProductDetailsInfo({
           ))}
         </TextField>
 
-        <Stack direction="row" spacing={2}>
-          <Button
-            fullWidth={!isMdUp}
-            size="large"
-            variant="contained"
-            startIcon={<Iconify icon="carbon:shopping-cart-plus" />}
-            disabled={inStock === 0}
-            onClick={handleAddToCart}
-            sx={{
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              '&:hover': {
-                bgcolor: 'primary.dark',
-              },
-              '&.Mui-disabled': {
-                bgcolor: 'grey.300',
-                color: 'grey.500',
-              },
-            }}
-          >
-            Add to Cart
-          </Button>
-
-          <Button
-            fullWidth={!isMdUp}
-            size="large"
-            variant="contained"
-            disabled={inStock === 0}
-            onClick={handleBuyNow}
-            sx={{
-              bgcolor: 'success.main',
-              color: 'success.contrastText',
-              '&:hover': {
-                bgcolor: 'success.dark',
-              },
-              '&.Mui-disabled': {
-                bgcolor: 'grey.300',
-                color: 'grey.500',
-              },
-            }}
-          >
-            Buy Now
-          </Button>
-        </Stack>
+        <Button
+          fullWidth
+          size="large"
+          variant="contained"
+          startIcon={<Iconify icon="carbon:shopping-cart-plus" />}
+          disabled={inStock === 0}
+          onClick={handleAddToCart}
+          sx={{
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
+            '&:hover': {
+              bgcolor: 'primary.dark',
+            },
+            '&.Mui-disabled': {
+              bgcolor: 'grey.300',
+              color: 'grey.500',
+            },
+          }}
+        >
+          Add to Cart
+        </Button>
       </Stack>
 
       <Divider sx={{ borderStyle: 'dashed', my: 3 }} />
