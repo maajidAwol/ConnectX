@@ -110,7 +110,7 @@ export default function AdminUsersPage() {
           <CardTitle className="text-sm font-medium">Administrators</CardTitle>
           <Link href="/admin/add-admin">
             <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4 " />
               Add New
             </Button>
           </Link>
