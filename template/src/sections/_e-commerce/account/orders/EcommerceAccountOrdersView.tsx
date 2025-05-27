@@ -20,7 +20,7 @@ import { useAuthStore } from 'src/store/auth';
 import { apiRequest } from 'src/lib/api-config';
 import Iconify from 'src/components/iconify';
 import { fDateTime } from 'src/utils/format-time';
-import { fCurrency } from 'src/utils/format-number';
+import { fCurrency } from 'src/utils/formatNumber';
 
 interface OrderItem {
   product_name: string;
@@ -41,7 +41,6 @@ interface Order {
   items_count: number;
   total_quantity: number;
   first_item: OrderItem;
-  payment_status: string;
 }
 
 export default function EcommerceAccountOrdersView() {
