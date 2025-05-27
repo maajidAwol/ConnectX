@@ -23,7 +23,7 @@ import { useAuthStore } from 'src/store/auth';
 // api
 import { apiRequest } from 'src/lib/api-config';
 // utils
-import { fCurrency } from 'src/utils/format-number';
+import { fCurrency } from 'src/utils/formatNumber';
 import { fDateTime } from 'src/utils/format-time';
 
 // ----------------------------------------------------------------------
