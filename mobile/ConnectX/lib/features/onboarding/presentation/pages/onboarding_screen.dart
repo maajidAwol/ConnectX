@@ -3,6 +3,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:korecha/components/dot_indicators.dart';
 import 'package:korecha/constants.dart';
 import 'package:korecha/route/route_constants.dart';
+import 'package:korecha/core/services/storage_service.dart';
+import 'package:korecha/core/injection/injection_container.dart' as di;
 
 import 'package:korecha/features/onboarding/presentation/widgets/onbording_content.dart';
 
@@ -71,7 +73,8 @@ class _OnBordingScreenState extends State<OnBordingScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, logInScreenRoute);
+                    di.sl<StorageService>().setHasSeenOnboarding();
+                    Navigator.pushReplacementNamed(context, logInScreenRoute);
                   },
                   child: Text(
                     "Skip",
@@ -124,7 +127,11 @@ class _OnBordingScreenState extends State<OnBordingScreen> {
                             duration: defaultDuration,
                           );
                         } else {
-                          Navigator.pushNamed(context, logInScreenRoute);
+                          di.sl<StorageService>().setHasSeenOnboarding();
+                          Navigator.pushReplacementNamed(
+                            context,
+                            logInScreenRoute,
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(

@@ -1,5 +1,6 @@
-export '/screens/onbording/views/onbording_screnn.dart';
+// export '/screens/onbording/views/onbording_screnn.dart';
 // export '/screens/auth/views/login_screen.dart';
+export '../features/onboarding/presentation/pages/onboarding_screen.dart';
 export '/screens/auth/views/password_recovery_screen.dart';
 // export '/screens/auth/views/signup_screen.dart';
 export '../features/authentication/presentation/pages/auth/login_page.dart';

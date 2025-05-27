@@ -12,7 +12,7 @@ import 'package:korecha/route/router.dart' as router;
 import 'package:korecha/theme/app_theme.dart';
 import 'package:korecha/features/authentication/presentation/state/auth/bloc/auth_bloc.dart';
 import 'package:korecha/features/authentication/presentation/pages/auth/login_page.dart';
-import 'package:korecha/screens/onbording/views/onbording_screnn.dart';
+import 'package:korecha/features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'package:korecha/core/services/storage_service.dart';
 import 'core/injection/injection_container.dart' as di;
 

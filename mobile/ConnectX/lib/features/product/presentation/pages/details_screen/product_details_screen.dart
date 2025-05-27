@@ -23,6 +23,7 @@ import 'package:korecha/features/product/domain/entities/review.dart'
     as review_entities;
 import 'package:korecha/core/injection/injection_container.dart';
 import 'package:korecha/features/product/data/datasources/product_remote_data_source.dart';
+import 'package:korecha/utils/price_utils.dart';
 
 import 'package:korecha/route/screen_export.dart';
 
@@ -45,6 +46,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   bool _loadingReviews = false;
   List<ProductModel> _relatedProducts = [];
   bool _loadingRelatedProducts = false;
+  bool _relatedProductsError = false;
+  String? _lastLoadedCategoryId;
 
   @override
   void initState() {
@@ -53,6 +56,24 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       LoadProductDetails(productId: widget.productId),
     );
     _loadReviews();
+  }
+
+  @override
+  void didUpdateWidget(ProductDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset related products state when product ID changes
+    if (oldWidget.productId != widget.productId) {
+      setState(() {
+        _relatedProducts = [];
+        _loadingRelatedProducts = false;
+        _relatedProductsError = false;
+        _lastLoadedCategoryId = null;
+      });
+      context.read<DetailsBloc>().add(
+        LoadProductDetails(productId: widget.productId),
+      );
+      _loadReviews();
+    }
   }
 
   @override
@@ -91,8 +112,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   Future<void> _loadRelatedProducts(String categoryId) async {
     if (!mounted) return;
 
+    // Avoid loading the same category multiple times
+    if (_lastLoadedCategoryId == categoryId &&
+        (_relatedProducts.isNotEmpty || _relatedProductsError)) {
+      return;
+    }
+
     setState(() {
       _loadingRelatedProducts = true;
+      _relatedProductsError = false;
+      _lastLoadedCategoryId = categoryId;
     });
 
     try {
@@ -107,13 +136,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         setState(() {
           _relatedProducts = filteredProducts;
           _loadingRelatedProducts = false;
+          _relatedProductsError = false;
         });
       }
     } catch (e) {
       print('Error loading related products: $e');
       if (mounted) {
         setState(() {
+          _relatedProducts = [];
           _loadingRelatedProducts = false;
+          _relatedProductsError = true;
         });
       }
     }
@@ -161,6 +193,80 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  Widget _buildRelatedProductsSection() {
+    if (_loadingRelatedProducts) {
+      return const ProductsSkelton();
+    }
+
+    if (_relatedProductsError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 8),
+            Text(
+              'Failed to load related products',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                if (_lastLoadedCategoryId != null) {
+                  setState(() {
+                    _relatedProductsError = false;
+                    _lastLoadedCategoryId = null;
+                  });
+                  _loadRelatedProducts(_lastLoadedCategoryId!);
+                }
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_relatedProducts.isEmpty) {
+      return const Center(child: Text('No related products available'));
+    }
+
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: _relatedProducts.length,
+      itemBuilder:
+          (context, index) => Padding(
+            padding: EdgeInsets.only(
+              left: defaultPadding,
+              right: index == _relatedProducts.length - 1 ? defaultPadding : 0,
+            ),
+            child: ProductCard(
+              image: _relatedProducts[index].coverUrl,
+              brandName: _relatedProducts[index].name,
+              title: _relatedProducts[index].subDescription,
+              price: _relatedProducts[index].price,
+              priceAfetDiscount: _relatedProducts[index].priceSale,
+              dicountpercent: PriceUtils.calculateDiscountPercentage(
+                _relatedProducts[index].price,
+                _relatedProducts[index].priceSale,
+              ),
+              press: () {
+                Navigator.pushNamed(
+                  context,
+                  productDetailsScreenRoute,
+                  arguments: {
+                    'isProductAvailable': true,
+                    'productId': _relatedProducts[index].id,
+                  },
+                );
+              },
+            ),
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<DetailsBloc, DetailsState>(
@@ -174,11 +280,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         if (state is DetailsLoaded) {
           // Load related products when product details are loaded
           final productModel = state.product;
-          if (_relatedProducts.isEmpty &&
-              !_loadingRelatedProducts &&
+          if (!_loadingRelatedProducts &&
               productModel is ProductModel &&
               productModel.categoryId != null &&
-              productModel.categoryId!.isNotEmpty) {
+              productModel.categoryId!.isNotEmpty &&
+              _lastLoadedCategoryId != productModel.categoryId) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _loadRelatedProducts(productModel.categoryId!);
             });
@@ -188,7 +294,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             bottomNavigationBar:
                 widget.isProductAvailable
                     ? CartButton(
-                      price: 140,
+                      price: state.product.priceSale ?? state.product.price,
                       press: () {
                         customModalBottomSheet(
                           context,
@@ -355,62 +461,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   SliverToBoxAdapter(
                     child: SizedBox(
                       height: 220,
-                      child:
-                          _loadingRelatedProducts
-                              ? const ProductsSkelton()
-                              : _relatedProducts.isEmpty
-                              ? const Center(
-                                child: Text('No related products available'),
-                              )
-                              : ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _relatedProducts.length,
-                                itemBuilder:
-                                    (context, index) => Padding(
-                                      padding: EdgeInsets.only(
-                                        left: defaultPadding,
-                                        right:
-                                            index == _relatedProducts.length - 1
-                                                ? defaultPadding
-                                                : 0,
-                                      ),
-                                      child: ProductCard(
-                                        image: _relatedProducts[index].coverUrl,
-                                        brandName: _relatedProducts[index].name,
-                                        title:
-                                            _relatedProducts[index]
-                                                .subDescription,
-                                        price:
-                                            _relatedProducts[index].priceSale ??
-                                            _relatedProducts[index].price,
-                                        priceAfetDiscount:
-                                            _relatedProducts[index].price,
-                                        dicountpercent:
-                                            _relatedProducts[index].priceSale !=
-                                                    null
-                                                ? ((_relatedProducts[index]
-                                                                .price -
-                                                            _relatedProducts[index]
-                                                                .priceSale!) /
-                                                        _relatedProducts[index]
-                                                            .price *
-                                                        100)
-                                                    .round()
-                                                : 0,
-                                        press: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            productDetailsScreenRoute,
-                                            arguments: {
-                                              'isProductAvailable': true,
-                                              'productId':
-                                                  _relatedProducts[index].id,
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ),
-                              ),
+                      child: _buildRelatedProductsSection(),
                     ),
                   ),
                   const SliverToBoxAdapter(

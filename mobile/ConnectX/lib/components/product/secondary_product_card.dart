@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../constants.dart';
 import '../network_image_with_loader.dart';
+import '../../utils/price_utils.dart';
 
 class SecondaryProductCard extends StatelessWidget {
   const SecondaryProductCard({
@@ -111,12 +112,12 @@ class SecondaryProductCard extends StatelessWidget {
                     ).textTheme.titleSmall!.copyWith(fontSize: 11),
                   ),
                   const SizedBox(height: 3),
-                  priceAfetDiscount != null
+                  PriceUtils.hasDiscount(price, priceAfetDiscount)
                       ? Row(
                         children: [
                           Flexible(
                             child: Text(
-                              "$priceAfetDiscount Birr",
+                              "${PriceUtils.getDisplayPrice(price, priceAfetDiscount)} Birr",
                               style: const TextStyle(
                                 color: Color(0xFF31B0D8),
                                 fontWeight: FontWeight.w500,
@@ -125,10 +126,26 @@ class SecondaryProductCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              "${PriceUtils.getOriginalPrice(price, priceAfetDiscount)} Birr",
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium!
+                                    .color!
+                                    .withOpacity(0.64),
+                                fontSize: 10,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       )
                       : Text(
-                        "$price Birr",
+                        "${PriceUtils.getDisplayPrice(price, priceAfetDiscount)} Birr",
                         style: const TextStyle(
                           color: Color(0xFF31B0D8),
                           fontWeight: FontWeight.w500,

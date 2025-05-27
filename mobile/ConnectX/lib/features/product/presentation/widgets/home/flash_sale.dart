@@ -4,6 +4,7 @@ import 'package:korecha/components/skleton/product/products_skelton.dart';
 import 'package:korecha/features/product/domain/usecases/get_filtered_products.dart';
 import 'package:korecha/features/product/presentation/state/home/bloc/home_bloc.dart';
 import 'package:korecha/route/route_constants.dart';
+import 'package:korecha/utils/price_utils.dart';
 
 import '/components/Banner/M/banner_m_with_counter.dart';
 import '../../../../../components/product/product_card.dart';
@@ -60,23 +61,13 @@ class FlashSale extends StatelessWidget {
                           image: products[index].coverUrl,
                           brandName: products[index].name,
                           title: products[index].subDescription,
-                          price:
-                              products[index].priceSale != null &&
-                                      products[index].priceSale! >
-                                          products[index].price
-                                  ? products[index].priceSale!
-                                  : products[index].price,
-                          priceAfetDiscount: products[index].price,
+                          price: products[index].price,
+                          priceAfetDiscount: products[index].priceSale,
                           dicountpercent:
-                              products[index].priceSale != null &&
-                                      products[index].priceSale! >
-                                          products[index].price
-                                  ? ((products[index].price -
-                                              products[index].priceSale!) /
-                                          products[index].price *
-                                          100)
-                                      .round()
-                                  : null,
+                              PriceUtils.calculateDiscountPercentage(
+                                products[index].price,
+                                products[index].priceSale,
+                              ),
                           press: () {
                             Navigator.pushNamed(
                               context,

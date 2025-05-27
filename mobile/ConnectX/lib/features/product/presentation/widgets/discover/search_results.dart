@@ -5,6 +5,7 @@ import 'package:korecha/components/product/product_card.dart';
 import 'package:korecha/features/product/presentation/state/discover/bloc/discover_bloc.dart';
 import 'package:korecha/features/product/presentation/state/product/bloc/product_bloc.dart';
 import 'package:korecha/route/route_constants.dart';
+import 'package:korecha/utils/price_utils.dart';
 
 import '../../../../../../constants.dart';
 
@@ -93,12 +94,10 @@ class SearchResultsScreen extends StatelessWidget {
                             price: product.price,
                             priceAfetDiscount: product.priceSale,
                             dicountpercent:
-                                product.priceSale != null
-                                    ? ((product.price - product.priceSale!) /
-                                            product.price *
-                                            100)
-                                        .round()
-                                    : 0,
+                                PriceUtils.calculateDiscountPercentage(
+                                  product.price,
+                                  product.priceSale,
+                                ),
                             press: () {
                               Navigator.pushNamed(
                                 context,
