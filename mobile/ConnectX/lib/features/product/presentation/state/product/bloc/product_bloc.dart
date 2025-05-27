@@ -30,40 +30,59 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       result.fold(
         (failure) => emit(ProductError(message: 'Failed to load products')),
         (products) {
-          final hotDeals = products
-              .where((p) =>
-                  p.totalRatings >= 4 ||
-                  p.totalSold > 1 ||
-                  (p.priceSale ?? 0) > 0)
-              .toList();
+          final hotDeals =
+              products
+                  .where(
+                    (p) =>
+                        p.totalRatings >= 4 ||
+                        p.totalSold > 1 ||
+                        (p.priceSale ?? 0) > 0,
+                  )
+                  .toList();
 
-          final countdownProducts = products
-              .where((p) =>
-                  (p.priceSale ?? 0) > 0 &&
-                  p.saleLabel.enabled &&
-                  p.quantity > 0)
-              .take(2)
-              .toList();
+          final countdownProducts =
+              products
+                  .where(
+                    (p) =>
+                        (p.priceSale ?? 0) > 0 &&
+                        p.saleLabel.enabled &&
+                        p.quantity > 0,
+                  )
+                  .take(2)
+                  .toList();
 
           final specialOffer = products
-              .where((p) =>
-                  (p.priceSale ?? 0) > 0 &&
-                  p.saleLabel.enabled &&
-                  p.quantity > 0)
-              .reduce((a, b) => ((b.price - (b.priceSale ?? 0)) >
-                      (a.price - (a.priceSale ?? 0)))
-                  ? b
-                  : a);
+              .where(
+                (p) =>
+                    (p.priceSale ?? 0) > 0 &&
+                    p.saleLabel.enabled &&
+                    p.quantity > 0,
+              )
+              .reduce((a, b) {
+                final aAverage = (a.price + (a.priceSale ?? 0)) / 2;
+                final bAverage = (b.price + (b.priceSale ?? 0)) / 2;
+                final aDiscount =
+                    aAverage > 0
+                        ? ((a.priceSale ?? 0) - aAverage).abs() / aAverage
+                        : 0;
+                final bDiscount =
+                    bAverage > 0
+                        ? ((b.priceSale ?? 0) - bAverage).abs() / bAverage
+                        : 0;
+                return bDiscount > aDiscount ? b : a;
+              });
           print("products");
           for (var product in products) {
             print(product);
           }
-          emit(ProductLoaded(
-            products: products,
-            hotDeals: hotDeals,
-            countdownProducts: countdownProducts,
-            specialOffer: specialOffer,
-          ));
+          emit(
+            ProductLoaded(
+              products: products,
+              hotDeals: hotDeals,
+              countdownProducts: countdownProducts,
+              specialOffer: specialOffer,
+            ),
+          );
         },
       );
     });
@@ -72,7 +91,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(ProductLoading());
 
       final result = await getProductsByCategory(event.categoryId);
-  
 
       result.fold(
         (failure) => emit(ProductError(message: 'Failed to load products')),
@@ -80,11 +98,12 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       );
     });
     on<LoadProductById>(_loadProductById);
-    
   }
 
   void _loadProductById(
-      LoadProductById event, Emitter<ProductState> emit) async {
+    LoadProductById event,
+    Emitter<ProductState> emit,
+  ) async {
     emit(ProductDetailsLoading());
     final result = await getProductById(event.productId);
 

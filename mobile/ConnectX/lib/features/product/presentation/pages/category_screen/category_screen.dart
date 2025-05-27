@@ -5,6 +5,7 @@ import 'package:korecha/components/product/product_card.dart';
 import 'package:korecha/features/product/presentation/state/product/bloc/product_bloc.dart';
 import 'package:korecha/features/product/presentation/widgets/category/category_screen_shimmer.dart';
 import 'package:korecha/route/route_constants.dart';
+import 'package:korecha/utils/price_utils.dart';
 
 import '../../../../../../constants.dart';
 
@@ -121,7 +122,10 @@ class CategoryScreen extends StatelessWidget {
                         title: state.products[index].subDescription,
                         price: state.products[index].price,
                         priceAfetDiscount: state.products[index].priceSale,
-                        dicountpercent: 10,
+                        dicountpercent: PriceUtils.calculateDiscountPercentage(
+                          state.products[index].price,
+                          state.products[index].priceSale,
+                        ),
                         press: () {
                           // Navigator.pushNamed(
                           //     context, productDetailsScreenRoute);

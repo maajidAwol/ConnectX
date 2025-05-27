@@ -101,12 +101,16 @@ class ProductFilterService {
     return product.createdAt.isAfter(thirtyDaysAgo);
   }
 
-  /// Calculates discount percentage
+  /// Calculates discount percentage using the new formula
   double _getDiscountPercentage(Product product) {
     if (product.priceSale == null || product.priceSale! >= product.price) {
       return 0.0;
     }
-    return ((product.price - product.priceSale!) / product.price) * 100;
+
+    final average = (product.priceSale! + product.price) / 2;
+    if (average == 0) return 0.0;
+
+    return ((product.priceSale! - average) / average * 100).abs();
   }
 
   /// Applies fallback logic when categories are empty
@@ -332,10 +336,13 @@ class ProductFilterService {
       ProductFilter.countDownProducts,
     ];
 
-    // Target number of products per section (minimum 6 for good UI)
+    // Target number of products per section
     final int targetProductsPerSection = _calculateOptimalProductsPerSection(
       allProducts.length,
     );
+
+    // Guarantee minimum of 3 products per section if we have more than 3 products total
+    final int minimumProductsPerSection = allProducts.length > 3 ? 3 : 1;
 
     // Keep track of used products to minimize overlaps (but allow reuse if needed)
     final Set<String> preferredUniqueIds = {};
@@ -410,12 +417,34 @@ class ProductFilterService {
         }
       }
 
+      // Priority 4: Guarantee minimum products per section if we have enough total products
+      if (availableProducts.length < minimumProductsPerSection &&
+          allProducts.length > 3) {
+        final shuffledAll = allProducts.toList()..shuffle();
+
+        for (final product in shuffledAll) {
+          if (!availableProducts.any((p) => p.id == product.id)) {
+            availableProducts.add(product);
+            if (availableProducts.length >= minimumProductsPerSection) {
+              break;
+            }
+          }
+        }
+      }
+
       // Shuffle to avoid same order across sections
       availableProducts.shuffle();
 
-      // Take the target number of products
-      final selectedProducts =
-          availableProducts.take(targetProductsPerSection).toList();
+      // Take the target number of products, but ensure we have at least the minimum
+      final productsToTake =
+          availableProducts.length >= targetProductsPerSection
+              ? targetProductsPerSection
+              : availableProducts.length.clamp(
+                minimumProductsPerSection,
+                availableProducts.length,
+              );
+
+      final selectedProducts = availableProducts.take(productsToTake).toList();
 
       // Mark these products as preferred unique (but allow reuse if needed)
       for (final product in selectedProducts.take(
@@ -467,21 +496,37 @@ class ProductFilterService {
     filteredProducts[ProductFilter.allProducts] =
         allUniqueProducts.take(50).toList();
 
-    // Emergency fallback: If any main section is still empty, fill with random products
+    // Emergency fallback: If any main section is still empty or below minimum, fill with random products
     for (final filter in mainSections) {
-      if ((filteredProducts[filter] ?? []).isEmpty && allProducts.isNotEmpty) {
+      final currentProducts = filteredProducts[filter] ?? [];
+      if (currentProducts.length < minimumProductsPerSection &&
+          allProducts.isNotEmpty) {
         final shuffled = allProducts.toList()..shuffle();
+        final needed = minimumProductsPerSection - currentProducts.length;
+        final additionalProducts = shuffled.take(needed).toList();
+
+        // Combine existing products with additional ones, avoiding duplicates
+        final combinedProducts = <Product>[...currentProducts];
+        for (final product in additionalProducts) {
+          if (!combinedProducts.any((p) => p.id == product.id)) {
+            combinedProducts.add(product);
+          }
+        }
+
         filteredProducts[filter] =
-            shuffled.take(targetProductsPerSection).toList();
+            combinedProducts.take(targetProductsPerSection).toList();
       }
     }
   }
 
   /// Calculates optimal number of products per section based on total available products
   int _calculateOptimalProductsPerSection(int totalProducts) {
-    if (totalProducts < 15) {
-      // If we have very few products, distribute them evenly
-      return (totalProducts / 3).floor().clamp(2, 4);
+    if (totalProducts <= 3) {
+      // If we have 3 or fewer products, distribute them as evenly as possible
+      return 1;
+    } else if (totalProducts < 15) {
+      // If we have more than 3 products, guarantee at least 3 per section
+      return (totalProducts / 3).floor().clamp(3, 4);
     } else if (totalProducts < 30) {
       return 6;
     } else if (totalProducts < 50) {
