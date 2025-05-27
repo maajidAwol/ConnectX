@@ -13,113 +13,120 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8">
-        {/* Starter Plan */}
-        <Card className="flex flex-col border-muted">
-          <CardHeader>
-            <CardTitle>Starter</CardTitle>
-            <div className="mt-4 flex items-baseline text-5xl font-extrabold">
-              2.5%
-              <span className="ml-1 text-xl font-medium text-muted-foreground">per sale</span>
-            </div>
-            <CardDescription className="mt-4">Perfect for new businesses just getting started.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <ul className="space-y-3">
-              {[
-                "Up to 100 products",
-                "Basic analytics",
-                "Standard support",
-                "Payment processing",
-                "Inventory management",
-                "Mobile-responsive templates",
-              ].map((feature, i) => (
-                <li key={i} className="flex items-center">
-                  <Check className="h-4 w-4 text-[#02569B] mr-2" />
-                  <span className="text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Link href="/signup" className="w-full">
-              <Button className="w-full bg-[#02569B] hover:bg-[#02569B]/90">Get Started</Button>
-            </Link>
-          </CardFooter>
-        </Card>
+      <div className="flex justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 max-w-4xl">
+          {/* Starter Plan */}
+          <Card className="flex flex-col border-muted">
+            <CardHeader>
+              <CardTitle>Unverified</CardTitle>
+              <div className="mt-4 flex items-baseline text-5xl font-extrabold">
+                2.5%
+                <span className="ml-1 text-xl font-medium text-muted-foreground">per sale Profit</span>
+              </div>
+              <CardDescription className="mt-4">Perfect for new businesses just getting started.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <ul className="space-y-3">
+                {[
+                  // "Up to 100 products",
+                  "Basic analytics",
+                  "Standard support",
+                  "Payment processing",
+                  "API access",
+                  // "Inventory management",
+                  "Multiple user accounts",
+                   "Product Listing to frontstore",
+                  "Responsive templates",
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center">
+                    <Check className="h-4 w-4 text-[#02569B] mr-2" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Link href="/signup" className="w-full">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">Get Started</Button>
+              </Link>
+            </CardFooter>
+          </Card>
 
-        {/* Pro Plan */}
-        <Card className="flex flex-col relative border-[#02569B]">
-          <div className="absolute -top-4 left-0 right-0 flex justify-center">
-            <span className="bg-[#02569B] text-white text-xs font-medium px-3 py-1 rounded-full">Most Popular</span>
-          </div>
-          <CardHeader>
-            <CardTitle>Pro</CardTitle>
-            <div className="mt-4 flex items-baseline text-5xl font-extrabold">
-              1.9%
-              <span className="ml-1 text-xl font-medium text-muted-foreground">per sale</span>
+          {/* Pro Plan */}
+          <Card className="flex flex-col relative border-[#02569B]">
+            <div className="absolute -top-4 left-0 right-0 flex justify-center">
+              <span className="bg-[#02569B] text-white text-xs font-medium px-3 py-1 rounded-full">Most Popular</span>
             </div>
-            <CardDescription className="mt-4">For growing businesses with increased needs.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <ul className="space-y-3">
-              {[
-                "Unlimited products",
-                "Advanced analytics",
-                "Priority support",
-                "Lower transaction fees",
-                "Custom branding",
-                "API access",
-                "Multiple user accounts",
-                "Abandoned cart recovery",
-              ].map((feature, i) => (
-                <li key={i} className="flex items-center">
-                  <Check className="h-4 w-4 text-[#02569B] mr-2" />
-                  <span className="text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Link href="/signup" className="w-full">
-              <Button className="w-full bg-[#02569B] hover:bg-[#02569B]/90">Get Started</Button>
-            </Link>
-          </CardFooter>
-        </Card>
+            <CardHeader>
+              <CardTitle>Verified Merchant</CardTitle>
+              <div className="mt-4 flex items-baseline text-5xl font-extrabold">
+                2.5%
+                <span className="ml-1 text-xl font-medium text-muted-foreground">per sale</span>
+              </div>
+              <CardDescription className="mt-4">For growing businesses with increased needs.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <ul className="space-y-3">
+                {[
+                  "Product Adding to Database",
+                  "Advanced analytics",
+                  "Priority support",
+                  // "Lower transaction fees",
+                  // "Custom branding",
+                  "API access",
+                  "Multiple Member accounts",
+                  // "Abandoned cart recovery",
+                  "Product Listing to frontstore",
+                  "Responsive templates"
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center">
+                    <Check className="h-4 w-4 text-[#02569B] mr-2" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Link href="/signup" className="w-full">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">Get Started</Button>
+              </Link>
+            </CardFooter>
+          </Card>
 
-        {/* Enterprise Plan */}
-        <Card className="flex flex-col border-muted">
-          <CardHeader>
-            <CardTitle>Enterprise</CardTitle>
-            <div className="mt-4 flex items-baseline text-5xl font-extrabold">Custom</div>
-            <CardDescription className="mt-4">For large businesses with specific requirements.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <ul className="space-y-3">
-              {[
-                "Everything in Pro",
-                "Custom integration",
-                "Dedicated account manager",
-                "24/7 phone support",
-                "Service level agreement",
-                "Custom development",
-                "On-premise deployment option",
-                "Advanced security features",
-                "Bulk operations",
-              ].map((feature, i) => (
-                <li key={i} className="flex items-center">
-                  <Check className="h-4 w-4 text-[#02569B] mr-2" />
-                  <span className="text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full border-[#02569B] text-[#02569B]">
-              Contact Sales
-            </Button>
-          </CardFooter>
-        </Card>
+          {/* Enterprise Plan */}
+          {/* <Card className="flex flex-col border-muted">
+            <CardHeader>
+              <CardTitle>Enterprise</CardTitle>
+              <div className="mt-4 flex items-baseline text-5xl font-extrabold">Custom</div>
+              <CardDescription className="mt-4">For large businesses with specific requirements.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <ul className="space-y-3">
+                {[
+                  "Everything in Pro",
+                  "Custom integration",
+                  "Dedicated account manager",
+                  "24/7 phone support",
+                  "Service level agreement",
+                  "Custom development",
+                  "On-premise deployment option",
+                  "Advanced security features",
+                  "Bulk operations",
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center">
+                    <Check className="h-4 w-4 text-[#02569B] mr-2" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full border-[#02569B] text-[#02569B]">
+                Contact Sales
+              </Button>
+            </CardFooter>
+          </Card> */}
+        </div>
       </div>
 
       <div className="mt-20 text-center space-y-4">
