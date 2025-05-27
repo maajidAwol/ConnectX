@@ -132,10 +132,10 @@ export default function Footer() {
                 </Stack>
               </Stack>
 
-              <Stack spacing={2}>
+              {/* <Stack spacing={2}>
                 <Typography variant="h6">Download Our App</Typography>
                 <AppStoreButton />
-              </Stack>
+              </Stack> */}
             </Stack>
           </Grid>
         </Grid>

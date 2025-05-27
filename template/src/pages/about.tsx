@@ -42,13 +42,13 @@ export default function AboutPage() {
 
       <Container sx={{ my: 10, bgcolor: 'background.neutral', borderRadius: 3, boxShadow: 3, py: 6 }}>
         <Typography variant="h2" sx={{ mb: 5, fontWeight: 'bold', color: 'primary.main' }}>
-          About ConnectX
+          About Our E-commerce Platform
         </Typography>
 
         <Typography variant="body1" sx={{ mb: 5 }}>
-          ConnectX is Ethiopia's premier e-commerce platform, headquartered in the vibrant city of Addis Ababa. 
-          We are dedicated to transforming the way Ethiopians shop and do business online, bringing together 
-          local merchants and customers in a seamless digital marketplace.
+          Our e-commerce platform is powered by ConnectX's robust centralized backend system, providing 
+          a seamless and secure shopping experience. We offer a comprehensive marketplace where customers 
+          can discover, shop, and enjoy a wide range of products with confidence.
         </Typography>
 
         <Grid container spacing={4} sx={{ mb: 5 }}>
@@ -59,8 +59,8 @@ export default function AboutPage() {
                   Our Mission
                 </Typography>
                 <Typography variant="body1">
-                  To empower Ethiopian businesses and consumers through innovative e-commerce solutions, 
-                  fostering economic growth and digital inclusion across the nation.
+                  To provide a seamless and secure e-commerce experience, leveraging ConnectX's powerful 
+                  backend infrastructure to deliver exceptional service to our customers.
                 </Typography>
               </CardContent>
             </Card>
@@ -73,8 +73,8 @@ export default function AboutPage() {
                   Our Vision
                 </Typography>
                 <Typography variant="body1">
-                  To become Ethiopia's leading digital commerce platform, connecting millions of 
-                  merchants and customers while driving the country's digital transformation.
+                  To become the preferred e-commerce destination, offering a diverse range of products 
+                  with reliable delivery and excellent customer service.
                 </Typography>
               </CardContent>
             </Card>
@@ -87,8 +87,8 @@ export default function AboutPage() {
                   Our Values
                 </Typography>
                 <Typography variant="body1">
-                  Innovation, Integrity, Customer Focus, and Community Impact guide everything we do 
-                  at ConnectX, as we work to build a stronger digital economy for Ethiopia.
+                  Customer satisfaction, secure transactions, and reliable service are at the core of 
+                  our e-commerce platform, backed by ConnectX's robust infrastructure.
                 </Typography>
               </CardContent>
             </Card>
@@ -96,27 +96,17 @@ export default function AboutPage() {
         </Grid>
 
         <Typography variant="h3" sx={{ mb: 3 }}>
-          Why Choose ConnectX?
+          Why Choose Our Platform?
         </Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <Typography variant="h6" sx={{ mb: 1 }}>
-              Local Expertise
+              Secure Shopping
             </Typography>
             <Typography variant="body1" sx={{ mb: 3 }}>
-              Deep understanding of Ethiopian market dynamics and consumer preferences, 
-              with a focus on serving the unique needs of Addis Ababa and beyond.
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Secure Platform
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3 }}>
-              State-of-the-art security measures to protect both merchants and customers, 
-              ensuring safe and reliable transactions.
+              Powered by ConnectX's secure backend, we ensure safe transactions and protect your 
+              personal information with state-of-the-art security measures.
             </Typography>
           </Grid>
 
@@ -125,8 +115,18 @@ export default function AboutPage() {
               Wide Selection
             </Typography>
             <Typography variant="body1" sx={{ mb: 3 }}>
-              Access to thousands of local and international products, from traditional 
-              Ethiopian goods to modern necessities.
+              Browse through thousands of products across various categories, all managed through 
+              our efficient e-commerce system.
+            </Typography>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Fast Delivery
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              Enjoy quick and reliable delivery services, with real-time tracking powered by 
+              ConnectX's integrated logistics system.
             </Typography>
           </Grid>
 
@@ -135,8 +135,8 @@ export default function AboutPage() {
               Customer Support
             </Typography>
             <Typography variant="body1" sx={{ mb: 3 }}>
-              Dedicated support team available in multiple languages, including Amharic and English, 
-              to assist you with any questions or concerns.
+              Our dedicated support team is available to assist you with any questions about 
+              products, orders, or technical issues.
             </Typography>
           </Grid>
         </Grid>
