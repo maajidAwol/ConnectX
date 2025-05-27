@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useState, useEffect } from 'react';
 // @mui
 import { LoadingButton } from '@mui/lab';
-import { Box, Typography, Stack, IconButton, InputAdornment, Alert, Button } from '@mui/material';
+import { Box, Typography, Stack, IconButton, InputAdornment, Alert, Button, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 // components
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
@@ -15,7 +15,7 @@ import { EcommerceAccountLayout } from '../layout';
 
 // ----------------------------------------------------------------------
 
-const API_URL = 'https://connectx-9agd.onrender.com/api';
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 // ----------------------------------------------------------------------
 
@@ -43,6 +43,13 @@ export default function EcommerceAccountPersonalView() {
     email: Yup.string().required('Email address is required').email('Email must be valid'),
     phone_number: Yup.string().nullable(),
     bio: Yup.string().nullable(),
+    gender: Yup.string()
+      .required('Gender is required')
+      .oneOf(['male', 'female', 'none'], 'Please select a valid gender'),
+    age: Yup.number()
+      .nullable()
+      .min(13, 'You must be at least 13 years old')
+      .max(120, 'Please enter a valid age'),
     oldPassword: Yup.string().when('showPasswordSection', {
       is: true,
       then: (schema) => schema.required('Current password is required'),
@@ -62,6 +69,8 @@ export default function EcommerceAccountPersonalView() {
     email: user?.email || '',
     phone_number: user?.phone_number || '',
     bio: user?.bio || '',
+    gender: user?.gender || 'none',
+    age: user?.age || null,
     oldPassword: '',
     newPassword: '',
     confirmNewPassword: '',
@@ -239,6 +248,8 @@ export default function EcommerceAccountPersonalView() {
       formData.append('email', data.email);
       formData.append('phone_number', data.phone_number || '');
       formData.append('bio', data.bio || '');
+      formData.append('gender', data.gender);
+      formData.append('age', data.age?.toString() || '');
       if (showPasswordSection && data.newPassword) {
         formData.append('password', data.newPassword);
       }
@@ -438,8 +449,40 @@ export default function EcommerceAccountPersonalView() {
           <RHFTextField name="email" label="Email Address" />
           <RHFTextField name="phone_number" label="Phone Number" />
           <RHFTextField name="bio" label="Bio" multiline rows={3} />
-        </Box>
+          
+          <Controller
+            name="gender"
+            control={methods.control}
+            render={({ field }) => (
+              <FormControl component="fieldset" error={!!methods.formState.errors.gender}>
+                <FormLabel component="legend">Gender</FormLabel>
+                <RadioGroup
+                  row
+                  {...field}
+                  value={field.value || 'none'}
+                >
+                  <FormControlLabel value="male" control={<Radio />} label="Male" />
+                  <FormControlLabel value="female" control={<Radio />} label="Female" />
+                  <FormControlLabel value="none" control={<Radio />} label="Prefer not to say" />
+                </RadioGroup>
+                {methods.formState.errors.gender && (
+                  <Typography color="error" variant="caption">
+                    {methods.formState.errors.gender.message}
+                  </Typography>
+                )}
+              </FormControl>
+            )}
+          />
 
+          <RHFTextField
+            name="age"
+            label="Age"
+            type="number"
+            error={!!methods.formState.errors.age}
+            helperText={methods.formState.errors.age?.message}
+            inputProps={{ min: 13, max: 120 }}
+          />
+        </Box>
 
         <Box sx={{ mt: 3, mb: 3 }}>
           <Button
@@ -502,7 +545,7 @@ export default function EcommerceAccountPersonalView() {
 
         <LoadingButton
           sx={{ mt: 3 }}
-          color="inherit"
+          color="primary"
           size="large"
           type="submit"
           variant="contained"

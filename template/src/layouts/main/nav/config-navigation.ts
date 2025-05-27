@@ -42,8 +42,7 @@ export const pageLinks = [
 
 export const navConfig = [
   { title: 'Home', path: '/' },
-  { title: 'About Us', path: '/about' },
+  { title: 'About', path: '/about' },
   { title: 'Contact Us', path: '/contact' },
-  { title: 'Become a Merchant', path: '/merchant' },
-  { title: 'Products', path: paths.products },
+  { title: 'Shop Now', path: paths.products },
 ];

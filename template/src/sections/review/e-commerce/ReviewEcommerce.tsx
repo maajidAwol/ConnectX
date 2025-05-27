@@ -10,22 +10,29 @@ import ReviewSummary from './ReviewSummary';
 
 // ----------------------------------------------------------------------
 
-export default function ReviewEcommerce() {
+type Props = {
+  productId: string;
+};
+
+export default function ReviewEcommerce({ productId }: Props) {
   const [openForm, setOpenForm] = useState(false);
 
   return (
     <>
       <ReviewSummary
-        ratingsNumber={4.1}
-        reviewsNumber={123456}
+        productId={productId}
         onOpenForm={() => setOpenForm(true)}
       />
 
       <Container>
-        <ReviewList reviews={_reviews} />
+        <ReviewList productId={productId} />
       </Container>
 
-      <ReviewNewForm open={openForm} onClose={() => setOpenForm(false)} />
+      <ReviewNewForm 
+        open={openForm} 
+        onClose={() => setOpenForm(false)} 
+        productId={productId}
+      />
     </>
   );
 }

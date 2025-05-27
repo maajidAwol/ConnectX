@@ -124,19 +124,6 @@ function AuthButtonsContent() {
           Orders
         </MenuItem>
 
-        <MenuItem
-          component={NextLink}
-          href="/e-commerce/account/wishlist"
-          onClick={handleClose}
-        >
-          <ListItemIcon>
-            <Iconify icon="solar:heart-bold" width={24} />
-          </ListItemIcon>
-          Wishlist
-        </MenuItem>
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
         <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
           <ListItemIcon>
             <Iconify icon="solar:logout-3-bold" width={24} sx={{ color: 'error.main' }} />

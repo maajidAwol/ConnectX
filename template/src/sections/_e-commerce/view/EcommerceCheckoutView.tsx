@@ -174,7 +174,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         setUserDetails(response as UserDetails);
       }
     } catch (error) {
-      console.error('Error fetching user details:', error);
     } finally {
       setLoading(false);
     }
@@ -196,7 +195,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         }
       }
     } catch (error) {
-      console.error('Error fetching shipping addresses:', error);
     }
   };
 
@@ -230,7 +228,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       setSelectedAddress(response);
       return response;
     } catch (error) {
-      console.error('Error creating shipping address:', error);
       throw error;
     }
   };
@@ -246,7 +243,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
   const defaultValues = {
     streetAddress: '',
     city: '',
-    country: 'United States',
+    country: 'Ethiopia',
     zipCode: '',
     phoneNumber: user?.phone_number || '',
   };
@@ -289,7 +286,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       cleaned = '+' + digitsAfterPlus.substring(0, 14);
     }
     
-    console.log('Formatted phone number:', cleaned);
     return cleaned;
   };
 
@@ -313,7 +309,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       })),
     };
 
-    console.log('Creating order with data:', orderData);
 
     const orderResponse = await apiRequest<OrderResponse>('/orders/', {
       method: 'POST',
@@ -337,7 +332,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       transaction_id: ''
     };
 
-    console.log('Creating payment with data:', paymentData);
 
     try {
       const paymentResponse = await apiRequest<PaymentResponse>('/payments/', {
@@ -352,16 +346,12 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
 
       return paymentResponse;
     } catch (error) {
-      console.error('Payment creation error:', error);
       if (error instanceof Error) {
         try {
           const errorData = JSON.parse(error.message);
-          console.error('Payment creation error details:', errorData);
           if (errorData.details) {
-            console.error('Validation errors:', errorData.details);
           }
         } catch (e) {
-          console.error('Raw error message:', error.message);
         }
       }
       throw error;
@@ -380,7 +370,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         }),
       });
     } catch (error) {
-      console.error('Error confirming COD payment:', error);
       throw error;
     }
   };
@@ -388,16 +377,16 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
   const onSubmit = async (data: typeof defaultValues) => {
     try {
       setSubmitting(true);
-
+      
       // Create shipping address
       const newAddress = await createShippingAddress(data);
       if (!newAddress) {
         throw new Error('Failed to create shipping address');
       }
-
+      
       // Calculate total amount
       const totalAmount = getTotalPrice().toString();
-
+      
       // Create order
       const orderData = {
         shipping_address: newAddress.id,
@@ -521,7 +510,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
 
         // Redirect to Chapa checkout after a short delay
         setTimeout(() => {
-          window.location.href = chapaResponse.data.checkout_url;
+        window.location.href = chapaResponse.data.checkout_url;
         }, 5000); // 5 seconds delay
       } else if (paymentMethod === 'cod') {
         const paymentResponse = await createPayment(orderResponse.id, totalAmount);
@@ -533,7 +522,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         }
       }
     } catch (error) {
-      console.error('Error in checkout:', error);
       if (error instanceof Error) {
         alert(error.message);
       }
@@ -583,7 +571,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         payment_method: paymentMethod
       };
 
-      console.log('Creating order with data:', orderData);
 
       const orderResponse = await apiRequest<OrderResponse>('/orders/', {
         method: 'POST',
@@ -694,7 +681,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
 
         // Redirect to Chapa checkout after a short delay
         setTimeout(() => {
-          window.location.href = chapaResponse.data.checkout_url;
+        window.location.href = chapaResponse.data.checkout_url;
         }, 5000); // 5 seconds delay
       } else if (paymentMethod === 'cod') {
         const paymentResponse = await createPayment(orderResponse.id, totalAmount);
@@ -706,7 +693,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         }
       }
     } catch (error) {
-      console.error('Error in checkout:', error);
       if (error instanceof Error) {
         alert(error.message);
       }
@@ -716,7 +702,6 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
   };
 
   const handleAddressSelect = (address: ShippingAddress) => {
-    console.log('Selected address:', address);
     setSelectedAddress(address);
   };
 

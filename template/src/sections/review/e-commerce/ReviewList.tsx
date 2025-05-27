@@ -1,43 +1,62 @@
+import { useEffect } from 'react';
 // @mui
-import { Pagination, Box } from '@mui/material';
-// types
-import { IReviewItemProp } from 'src/types/review';
+import { Box, Typography, Stack } from '@mui/material';
+// store
+import { useReviewStore } from 'src/store/review';
 //
 import ReviewItem from './ReviewItem';
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  reviews: IReviewItemProp[];
+  productId?: string;
+  onHelpful?: (reviewId: string, isHelpful: boolean) => void;
 };
 
-export default function ReviewList({ reviews }: Props) {
+export default function ReviewList({ productId, onHelpful }: Props) {
+  const { productReviews, loading, error, fetchProductReviews } = useReviewStore();
+
+  useEffect(() => {
+    
+    if (productId) {
+      fetchProductReviews(productId);
+    } else {
+    }
+  }, [productId, fetchProductReviews]);
+
+  
+
+  if (!productId) {
+    return null;
+  }
+
+  if (loading) {
+    return <Box sx={{ py: 3 }}>Loading reviews...</Box>;
+  }
+
+  if (error) {
+    return <Box sx={{ py: 3, color: 'error.main' }}>{error}</Box>;
+  }
+
+  if (!productReviews || productReviews.length === 0) {
+    return (
+      <Box sx={{ py: 3 }}>
+        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+          No reviews yet. Be the first to review this product!
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ pt: 5 }}>
-      {reviews.map((review) => (
+    <Stack spacing={3}>
+      {productReviews.map((review) => (
         <ReviewItem
           key={review.id}
-          name={review.name}
-          avatarUrl={review.avatarUrl}
-          postedAt={review.postedAt}
-          message={review.message}
-          rating={review.rating}
-          helpful={review.helpful}
+          review={review}
+          onHelpful={onHelpful}
         />
       ))}
-
-      <Pagination
-        count={10}
-        color="primary"
-        size="large"
-        sx={{
-          mt: 5,
-          mb: 10,
-          '& .MuiPagination-ul': {
-            justifyContent: 'center',
-          },
-        }}
-      />
-    </Box>
+    </Stack>
   );
 }
