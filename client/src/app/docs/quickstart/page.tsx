@@ -6,6 +6,24 @@ export default function QuickstartPage() {
     <div className="space-y-8">
       <DocPageHeader heading="Quickstart" text="Get up and running with ConnectX in minutes." />
 
+      <h2 id="get-started" className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight mt-12">
+        Get Started
+      </h2>
+      <ol className="list-decimal ml-6 space-y-4">
+        <li>
+          <h4 className="font-semibold">Create an Account</h4>
+          <p className="text-gray-700">Sign up at <a href="https://connect-x-peach.vercel.app/" className="text-[#02569B] hover:underline">connect-x-peach.vercel.app</a> and create your first project.</p>
+        </li>
+        <li>
+          <h4 className="font-semibold">Get Your API Keys</h4>
+          <p className="text-gray-700">Generate API keys from your project dashboard.</p>
+        </li>
+        <li>
+          <h4 className="font-semibold">Make Your First Request</h4>
+          <p className="text-gray-700">Start building your application with our comprehensive API.</p>
+        </li>
+      </ol>
+
       <p className="leading-7 text-gray-700">
         This quickstart guide will help you create a simple e-commerce application using ConnectX. By the end of this
         guide, you'll have a working application that can list products, handle user authentication, and process orders.
@@ -204,8 +222,8 @@ export default function Home() {
       </div>
 
       <DocsPager
-        prev={{ title: "Installation", href: "/docs/installation" }}
-        next={{ title: "Authentication", href: "/docs/authentication/overview" }}
+        prev={{ label: "Installation", href: "/docs/installation" }}
+        next={{ label: "Authentication", href: "/docs/authentication/overview" }}
       />
     </div>
   )

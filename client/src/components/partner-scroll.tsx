@@ -41,7 +41,7 @@ export function PartnerScroll() {
         {[...Array(12)].map((_, i) => (
           <div key={i} className="flex-shrink-0 transition-transform duration-300 hover:scale-105">
             <Image
-              src={`/placeholder.svg?height=40&width=120&text=Partner${(i % 6) + 1}`}
+              src={`https://res.cloudinary.com/dxjomgo1o/image/upload/v1748324697/transparent_logo_vct1gk.png?height=40&width=120&text=Partner${(i % 6) + 1}`}
               alt={`Partner ${(i % 6) + 1}`}
               width={120}
               height={40}

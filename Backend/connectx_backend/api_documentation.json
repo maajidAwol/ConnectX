@@ -1,0 +1,764 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ConnectX API Documentation",
+    "version": "1.0.0",
+    "description": "API documentation for ConnectX backend services"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://connectx-backend-4o0i.onrender.com/api",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/users/": {
+      "get": {
+        "summary": "List users",
+        "description": "Get a list of users based on user role and tenant",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/users/?page=1&size=10' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create user",
+        "description": "Create a new user with specified role and tenant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/users/' -H 'Content-Type: application/json' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' -d '{\"name\":\"John Doe\",\"email\":\"john@example.com\",\"password\":\"securepassword\",\"role\":\"customer\"}'"
+          }
+        ]
+      }
+    },
+    "/users/me/": {
+      "get": {
+        "summary": "Get current user",
+        "description": "Get details of the currently authenticated user",
+        "responses": {
+          "200": {
+            "description": "Current user details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/users/me/' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+          }
+        ]
+      }
+    },
+    "/users/members/": {
+      "get": {
+        "summary": "List tenant members",
+        "description": "Get a list of members for the current tenant",
+        "responses": {
+          "200": {
+            "description": "List of tenant members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/": {
+      "get": {
+        "summary": "List orders",
+        "description": "Get a list of orders based on user role and tenant",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by order status",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "processing", "shipped", "delivered", "cancelled"]
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "Filter orders created on or after this date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "Filter orders created on or before this date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Order"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/orders/?status=pending&start_date=2024-01-01&end_date=2024-12-31' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create order",
+        "description": "Create a new order with specified items",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/orders/' -H 'Content-Type: application/json' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' -d '{\"items\":[{\"product_id\":\"123e4567-e89b-12d3-a456-426614174000\",\"quantity\":2}]}'"
+          }
+        ]
+      }
+    },
+    "/orders/{order_id}/": {
+      "get": {
+        "summary": "Get order details",
+        "description": "Get detailed information about a specific order",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/": {
+      "get": {
+        "summary": "List payments",
+        "description": "Get a list of payments based on user role and tenant",
+        "responses": {
+          "200": {
+            "description": "List of payments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Payment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/initialize_chapa_payment/": {
+      "post": {
+        "summary": "Initialize Chapa payment",
+        "description": "Initialize a new payment transaction with Chapa payment gateway",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["order_id"],
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "phone_number": {
+                    "type": "string"
+                  },
+                  "return_url": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment initialized successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "payment_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "checkout_url": {
+                          "type": "string"
+                        },
+                        "tx_ref": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/payments/initialize_chapa_payment/' -H 'Content-Type: application/json' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' -d '{\"order_id\":\"123e4567-e89b-12d3-a456-426614174000\",\"phone_number\":\"+251912345678\",\"return_url\":\"https://your-frontend.com/payment-complete\"}'"
+          }
+        ]
+      }
+    },
+    "/products/": {
+      "get": {
+        "summary": "List products",
+        "description": "Get a list of products based on filters and user role",
+        "parameters": [
+          {
+            "name": "filter_type",
+            "in": "query",
+            "description": "Filter products by type",
+            "schema": {
+              "type": "string",
+              "enum": ["listed", "owned", "public", "public_owned"]
+            }
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "description": "Minimum price filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "description": "Maximum price filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Category name filter",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Product"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X GET 'https://connectx-backend-4o0i.onrender.com/api/products/?filter_type=public&min_price=100&max_price=1000&category=electronics' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create product",
+        "description": "Create a new product",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl -X POST 'https://connectx-backend-4o0i.onrender.com/api/products/' -H 'Content-Type: application/json' -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' -d '{\"name\":\"Product Name\",\"description\":\"Product Description\",\"base_price\":99.99,\"category\":\"123e4567-e89b-12d3-a456-426614174000\",\"is_public\":true}'"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "owner", "member", "customer"]
+          },
+          "tenant": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_verified": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserCreate": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "owner", "member", "customer"]
+          },
+          "tenant": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "order_number": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenant": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "shipped", "delivered", "cancelled"]
+          },
+          "total_amount": {
+            "type": "number"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrderCreate": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["product_id", "quantity"],
+              "properties": {
+                "product_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "product": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "order": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "payment_method": {
+            "type": "string",
+            "enum": ["chapa", "cod"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed", "refunded", "cancelled"]
+          },
+          "transaction_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "base_price": {
+            "type": "number"
+          },
+          "category": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "owner": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_public": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProductCreate": {
+        "type": "object",
+        "required": ["name", "base_price", "category"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "base_price": {
+            "type": "number"
+          },
+          "category": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_public": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+} 

@@ -3,9 +3,9 @@ export interface NavItem {
   href?: string
   disabled?: boolean
   external?: boolean
+  items?: NavItem[]
 }
 
-export interface SidebarNavItem {
-  title: string
-  items: NavItem[]
+export interface SidebarNavItem extends NavItem {
+  items?: NavItem[]
 }

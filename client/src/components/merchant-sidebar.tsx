@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Code,
   Home,
+  LogOut,
   Menu,
   Package,
   Palette,
@@ -19,7 +20,10 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Logo } from "@/components/logo"
 import { cn } from "@/lib/utils"
+import { useAuthStore } from "@/store/authStore"
+import { ModeToggle } from "./mode-toggle"
 
 interface SidebarProps {
   className?: string
@@ -28,6 +32,7 @@ interface SidebarProps {
 export function MerchantSidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const logout = useAuthStore((state) => state.logout)
 
   const routes = [
     {
@@ -64,13 +69,13 @@ export function MerchantSidebar({ className }: SidebarProps) {
       title: "Order Management",
       href: "/merchant/orders",
       icon: ShoppingCart,
-      isActive: pathname.startsWith("/merchant/orders"),
-      submenu: [
-        { title: "All Orders", href: "/merchant/orders" },
-        { title: "Returns & Refunds", href: "/merchant/orders/returns" },
-        { title: "Customers", href: "/merchant/orders/customers" },
-        // { title: "Email Templates", href: "/merchant/orders/emails" },
-      ],
+      // isActive: pathname.startsWith("/merchant/orders"),
+      // submenu: [
+      //   { title: "All Orders", href: "/merchant/orders" },
+      //   { title: "Returns & Refunds", href: "/merchant/orders/returns" },
+      //   // { title: "Customers", href: "/merchant/orders/customers" },
+      //   // { title: "Email Templates", href: "/merchant/orders/emails" },
+      // ], 
     },
     {
       title: "Analytics",
@@ -125,10 +130,11 @@ export function MerchantSidebar({ className }: SidebarProps) {
         <SheetContent side="left" className="w-[280px] p-0 h-full">
           <div className="flex h-full flex-col bg-background border-r border-border">
             <div className="flex h-14 items-center border-b border-border px-4">
-              <div className="flex items-center gap-2 font-semibold text-foreground">
+              {/* <div className="flex items-center gap-2 font-semibold text-foreground">
                 <Box className="h-5 w-5 text-primary" />
                 <span>ConnectX Merchant</span>
-              </div>
+              </div> */}
+              <Logo />
               <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setIsOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>
@@ -196,15 +202,14 @@ export function MerchantSidebar({ className }: SidebarProps) {
               </nav>
             </div>
             <div className="border-t border-border p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-primary font-medium">M</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Merchant User</p>
-                  <p className="text-xs text-muted-foreground">merchant@example.com</p>
-                </div>
-              </div>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                onClick={logout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </Button>
             </div>
           </div>
         </SheetContent>
@@ -213,10 +218,11 @@ export function MerchantSidebar({ className }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div className={cn("hidden fixed top-0 left-0 h-screen w-64 flex-col border-r border-border bg-background md:flex z-10", className)}>
         <div className="flex h-14 items-center border-b border-border px-4">
-          <div className="flex items-center gap-2 font-semibold text-foreground">
+          {/* <div className="flex items-center gap-2 font-semibold text-foreground">
             <Box className="h-5 w-5 text-primary" />
             <span>ConnectX Merchant</span>
-          </div>
+          </div> */}
+          <Logo />
         </div>
         <div className="flex-1 overflow-auto py-2">
           <nav className="grid gap-1 px-2">
@@ -278,16 +284,16 @@ export function MerchantSidebar({ className }: SidebarProps) {
             ))}
           </nav>
         </div>
-        <div className="border-t border-border p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-medium">M</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">Merchant User</p>
-              <p className="text-xs text-muted-foreground">merchant@example.com</p>
-            </div>
-          </div>
+        <div className="flex gap-2 p-4">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            onClick={logout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </Button>
+          <ModeToggle />
         </div>
       </div>
     </>

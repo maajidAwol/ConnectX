@@ -2,8 +2,9 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,7 +13,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, File, FileText, Info, Loader2, Trash, Upload, X } from "lucide-react"
-import { fileUploadService } from "@/lib/data"
+import { useTenantStore } from "@/store/tenantStore"
+import { useAuthStore } from "@/store/authStore"
+import { toast } from "sonner"
 
 // File type for document uploads
 type UploadedFile = {
@@ -25,72 +28,68 @@ type UploadedFile = {
 }
 
 export default function VerifyBusiness() {
+  const { tenantData, fetchTenantData, updateTenantData, isLoading } = useTenantStore()
+
   // Form state
   const [formData, setFormData] = useState({
-    legalName: "",
-    businessType: "",
-    businessAddress: "",
-    registrationNumber: "",
-    registrationDate: "",
-    tinNumber: "",
-    vatNumber: "",
-    taxOffice: "",
-    bankName: "",
-    accountNumber: "",
-    accountName: "",
-    branch: "",
-    additionalInfo: "",
-    ownerName: "", // Added owner/manager name field
+    legal_name: "",
+    business_type: "",
+    address: "",
+    business_registration_number: "",
+    licence_registration_date: "",
+    tin_number: "",
+    vat_number: "",
+    tax_office_address: "",
+    bank_name: "",
+    bank_account_number: "",
+    bank_account_name: "",
+    bank_branch: "",
+    business_bio: "",
+    tenant_verification_status: "pending" as const,
   })
 
   // File upload state
-  const [files, setFiles] = useState<Record<string, UploadedFile>>({
-    businessRegistration: {
-      name: "",
-      size: 0,
-      type: "",
-      url: "",
-      status: "uploaded",
-      progress: 0,
-    },
-    taxCertificate: {
-      name: "",
-      size: 0,
-      type: "",
-      url: "",
-      status: "uploaded",
-      progress: 0,
-    },
-    bankStatement: {
-      name: "",
-      size: 0,
-      type: "",
-      url: "",
-      status: "uploaded",
-      progress: 0,
-    },
-    idDocument: {
-      name: "",
-      size: 0,
-      type: "",
-      url: "",
-      status: "uploaded",
-      progress: 0,
-    },
-  })
+  const [selectedFiles, setSelectedFiles] = useState<{
+    business_registration_certificate?: File
+    tax_registration_certificate?: File
+    id_card?: File
+  }>({})
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formErrors, setFormErrors] = useState<string[]>([])
-  const [uploadingField, setUploadingField] = useState<string | null>(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   // Refs for file inputs
-  const fileInputRefs = {
-    businessRegistration: useRef<HTMLInputElement>(null),
-    taxCertificate: useRef<HTMLInputElement>(null),
-    bankStatement: useRef<HTMLInputElement>(null),
-    idDocument: useRef<HTMLInputElement>(null),
-  }
+  const businessRegRef = useRef<HTMLInputElement>(null)
+  const taxRegRef = useRef<HTMLInputElement>(null)
+  const idCardRef = useRef<HTMLInputElement>(null)
+
+  // Load tenant data on component mount
+  useEffect(() => {
+    fetchTenantData()
+  }, [fetchTenantData])
+
+  // Update form data when tenant data is loaded
+  useEffect(() => {
+    if (tenantData) {
+      setFormData(prev => ({
+        ...prev,
+        legal_name: tenantData.legal_name || "",
+        business_type: tenantData.business_type || "",
+        address: tenantData.address || "",
+        business_registration_number: tenantData.business_registration_number || "",
+        licence_registration_date: tenantData.licence_registration_date || "",
+        tin_number: tenantData.tin_number || "",
+        vat_number: tenantData.vat_number || "",
+        tax_office_address: tenantData.tax_office_address || "",
+        bank_name: tenantData.bank_name || "",
+        bank_account_number: tenantData.bank_account_number || "",
+        bank_account_name: tenantData.bank_account_name || "",
+        bank_branch: tenantData.bank_branch || "",
+        business_bio: tenantData.business_bio || "",
+      }))
+    }
+  }, [tenantData])
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -102,122 +101,37 @@ export default function VerifyBusiness() {
   }
 
   // Handle file selection
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0]
-
-      // Update file state as uploading
-      setFiles((prev) => ({
-        ...prev,
-        [fieldName]: {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          url: "",
-          status: "uploading",
-          progress: 0,
-        },
-      }))
-
-      setUploadingField(fieldName)
-
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setFiles((prev) => {
-          // Only update if still uploading
-          if (prev[fieldName].status === "uploading" && prev[fieldName].progress < 90) {
-            return {
-              ...prev,
-              [fieldName]: {
-                ...prev[fieldName],
-                progress: prev[fieldName].progress + 10,
-              },
-            }
-          }
-          return prev
-        })
-      }, 300)
-
-      try {
-        // Upload file (simulated)
-        const result = (await fileUploadService.uploadFile(file)) as any
-
-        clearInterval(progressInterval)
-
-        // Update file state
-        setFiles((prev) => ({
-          ...prev,
-          [fieldName]: {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            url: result.url,
-            status: "uploaded",
-            progress: 100,
-          },
-        }))
-      } catch (error) {
-        clearInterval(progressInterval)
-
-        // Update file state with error
-        setFiles((prev) => ({
-          ...prev,
-          [fieldName]: {
-            ...prev[fieldName],
-            status: "error",
-            progress: 0,
-          },
-        }))
-      } finally {
-        setUploadingField(null)
-      }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFiles(prev => ({ ...prev, [field]: file }))
     }
-
-    // Clear the input to allow selecting the same file again
-    if (e.target.value) {
-      e.target.value = ""
-    }
-  }
-
-  // Trigger file input click
-  const triggerFileInput = (fieldName: keyof typeof fileInputRefs) => {
-    fileInputRefs[fieldName].current?.click()
-  }
-
-  // Remove a file
-  const removeFile = (fieldName: string) => {
-    setFiles((prev) => ({
-      ...prev,
-      [fieldName]: {
-        name: "",
-        size: 0,
-        type: "",
-        url: "",
-        status: "uploaded",
-        progress: 0,
-      },
-    }))
   }
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Validate form
     const errors: string[] = []
 
     // Check required fields
-    if (!formData.legalName) errors.push("Legal Business Name is required")
-    if (!formData.businessType) errors.push("Business Type is required")
-    if (!formData.businessAddress) errors.push("Business Address is required")
-    if (!formData.registrationNumber) errors.push("Business Registration Number is required")
-    if (!formData.tinNumber) errors.push("TIN Number is required")
-    if (!formData.ownerName) errors.push("Business Owner/Manager Name is required") // Added validation
+    if (!formData.legal_name) errors.push("Legal Business Name is required")
+    if (!formData.business_type) errors.push("Business Type is required")
+    if (!formData.address) errors.push("Business Address is required")
+    if (!formData.business_registration_number) errors.push("Business Registration Number is required")
+    if (!formData.tin_number) errors.push("TIN Number is required")
 
     // Check required files
-    if (!files.businessRegistration.name) errors.push("Business Registration document is required")
-    if (!files.taxCertificate.name) errors.push("Tax Certificate document is required")
-    if (!files.idDocument.name) errors.push("ID document is required")
+    if (!selectedFiles.business_registration_certificate && !tenantData?.business_registration_certificate_url) {
+      errors.push("Business Registration document is required")
+    }
+    if (!selectedFiles.tax_registration_certificate && !tenantData?.tax_registration_certificate_url) {
+      errors.push("Tax Certificate document is required")
+    }
+    if (!selectedFiles.id_card && !tenantData?.id_card_url) {
+      errors.push("ID document is required")
+    }
 
     // Check terms acceptance
     if (!termsAccepted) errors.push("You must accept the terms and conditions")
@@ -232,12 +146,46 @@ export default function VerifyBusiness() {
 
     setIsSubmitting(true)
 
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      // Create FormData object
+      const submitData = new FormData()
+
+      // Add all text fields
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) submitData.append(key, value)
+      })
+
+      // Ensure verification status is set to pending
+      submitData.set('tenant_verification_status', 'pending')
+
+      // Debug: Log what's being submitted
+      console.log('Form data being submitted:')
+      for (const [key, value] of submitData.entries()) {
+        console.log(`${key}:`, value)
+      }
+
+      // Add files
+      if (selectedFiles.business_registration_certificate) {
+        submitData.append('business_registration_certificate', selectedFiles.business_registration_certificate)
+      }
+      if (selectedFiles.tax_registration_certificate) {
+        submitData.append('tax_registration_certificate', selectedFiles.tax_registration_certificate)
+      }
+      if (selectedFiles.id_card) {
+        submitData.append('id_card', selectedFiles.id_card)
+      }
+
+      // Update tenant data
+      await updateTenantData(submitData)
+      
+      toast.success("Verification request submitted successfully")
       // Redirect to profile page
       window.location.href = "/merchant/profile"
-    }, 2000)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to submit verification request")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -281,22 +229,22 @@ export default function VerifyBusiness() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="legalName">Legal Business Name*</Label>
+                <Label htmlFor="legal_name">Legal Business Name*</Label>
                 <Input
-                  id="legalName"
-                  name="legalName"
-                  value={formData.legalName}
+                  id="legal_name"
+                  name="legal_name"
+                  value={formData.legal_name}
                   onChange={handleInputChange}
                   placeholder="Your official business name"
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="businessType">Business Type*</Label>
+                <Label htmlFor="business_type">Business Type*</Label>
                 <select
-                  id="businessType"
-                  name="businessType"
-                  value={formData.businessType}
+                  id="business_type"
+                  name="business_type"
+                  value={formData.business_type}
                   onChange={handleInputChange}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                   required
@@ -312,23 +260,11 @@ export default function VerifyBusiness() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="ownerName">Business Owner/Manager Name*</Label>
-              <Input
-                id="ownerName"
-                name="ownerName"
-                value={formData.ownerName}
-                onChange={handleInputChange}
-                placeholder="Full name of business owner or manager"
-                required
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="businessAddress">Business Address*</Label>
+              <Label htmlFor="address">Business Address*</Label>
               <Textarea
-                id="businessAddress"
-                name="businessAddress"
-                value={formData.businessAddress}
+                id="address"
+                name="address"
+                value={formData.address}
                 onChange={handleInputChange}
                 placeholder="Full address including sub-city, woreda, and city"
                 required
@@ -337,22 +273,22 @@ export default function VerifyBusiness() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="registrationNumber">Business Registration Number*</Label>
+                <Label htmlFor="business_registration_number">Business Registration Number*</Label>
                 <Input
-                  id="registrationNumber"
-                  name="registrationNumber"
-                  value={formData.registrationNumber}
+                  id="business_registration_number"
+                  name="business_registration_number"
+                  value={formData.business_registration_number}
                   onChange={handleInputChange}
                   placeholder="Official registration number"
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="registrationDate">Registration Date*</Label>
+                <Label htmlFor="licence_registration_date">Registration Date*</Label>
                 <Input
-                  id="registrationDate"
-                  name="registrationDate"
-                  value={formData.registrationDate}
+                  id="licence_registration_date"
+                  name="licence_registration_date"
+                  value={formData.licence_registration_date}
                   onChange={handleInputChange}
                   type="date"
                   required
@@ -370,22 +306,22 @@ export default function VerifyBusiness() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="tinNumber">Tax Identification Number (TIN)*</Label>
+                <Label htmlFor="tin_number">Tax Identification Number (TIN)*</Label>
                 <Input
-                  id="tinNumber"
-                  name="tinNumber"
-                  value={formData.tinNumber}
+                  id="tin_number"
+                  name="tin_number"
+                  value={formData.tin_number}
                   onChange={handleInputChange}
                   placeholder="Ethiopian TIN number"
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="vatNumber">VAT Registration Number (if applicable)</Label>
+                <Label htmlFor="vat_number">VAT Registration Number (if applicable)</Label>
                 <Input
-                  id="vatNumber"
-                  name="vatNumber"
-                  value={formData.vatNumber}
+                  id="vat_number"
+                  name="vat_number"
+                  value={formData.vat_number}
                   onChange={handleInputChange}
                   placeholder="VAT number"
                 />
@@ -393,11 +329,11 @@ export default function VerifyBusiness() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="taxOffice">Tax Office</Label>
+              <Label htmlFor="tax_office_address">Tax Office</Label>
               <Input
-                id="taxOffice"
-                name="taxOffice"
-                value={formData.taxOffice}
+                id="tax_office_address"
+                name="tax_office_address"
+                value={formData.tax_office_address}
                 onChange={handleInputChange}
                 placeholder="Name of tax office where registered"
               />
@@ -413,11 +349,11 @@ export default function VerifyBusiness() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="bankName">Bank Name*</Label>
+                <Label htmlFor="bank_name">Bank Name*</Label>
                 <select
-                  id="bankName"
-                  name="bankName"
-                  value={formData.bankName}
+                  id="bank_name"
+                  name="bank_name"
+                  value={formData.bank_name}
                   onChange={handleInputChange}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                   required
@@ -432,11 +368,11 @@ export default function VerifyBusiness() {
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="accountNumber">Account Number*</Label>
+                <Label htmlFor="bank_account_number">Account Number*</Label>
                 <Input
-                  id="accountNumber"
-                  name="accountNumber"
-                  value={formData.accountNumber}
+                  id="bank_account_number"
+                  name="bank_account_number"
+                  value={formData.bank_account_number}
                   onChange={handleInputChange}
                   placeholder="Business account number"
                   required
@@ -446,22 +382,22 @@ export default function VerifyBusiness() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="accountName">Account Name*</Label>
+                <Label htmlFor="bank_account_name">Account Name*</Label>
                 <Input
-                  id="accountName"
-                  name="accountName"
-                  value={formData.accountName}
+                  id="bank_account_name"
+                  name="bank_account_name"
+                  value={formData.bank_account_name}
                   onChange={handleInputChange}
                   placeholder="Name on the account"
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="branch">Branch*</Label>
+                <Label htmlFor="bank_branch">Branch*</Label>
                 <Input
-                  id="branch"
-                  name="branch"
-                  value={formData.branch}
+                  id="bank_branch"
+                  name="bank_branch"
+                  value={formData.bank_branch}
                   onChange={handleInputChange}
                   placeholder="Bank branch"
                   required
@@ -477,269 +413,138 @@ export default function VerifyBusiness() {
             <CardDescription>Upload the required verification documents</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Business Registration */}
-            <div className="rounded-md border p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <span className="font-medium">Business Registration Certificate</span>
-                <span className="text-sm text-red-500 ml-auto">Required</span>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Business Registration Certificate */}
+              <div className="rounded-md border border-dashed p-4 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  {selectedFiles.business_registration_certificate ? (
+                    <div className="relative w-full h-32">
+                      <Image
+                        src={URL.createObjectURL(selectedFiles.business_registration_certificate)}
+                        alt="Business Registration"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : tenantData?.business_registration_certificate_url ? (
+                    <div className="relative w-full h-32">
+                      <Image
+                        src={tenantData.business_registration_certificate_url}
+                        alt="Business Registration"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                  )}
+                  <p className="font-medium">Business Registration</p>
+                  <p className="text-xs text-muted-foreground">Upload your business registration certificate</p>
+                  <input
+                    type="file"
+                    ref={businessRegRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'business_registration_certificate')}
+                  />
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => businessRegRef.current?.click()}
+                  >
+                    Select File
+                  </Button>
+                </div>
               </div>
 
-              <input
-                type="file"
-                ref={fileInputRefs.businessRegistration}
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileSelect(e, "businessRegistration")}
-              />
-
-              {files.businessRegistration.name ? (
-                <div className="rounded-md border p-3 bg-blue-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <File className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <div className="font-medium text-sm">{files.businessRegistration.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {(files.businessRegistration.size / 1024 / 1024).toFixed(2)} MB
-                        </div>
-                      </div>
+              {/* Tax Registration Certificate */}
+              <div className="rounded-md border border-dashed p-4 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  {selectedFiles.tax_registration_certificate ? (
+                    <div className="relative w-full h-32">
+                      <Image
+                        src={URL.createObjectURL(selectedFiles.tax_registration_certificate)}
+                        alt="Tax Certificate"
+                        fill
+                        className="object-contain"
+                      />
                     </div>
-
-                    {files.businessRegistration.status === "uploading" ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-24">
-                          <Progress value={files.businessRegistration.progress} className="h-2" />
-                        </div>
-                        <span className="text-xs">{files.businessRegistration.progress}%</span>
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile("businessRegistration")}
-                      >
-                        <Trash className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="rounded-md border border-dashed p-6 text-center cursor-pointer hover:bg-muted/50"
-                  onClick={() => triggerFileInput("businessRegistration")}
-                >
-                  <div className="flex flex-col items-center gap-2">
+                  ) : tenantData?.tax_registration_certificate_url ? (
+                    <div className="relative w-full h-32">
+                      <Image
+                        src={tenantData.tax_registration_certificate_url}
+                        alt="Tax Certificate"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
                     <Upload className="h-8 w-8 text-muted-foreground" />
-                    <p className="font-medium">Upload Document</p>
-                    <p className="text-xs text-muted-foreground">PDF, JPG, or PNG (max 5MB)</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      className="mt-2 bg-blue-600 text-white hover:bg-blue-700 border-none"
-                    >
-                      Select File
-                    </Button>
-                  </div>
+                  )}
+                  <p className="font-medium">Tax Certificate</p>
+                  <p className="text-xs text-muted-foreground">Upload your tax registration certificate</p>
+                  <input
+                    type="file"
+                    ref={taxRegRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'tax_registration_certificate')}
+                  />
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => taxRegRef.current?.click()}
+                  >
+                    Select File
+                  </Button>
                 </div>
-              )}
-            </div>
-
-            {/* Tax Certificate */}
-            <div className="rounded-md border p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <span className="font-medium">Tax Registration Certificate</span>
-                <span className="text-sm text-red-500 ml-auto">Required</span>
               </div>
 
-              <input
-                type="file"
-                ref={fileInputRefs.taxCertificate}
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileSelect(e, "taxCertificate")}
-              />
-
-              {files.taxCertificate.name ? (
-                <div className="rounded-md border p-3 bg-blue-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <File className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <div className="font-medium text-sm">{files.taxCertificate.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {(files.taxCertificate.size / 1024 / 1024).toFixed(2)} MB
-                        </div>
-                      </div>
+              {/* ID Card */}
+              <div className="rounded-md border border-dashed p-4 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  {selectedFiles.id_card ? (
+                    <div className="relative w-full h-32">
+                      <Image
+                        src={URL.createObjectURL(selectedFiles.id_card)}
+                        alt="ID Card"
+                        fill
+                        className="object-contain"
+                      />
                     </div>
-
-                    {files.taxCertificate.status === "uploading" ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-24">
-                          <Progress value={files.taxCertificate.progress} className="h-2" />
-                        </div>
-                        <span className="text-xs">{files.taxCertificate.progress}%</span>
-                      </div>
-                    ) : (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeFile("taxCertificate")}>
-                        <Trash className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="rounded-md border border-dashed p-6 text-center cursor-pointer hover:bg-muted/50"
-                  onClick={() => triggerFileInput("taxCertificate")}
-                >
-                  <div className="flex flex-col items-center gap-2">
+                  ) : tenantData?.id_card_url ? (
+                    <div className="relative w-full h-32">
+                      <Image
+                        src={tenantData.id_card_url}
+                        alt="ID Card"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
                     <Upload className="h-8 w-8 text-muted-foreground" />
-                    <p className="font-medium">Upload Document</p>
-                    <p className="text-xs text-muted-foreground">PDF, JPG, or PNG (max 5MB)</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      className="mt-2 bg-blue-600 text-white hover:bg-blue-700 border-none"
-                    >
-                      Select File
-                    </Button>
-                  </div>
+                  )}
+                  <p className="font-medium">ID Card</p>
+                  <p className="text-xs text-muted-foreground">Upload your ID card</p>
+                  <input
+                    type="file"
+                    ref={idCardRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'id_card')}
+                  />
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => idCardRef.current?.click()}
+                  >
+                    Select File
+                  </Button>
                 </div>
-              )}
-            </div>
-
-            {/* Bank Statement */}
-            <div className="rounded-md border p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <span className="font-medium">Bank Statement or Void Check</span>
-                <span className="text-sm text-red-500 ml-auto">Required</span>
               </div>
-
-              <input
-                type="file"
-                ref={fileInputRefs.bankStatement}
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileSelect(e, "bankStatement")}
-              />
-
-              {files.bankStatement.name ? (
-                <div className="rounded-md border p-3 bg-blue-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <File className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <div className="font-medium text-sm">{files.bankStatement.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {(files.bankStatement.size / 1024 / 1024).toFixed(2)} MB
-                        </div>
-                      </div>
-                    </div>
-
-                    {files.bankStatement.status === "uploading" ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-24">
-                          <Progress value={files.bankStatement.progress} className="h-2" />
-                        </div>
-                        <span className="text-xs">{files.bankStatement.progress}%</span>
-                      </div>
-                    ) : (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeFile("bankStatement")}>
-                        <Trash className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="rounded-md border border-dashed p-6 text-center cursor-pointer hover:bg-muted/50"
-                  onClick={() => triggerFileInput("bankStatement")}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
-                    <p className="font-medium">Upload Document</p>
-                    <p className="text-xs text-muted-foreground">PDF, JPG, or PNG (max 5MB)</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      className="mt-2 bg-blue-600 text-white hover:bg-blue-700 border-none"
-                    >
-                      Select File
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ID Document */}
-            <div className="rounded-md border p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <span className="font-medium">ID of Business Owner/Representative</span>
-                <span className="text-sm text-red-500 ml-auto">Required</span>
-              </div>
-
-              <input
-                type="file"
-                ref={fileInputRefs.idDocument}
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileSelect(e, "idDocument")}
-              />
-
-              {files.idDocument.name ? (
-                <div className="rounded-md border p-3 bg-blue-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <File className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <div className="font-medium text-sm">{files.idDocument.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {(files.idDocument.size / 1024 / 1024).toFixed(2)} MB
-                        </div>
-                      </div>
-                    </div>
-
-                    {files.idDocument.status === "uploading" ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-24">
-                          <Progress value={files.idDocument.progress} className="h-2" />
-                        </div>
-                        <span className="text-xs">{files.idDocument.progress}%</span>
-                      </div>
-                    ) : (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeFile("idDocument")}>
-                        <Trash className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="rounded-md border border-dashed p-6 text-center cursor-pointer hover:bg-muted/50"
-                  onClick={() => triggerFileInput("idDocument")}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
-                    <p className="font-medium">Upload Document</p>
-                    <p className="text-xs text-muted-foreground">PDF, JPG, or PNG (max 5MB)</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      className="mt-2 bg-blue-600 text-white hover:bg-blue-700 border-none"
-                    >
-                      Select File
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -751,13 +556,13 @@ export default function VerifyBusiness() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-2">
-              <Label htmlFor="additionalInfo">Additional Information (Optional)</Label>
+              <Label htmlFor="business_bio">Business Bio (Optional)</Label>
               <Textarea
-                id="additionalInfo"
-                name="additionalInfo"
-                value={formData.additionalInfo}
+                id="business_bio"
+                name="business_bio"
+                value={formData.business_bio}
                 onChange={handleInputChange}
-                placeholder="Any additional information you'd like to provide"
+                placeholder="A brief description of your business"
                 rows={4}
               />
             </div>
@@ -786,21 +591,20 @@ export default function VerifyBusiness() {
                 className="rounded border-gray-300"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                required
               />
               <Label htmlFor="terms" className="text-sm font-normal">
-                I agree to the terms and conditions
+                I agree to the terms and conditions *
               </Label>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-            <Button variant="outline" asChild>
+            <Button type="button" variant="outline" asChild>
               <Link href="/merchant/profile">Cancel</Link>
             </Button>
             <Button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={isSubmitting || uploadingField !== null}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>

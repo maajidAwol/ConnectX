@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useRef, useEffect } from "react"
 import { motion, useInView, useAnimation } from "framer-motion"
-import { CheckCircle, Code, Rocket } from "lucide-react"
+import { CheckCircle, Code, Rocket, Key } from "lucide-react"
 
 interface Step {
   id: number
@@ -22,12 +22,18 @@ const steps: Step[] = [
   },
   {
     id: 2,
+    title: "Generate API Key",
+    description: "Create and securely store your unique API key. This key will only be shown once at creation, so make sure to save it safely.",
+    icon: <Key className="h-8 w-8" />,
+  },
+  {
+    id: 3,
     title: "Configure Your Store",
     description: "Set up your products, pricing, and payment methods using our intuitive dashboard or API.",
     icon: <Code className="h-8 w-8" />,
   },
   {
-    id: 3,
+    id: 4,
     title: "Launch Your Business",
     description: "Connect your frontend to our API and start selling. We handle the backend complexity.",
     icon: <Rocket className="h-8 w-8" />,
@@ -67,7 +73,38 @@ export function ProcessSteps() {
                 },
               }}
             >
-              <div className="flex flex-col items-center md:flex-row md:gap-8">
+              {/* Mobile layout (hidden on md and up) */}
+              <div className="flex md:hidden">
+                {/* Step number circle - positioned on the line like desktop */}
+                <div className="absolute left-4 top-4 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border-4 border-background bg-[#02569B] text-white">
+                  {step.id}
+                </div>
+
+                {/* Content */}
+                <div className="ml-10 pt-1">
+                  <motion.div
+                    className="mb-3 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-[#02569B] to-[#0288d1] text-white"
+                    initial={{ scale: 0 }}
+                    animate={controls}
+                    variants={{
+                      hidden: { scale: 0 },
+                      visible: {
+                        scale: 1,
+                        transition: { duration: 0.4, delay: index * 0.3 + 0.2 },
+                      },
+                    }}
+                  >
+                    {step.icon}
+                  </motion.div>
+                  <div className="mt-1">
+                    <h3 className="text-xl font-bold">{step.title}</h3>
+                    <p className="text-muted-foreground mt-2">{step.description}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop layout (hidden on small screens, visible on md and up) */}
+              <div className="hidden md:flex flex-col items-center md:flex-row md:gap-8">
                 <div className="flex md:w-1/2 md:justify-end md:pr-8">
                   {index % 2 === 0 ? (
                     <div className="relative z-10 md:text-right">
@@ -118,10 +155,7 @@ export function ProcessSteps() {
                       <p className="text-muted-foreground">{step.description}</p>
                     </div>
                   ) : (
-                    <div className="block md:hidden">
-                      <h3 className="text-xl font-bold">{step.title}</h3>
-                      <p className="text-muted-foreground">{step.description}</p>
-                    </div>
+                    <div className="hidden" />
                   )}
                 </div>
               </div>

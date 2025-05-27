@@ -1,72 +1,85 @@
 import uuid
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+    Permission,
+)
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import Permission
 from tenants.models import Tenant
 
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError('The Email field must be set')
+            raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+        user.set_password(password)  # This hashes the password
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('role', User.ADMIN)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("role", User.ADMIN)
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
 
-        # Create the superuser
-        permissions = Permission.objects.all()
         user = self.create_user(email, password, **extra_fields)
-
-        # Assign all permissions
-        user.user_permissions.set(permissions)
+        user.user_permissions.set(Permission.objects.all())
         user.save(using=self._db)
         return user
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    ADMIN = 'admin'
-    CUSTOMER = 'customer'
-    OWNER = 'owner'  
-    
+    ADMIN = "admin"
+    CUSTOMER = "customer"
+    OWNER = "owner"
+    MEMBER = "member"
+
     ROLE_CHOICES = [
-        (ADMIN, 'Admin'),
-        (CUSTOMER, 'Customer'),
-        (OWNER, 'Owner'),
+        (ADMIN, "admin"),
+        (CUSTOMER, "customer"),
+        (OWNER, "owner"),
+        (MEMBER, "member"),
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="users")
+    tenant = models.ForeignKey(
+        Tenant, on_delete=models.CASCADE, related_name="users", null=True, blank=True
+    )
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=255)  # Hashed password
+    age = models.PositiveIntegerField(null=True, blank=True)
+    GENDER_CHOICES = [
+        ("male", "Male"),
+        ("female", "Female"),
+        ("none", "None"),
+    ]
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default="none", null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=CUSTOMER)
+    bio = models.TextField(null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
     avatar_url = models.URLField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["name", "role"]
 
     def save(self, *args, **kwargs):
         # Ensure password is hashed before saving
-        if self.password and not self.password.startswith('pbkdf2_sha256$'):
+        if self.password and not self.password.startswith("pbkdf2_sha256$"):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
@@ -74,4 +87,4 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.name} ({self.email})"
 
     class Meta:
-        db_table = 'users'
+        db_table = "users"

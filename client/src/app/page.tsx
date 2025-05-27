@@ -32,11 +32,13 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-white h-11">
-                    Get Started Free
-                  </Button>
-                  <Link href="/docs">
-                    <Button variant="outline" className="border-[#02569B] text-[#02569B] hover:bg-[#02569B]/10 h-11">
+                  <Link href="/signup">
+                    <Button className="bg-gradient-to-r from-[#02569B] to-[#0288d1] hover:opacity-90 text-white h-11 w-full" name="Sign Up">
+                      Get Started Free
+                    </Button>
+                  </Link>
+                  <Link href="/docs" className="">
+                    <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600/10 h-11 w-full">
                       View Documentation
                     </Button>
                   </Link>
@@ -74,7 +76,7 @@ export default function Home() {
                         <div className="h-3 w-3 rounded-full bg-yellow-500" />
                         <div className="h-3 w-3 rounded-full bg-green-500" />
                       </div>
-                      <div className="text-xs text-muted-foreground">dashboard.connectx.com</div>
+                      <div className="text-xs text-muted-foreground">https://connect-x-peach.vercel.app/merchant</div>
                     </div>
                     <div className="space-y-4">
                       <div className="rounded-lg bg-muted p-4">
@@ -169,9 +171,9 @@ export default function Home() {
                 <div className="mb-4 text-[#02569B]">
                   <Package className="h-10 w-10" />
                 </div>
-                <h3 className="mb-2 text-xl font-bold">Inventory Management</h3>
+                <h3 className="mb-2 text-xl font-bold">Stock Management</h3>
                 <p className="text-sm text-muted-foreground">
-                  Efficiently track and manage your product inventory with real-time updates and alerts.
+                  Efficiently track and manage your product stock with real-time updates and alerts.
                 </p>
                 <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-emerald-400 to-green-500 transition-all duration-300 group-hover:w-full"></div>
               </div>
@@ -205,9 +207,9 @@ export default function Home() {
                 <div className="mb-4 text-[#02569B]">
                   <Users className="h-10 w-10" />
                 </div>
-                <h3 className="mb-2 text-xl font-bold">Dual Product Listings</h3>
+                <h3 className="mb-2 text-xl font-bold">Dual Product Addition</h3>
                 <p className="text-sm text-muted-foreground">
-                  List products as private or public, fostering a collaborative marketplace ecosystem.
+                  Add products as private or public, fostering a collaborative marketplace ecosystem and list them on your storefront.
                 </p>
                 <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-emerald-400 to-green-500 transition-all duration-300 group-hover:w-full"></div>
               </div>
@@ -254,7 +256,7 @@ export default function Home() {
                 </div>
                 <pre className="overflow-x-auto text-sm text-zinc-300">
                   <code>{`// Example: Creating a new product
-fetch('https://api.connectx.com/products', {
+fetch('https://connectx-backend-295168525338.europe-west1.run.app/api/products', {
 method: 'POST',
 headers: {
   'Content-Type': 'application/json',
@@ -270,7 +272,8 @@ body: JSON.stringify({
 })
 .then(response => response.json())
 .then(data => console.log(data))
-.catch(error => console.error('Error:', error));`}</code>
+.catch(error => console.error('Error:', error));`}
+                  </code>
                 </pre>
               </div>
             </div>
@@ -394,13 +397,13 @@ body: JSON.stringify({
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row mt-6">
                 <Link href="/signup">
-                  <Button className="bg-white text-[#02569B] hover:bg-blue-50 px-8 h-12 rounded-md">
+                  <Button className="bg-white text-blue-600 hover:bg-blue-50 px-8 h-12 rounded-md">
                     Get Started Now
                   </Button>
                 </Link>
-                <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 h-12 rounded-md">
+                {/* <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 h-12 rounded-md">
                   Schedule a Demo
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
@@ -506,11 +509,11 @@ body: JSON.stringify({
                     About
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link href="#" className="text-muted-foreground hover:text-foreground">
                     Careers
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link href="#" className="text-muted-foreground hover:text-foreground">
                     Contact

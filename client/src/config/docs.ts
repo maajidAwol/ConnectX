@@ -7,15 +7,7 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       items: [
         {
           title: "Introduction",
-          href: "/docs",
-        },
-        {
-          title: "Installation",
-          href: "/docs/installation",
-        },
-        {
-          title: "Quickstart",
-          href: "/docs/quickstart",
+          href: "/docs/quickstart/introduction",
         },
       ],
     },
@@ -23,16 +15,25 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       title: "Authentication",
       items: [
         {
-          title: "Overview",
+          title: "Authentication",
           href: "/docs/authentication/overview",
         },
         {
-          title: "API Keys",
-          href: "/docs/authentication/api-keys",
+          title: "Login",
+          href: "/docs/authentication/login",
         },
         {
-          title: "OAuth",
-          href: "/docs/authentication/oauth",
+          title: "Register",
+          href: "/docs/authentication/register",
+        },
+      ],
+    },
+    {
+      title: "User Management",
+      items: [
+        {
+          title: "Users",
+          href: "/docs/users/overview",
         },
       ],
     },
@@ -40,24 +41,17 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       title: "Product APIs",
       items: [
         {
-          title: "Overview",
+          title: "Products",
           href: "/docs/products/overview",
         },
+      ],
+    },
+    {
+      title: "Categories",
+      items: [
         {
-          title: "Create Products",
-          href: "/docs/products/create",
-        },
-        {
-          title: "Retrieve Products",
-          href: "/docs/products/retrieve",
-        },
-        {
-          title: "Update Products",
-          href: "/docs/products/update",
-        },
-        {
-          title: "Delete Products",
-          href: "/docs/products/delete",
+          title: "Categories",
+          href: "/docs/categories/overview",
         },
       ],
     },
@@ -65,20 +59,8 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       title: "Order APIs",
       items: [
         {
-          title: "Overview",
+          title: "Orders",
           href: "/docs/orders/overview",
-        },
-        {
-          title: "Create Orders",
-          href: "/docs/orders/create",
-        },
-        {
-          title: "Retrieve Orders",
-          href: "/docs/orders/retrieve",
-        },
-        {
-          title: "Update Orders",
-          href: "/docs/orders/update",
         },
       ],
     },
@@ -86,37 +68,30 @@ export const docsConfig: { sidebarNav: SidebarNavItem[] } = {
       title: "Payment Integration",
       items: [
         {
-          title: "Overview",
+          title: "Payments",
           href: "/docs/payments/overview",
         },
         {
-          title: "Stripe",
-          href: "/docs/payments/stripe",
-        },
-        {
-          title: "PayPal",
-          href: "/docs/payments/paypal",
-        },
-        {
-          title: "Chapa",
+          title: "Chapa Integration",
           href: "/docs/payments/chapa",
         },
       ],
     },
     {
-      title: "Error Handling",
+      title: "Shipping Management",
       items: [
         {
-          title: "Overview",
-          href: "/docs/errors/overview",
+          title: "Shipping",
+          href: "/docs/shipping/overview",
         },
+      ],
+    },
+    {
+      title: "Reviews",
+      items: [
         {
-          title: "Common Errors",
-          href: "/docs/errors/common-errors",
-        },
-        {
-          title: "Best Practices",
-          href: "/docs/errors/best-practices",
+          title: "Reviews",
+          href: "/docs/reviews/overview",
         },
       ],
     },
