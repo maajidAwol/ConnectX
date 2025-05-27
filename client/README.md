@@ -7,7 +7,7 @@ ConnectX is a centralized, multi-tenant e-commerce platform that democratizes on
 ## 🚀 Features
 
 ### 🏪 **Merchant Dashboard**
-- **Product Management**: Complete CRUD operations for products with categories, stock tracking, and inventory management
+- **Product Management**: Complete CRUD operations for products with categories and stock tracking
 - **Order Processing**: Streamlined order fulfillment with automated processing and status tracking
 - **Category Management**: Hierarchical product categorization with icon support
 - **Analytics & Reporting**: Revenue tracking, sales analytics, and performance metrics
