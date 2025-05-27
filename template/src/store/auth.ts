@@ -18,6 +18,8 @@ export interface User {
   created_at: string;
   updated_at: string;
   groups: string[];
+  gender?: 'male' | 'female';
+  age?: number | null;
 }
 
 interface LoginResponse {
