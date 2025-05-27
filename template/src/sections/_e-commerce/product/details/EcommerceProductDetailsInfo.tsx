@@ -64,8 +64,13 @@ export default function EcommerceProductDetailsInfo({
   }));
 
   const handleAddToCart = () => {
+    if (!id) {
+      console.error('Product ID is missing');
+      return;
+    }
+    
     addItem({
-      id,
+      id: id.toString(),
       name,
       price,
       quantity,
