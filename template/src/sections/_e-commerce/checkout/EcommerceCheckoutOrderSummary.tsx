@@ -60,28 +60,28 @@ export default function EcommerceCheckoutOrderSummary({
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Subtotal
           </Typography>
-          <Typography variant="subtitle2">${subtotal}</Typography>
+          <Typography variant="subtitle2">{fCurrency(subtotal)}</Typography>
         </Stack>
 
         <Stack direction="row" justifyContent="space-between">
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Shipping
           </Typography>
-          <Typography variant="subtitle2">${shipping}</Typography>
+          <Typography variant="subtitle2">{fCurrency(shipping)}</Typography>
         </Stack>
 
         <Stack direction="row" justifyContent="space-between">
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Tax
           </Typography>
-          <Typography variant="subtitle2">${tax}</Typography>
+          <Typography variant="subtitle2">{fCurrency(tax)}</Typography>
         </Stack>
 
         <Stack direction="row" justifyContent="space-between">
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Discount
           </Typography>
-          <Typography variant="subtitle2">-${discount}</Typography>
+          <Typography variant="subtitle2">-{fCurrency(discount)}</Typography>
         </Stack>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
@@ -89,7 +89,7 @@ export default function EcommerceCheckoutOrderSummary({
         <Stack direction="row" justifyContent="space-between">
           <Typography variant="subtitle1">Total</Typography>
           <Typography variant="subtitle1" sx={{ color: 'error.main' }}>
-            ${total}
+            {fCurrency(total)}
           </Typography>
         </Stack>
 
