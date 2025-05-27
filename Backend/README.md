@@ -112,7 +112,8 @@ The project includes a visual representation of the database schema. To generate
    ```bash
    python manage.py graph_models -a -o schema.png
    ```
-![Database Schema](schema.png)
+   ![Database Schema](schema.png)
+
 ## 🔧 Development
 
 ### Code Style
@@ -150,19 +151,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-
 - [API Documentation](https://connectx-backend-295168525338.europe-west1.run.app)
 - [Issue Tracker](https://github.com/AASTUSoftwareEngineeringDepartment/ConnectX/issues)
 
 ## 👥 Authors
 
-
-
 ## 🙏 Acknowledgments
 
 - Django Documentation
 - Django REST Framework
-
 
 ## 📞 Support
 
