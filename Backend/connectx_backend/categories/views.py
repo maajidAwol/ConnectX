@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Category
 from .serializers import CategorySerializer
 from users.permissions import (
@@ -12,6 +13,7 @@ from django.db.models import Q
 
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_permissions(self):
         """Allow all authenticated users to read, but only tenant owners can write."""
