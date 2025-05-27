@@ -12,7 +12,9 @@ import {
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // utils
-import { fCurrency } from 'src/utils/formatNumber';
+import { fCurrency } from 'src/utils/currency';
+// types
+import { CartItem } from 'src/store/cart';
 // components
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
