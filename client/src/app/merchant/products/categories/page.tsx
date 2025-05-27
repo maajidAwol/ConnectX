@@ -52,24 +52,39 @@ export default function ProductCategories() {
   const handleAddCategory = async (data: {
     name: string
     description: string
-    icon?: string
-    parent?: string | null
+    icon?: File
+    parent?: string
   }) => {
     setIsSubmitting(true)
     try {
+      // Add the category via the store
       await addCategory(data)
-      await fetchCategories() // Refresh the list
+      
+      // Refresh categories from backend to get the latest data
+      // Reset to first page to see the new category
+      setCurrentPage(1)
+      await fetchCategories({ page: 1, search: searchQuery })
+      
     } finally {
       setIsSubmitting(false)
     }
   }
 
   // Update an existing category
-  const handleUpdateCategory = async (id: string, data: Partial<any>) => {
+  const handleUpdateCategory = async (id: string, data: {
+    name: string
+    description: string
+    icon?: File
+    parent?: string
+  }) => {
     setIsSubmitting(true)
     try {
+      // Update the category via the store
       await updateCategory(id, data)
-      await fetchCategories() // Refresh the list
+      
+      // Refresh categories from backend to get the latest data
+      await fetchCategories({ page: currentPage, search: searchQuery })
+      
     } finally {
       setIsSubmitting(false)
     }
@@ -79,8 +94,12 @@ export default function ProductCategories() {
   const handleDeleteCategory = async (id: string) => {
     setIsSubmitting(true)
     try {
+      // Delete the category via the store
       await deleteCategory(id)
-      await fetchCategories() // Refresh the list
+      
+      // Refresh categories from backend to get the latest data
+      await fetchCategories({ page: currentPage, search: searchQuery })
+      
     } finally {
       setIsSubmitting(false)
     }
@@ -163,7 +182,7 @@ export default function ProductCategories() {
           <AddCategoryDialog 
             categories={categories} 
             onAddCategory={handleAddCategory} 
-            isSubmitting={isSubmitting} 
+            isSubmitting={isSubmitting || isLoading} 
           />
         )}
       </div>
@@ -280,28 +299,39 @@ export default function ProductCategories() {
               </div>
             </div>
           ) : (
-            <div className="rounded-md border">
-              <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
-                <div className="col-span-5">Category Name</div>
-                <div className="col-span-3">Products</div>
-                <div className="col-span-2">Parent</div>
-                <div className="col-span-2 text-right">Actions</div>
-              </div>
-              <div className="divide-y">
-                {categories.length > 0 ? (
-                  categories.map((category) => (
-                    <CategoryListItem
-                      key={category.id}
-                      category={category}
-                      onDelete={handleDeleteCategory}
-                      onUpdate={handleUpdateCategory}
-                      isSubmitting={isSubmitting}
-                      productCount={0} // In a real app, this would be a count from the API
-                    />
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-muted-foreground">No categories found matching your search.</div>
-                )}
+            <div className="relative">
+              {isSubmitting && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-md">
+                  <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-lg border">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm font-medium">Updating categories...</span>
+                  </div>
+                </div>
+              )}
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                  <div className="col-span-5">Category Name</div>
+                  <div className="col-span-3">Products</div>
+                  <div className="col-span-2">Parent</div>
+                  <div className="col-span-2 text-right">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {categories.length > 0 ? (
+                    categories.map((category) => (
+                      <CategoryListItem
+                        key={category.id}
+                        category={category}
+                        onDelete={handleDeleteCategory}
+                        onUpdate={handleUpdateCategory}
+                        isSubmitting={isSubmitting || isLoading}
+                        productCount={0} // In a real app, this would be a count from the API
+                        categories={categories}
+                      />
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">No categories found matching your search.</div>
+                  )}
+                </div>
               </div>
             </div>
           )}
