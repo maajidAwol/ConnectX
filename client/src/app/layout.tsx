@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: "ConnectX - Your Plug-and-Play E-Commerce Backend",
   description:
     "A centralized, multi-tenant backend framework for e-commerce, empowering entrepreneurs to build without barriers.",
+  icons: {
+    icon: "https://res.cloudinary.com/denhfpk51/image/upload/v1748338458/categories/categories/2066b626-880c-45fd-bab5-5fa0e926ab25.png",
+  },
 }
 
 export default function RootLayout({
