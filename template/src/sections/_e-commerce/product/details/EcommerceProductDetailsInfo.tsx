@@ -77,6 +77,20 @@ export default function EcommerceProductDetailsInfo({
     });
   };
 
+  const handleBuyNow = () => {
+    addItem({
+      id,
+      name,
+      price,
+      quantity,
+      cover_url: '',
+      color,
+      colors: [],
+      sizes: [],
+      category: '',
+    });
+  };
+
   const handleOpenReviewForm = () => {
     setOpenReviewForm(true);
   };
@@ -157,12 +171,11 @@ export default function EcommerceProductDetailsInfo({
           </Button>
 
           <Button
-            component={NextLink}
-            href={paths.eCommerce.checkout}
             fullWidth={!isMdUp}
             size="large"
             variant="contained"
             disabled={inStock === 0}
+            onClick={handleBuyNow}
             sx={{
               bgcolor: 'success.main',
               color: 'success.contrastText',
