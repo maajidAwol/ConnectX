@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { UploadImageArea } from "./upload-image-area"
 
 interface ProductImagesTabProps {
-  coverImage: { file: File; preview: string; uploading?: boolean } | null
-  images: Array<{ file: File; preview: string; uploading?: boolean }>
+  coverImage: { file?: File; preview: string; uploading?: boolean; existing?: boolean } | null
+  images: Array<{ file?: File; preview: string; uploading?: boolean; existing?: boolean }>
   onAddCoverImage: (files: FileList) => void
   onRemoveCoverImage: () => void
   onAddImage: (files: FileList) => void
