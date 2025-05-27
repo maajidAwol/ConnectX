@@ -38,7 +38,7 @@ export default function Home() {
                     </Button>
                   </Link>
                   <Link href="/docs" className="">
-                    <Button variant="outline" className="border-[#02569B] text-[#02569B] hover:bg-[#02569B]/10 h-11 w-full">
+                    <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600/10 h-11 w-full">
                       View Documentation
                     </Button>
                   </Link>
@@ -397,13 +397,13 @@ body: JSON.stringify({
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row mt-6">
                 <Link href="/signup">
-                  <Button className="bg-white text-[#02569B] hover:bg-blue-50 px-8 h-12 rounded-md">
+                  <Button className="bg-white text-blue-600 hover:bg-blue-50 px-8 h-12 rounded-md">
                     Get Started Now
                   </Button>
                 </Link>
-                <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 h-12 rounded-md">
+                {/* <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 h-12 rounded-md">
                   Schedule a Demo
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
@@ -509,11 +509,11 @@ body: JSON.stringify({
                     About
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link href="#" className="text-muted-foreground hover:text-foreground">
                     Careers
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link href="#" className="text-muted-foreground hover:text-foreground">
                     Contact
