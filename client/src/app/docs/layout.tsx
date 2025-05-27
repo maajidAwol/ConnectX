@@ -38,8 +38,8 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
         <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 md:sticky md:block overflow-y-auto py-6 pr-2 md:py-10">
           <DocSidebarNav items={docsConfig.sidebarNav} />
         </aside>
-        <main className="relative py-6 lg:gap-10 lg:py-10 xl:grid xl:grid-cols-[1fr_200px]">
-          <div className="mx-auto w-full min-w-0">
+        <main className="relative py-6 lg:gap-10 lg:py-10">
+          <div className="mx-auto w-full min-w-0 max-w-4xl">
             <div className="mb-4 hidden md:flex items-center space-x-1 text-sm text-muted-foreground">
               <div className="overflow-hidden text-ellipsis whitespace-nowrap">Docs</div>
               <ChevronRight className="h-4 w-4" />
@@ -50,33 +50,6 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
               <p className="text-lg text-muted-foreground">Learn how to integrate ConnectX into your application.</p>
             </div>
             <div className="pb-12 pt-8">{children}</div>
-          </div>
-          <div className="hidden text-sm xl:block">
-            <div className="sticky top-16 -mt-10 max-h-[calc(var(--vh)-4rem)] overflow-y-auto pt-10">
-              <div className="pb-4">
-                <div className="mb-2 rounded-[0.5rem] bg-muted px-4 py-1 font-medium">On This Page</div>
-                <div className="mt-2 flex flex-col space-y-2 text-sm">
-                  <Link href="#introduction" className="text-muted-foreground hover:text-foreground">
-                    Introduction
-                  </Link>
-                  <Link href="#getting-started" className="text-muted-foreground hover:text-foreground">
-                    Getting Started
-                  </Link>
-                  <Link href="#authentication" className="text-muted-foreground hover:text-foreground">
-                    Authentication
-                  </Link>
-                  <Link href="#making-requests" className="text-muted-foreground hover:text-foreground">
-                    Making Requests
-                  </Link>
-                  <Link href="#error-handling" className="text-muted-foreground hover:text-foreground">
-                    Error Handling
-                  </Link>
-                  <Link href="#rate-limits" className="text-muted-foreground hover:text-foreground">
-                    Rate Limits
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </main>
       </div>
