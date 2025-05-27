@@ -26,24 +26,29 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Pencil, Upload } from "lucide-react"
+import { Pencil, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 import type { Category } from "@/store/useCategoryStore"
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Category name must be at least 2 characters.",
-  }).optional(),
+  }),
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
-  }).optional(),
-  parent: z.string().nullable().optional(),
+  }),
+  parent: z.string().optional(),
 })
 
 interface EditCategoryDialogProps {
   category: Category
   categories: Category[]
-  onEditCategory: (id: string, data: Partial<Category>) => Promise<void>
+  onEditCategory: (id: string, data: {
+    name: string
+    description: string
+    icon?: File
+    parent?: string
+  }) => Promise<void>
   isSubmitting: boolean
 }
 
@@ -62,67 +67,93 @@ export function EditCategoryDialog({
     defaultValues: {
       name: category.name,
       description: category.description,
-      parent: category.parent,
+      parent: category.parent || undefined,
     },
   })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select a valid image file", { className: 'bg-red-500 text-white' })
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB", { className: 'bg-red-500 text-white' })
+        return
+      }
+      
       setIconFile(file)
+      
+      // Create preview URL
       const previewUrl = URL.createObjectURL(file)
       setIconPreview(previewUrl)
     }
   }
 
+  const handleRemoveFile = () => {
+    setIconFile(null)
+    if (iconPreview) {
+      URL.revokeObjectURL(iconPreview)
+      setIconPreview(null)
+    }
+    // Reset the file input
+    const fileInput = document.getElementById('edit-icon-upload') as HTMLInputElement
+    if (fileInput) {
+      fileInput.value = ''
+    }
+  }
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const updateData: Partial<Category> = {}
-      
-      // Only include changed fields
-      if (values.name !== category.name) updateData.name = values.name
-      if (values.description !== category.description) updateData.description = values.description
-      if (values.parent !== category.parent) {
-        updateData.parent = values.parent === "none" ? null : values.parent
-      }
-      if (iconFile) {
-        updateData.icon = await convertFileToBase64(iconFile)
+      const updateData = {
+        name: values.name,
+        description: values.description,
+        icon: iconFile || undefined,
+        parent: values.parent || undefined
       }
 
       await onEditCategory(category.id, updateData)
       toast.success("Category updated successfully", { className: 'bg-[#02569B] text-white' })
       setOpen(false)
       form.reset()
-      setIconFile(null)
-      setIconPreview(null)
+      handleRemoveFile()
     } catch (error) {
       console.error("Error updating category:", error)
       toast.error("Failed to update category. Please try again.", { className: 'bg-red-500 text-white' })
     }
   }
 
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = (error) => reject(error)
-    })
+  const handleDialogClose = (isOpen: boolean) => {
+    setOpen(isOpen)
+    if (!isOpen) {
+      // Clean up when dialog closes
+      form.reset({
+        name: category.name,
+        description: category.description,
+        parent: category.parent || undefined,
+      })
+      handleRemoveFile()
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="ghost" size="icon">
           <Pencil className="h-4 w-4" />
-          <span>Edit</span>
+          <span className="sr-only">Edit</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Category</DialogTitle>
           <DialogDescription>
-            Make changes to the category. Only modified fields will be updated.
+            Make changes to the category details below.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -132,7 +163,7 @@ export function EditCategoryDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category Name</FormLabel>
+                  <FormLabel>Category Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input placeholder="Enter category name" {...field} />
                   </FormControl>
@@ -145,11 +176,12 @@ export function EditCategoryDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Enter category description"
                       className="resize-none"
+                      rows={3}
                       {...field}
                     />
                   </FormControl>
@@ -164,8 +196,8 @@ export function EditCategoryDialog({
                 <FormItem>
                   <FormLabel>Parent Category</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value || undefined}
+                    onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                    value={field.value || "none"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -173,7 +205,7 @@ export function EditCategoryDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="none">None (Top Level Category)</SelectItem>
                       {categories
                         .filter(c => c.id !== category.id) // Prevent self-selection
                         .map((cat) => (
@@ -193,29 +225,91 @@ export function EditCategoryDialog({
             <FormItem>
               <FormLabel>Category Icon</FormLabel>
               <FormControl>
-                <div className="flex flex-col gap-2">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="cursor-pointer"
-                  />
-                  {(iconPreview || category.icon) && (
-                    <div className="mt-2">
-                      <img
-                        src={iconPreview || category.icon || ''}
-                        alt="Icon preview"
-                        className="w-16 h-16 object-cover rounded-md"
+                <div className="space-y-2">
+                  {!iconFile ? (
+                    <div className="space-y-2">
+                      {category.icon && (
+                        <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                          <img
+                            src={category.icon}
+                            alt="Current icon"
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                          <div className="flex-1 text-sm">
+                            <p className="font-medium">Current Icon</p>
+                            <p className="text-muted-foreground">Click below to change</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="edit-icon-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="cursor-pointer"
+                        />
+                        <Upload className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                        <img
+                          src={iconPreview!}
+                          alt="New icon preview"
+                          className="w-10 h-10 object-cover rounded"
+                        />
+                        <div className="flex-1 text-sm">
+                          <p className="font-medium">{iconFile.name}</p>
+                          <p className="text-muted-foreground">
+                            {(iconFile.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveFile}
+                          className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('edit-icon-upload')?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Change Image
+                      </Button>
+                      <input
+                        id="edit-icon-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
                       />
                     </div>
                   )}
                 </div>
               </FormControl>
               <FormDescription>
-                Optional: Upload a new icon for the category
+                Optional: Upload a new icon for the category (max 5MB). Supported formats: JPG, PNG, GIF, WebP
               </FormDescription>
             </FormItem>
             <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => handleDialogClose(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Updating..." : "Update Category"}
               </Button>

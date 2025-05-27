@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search } from 'lucide-react'
@@ -10,9 +12,10 @@ import { AddCategoryDialog } from "@/components/categories/add-category-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from 'lucide-react'
 import useCategoryStore from "@/store/useCategoryStore"
-import { useAuthStore } from "@/store/authStore"
+// import { useAuthStore } from "@/store/authStore"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useTenantStore } from "@/store/tenantStore"
 
 export default function ProductCategories() {
   const { 
@@ -30,40 +33,58 @@ export default function ProductCategories() {
     deleteCategory
   } = useCategoryStore()
   
-  const { isAuthenticated, user, isTenantVerified } = useAuthStore()
-  const isVerified = isTenantVerified()
+  // const { isAuthenticated, user, isTenantVerified } = useAuthStore()
+  const { tenantData, fetchTenantData } = useTenantStore()
+  const isVerified = tenantData?.is_verified || false
+  const verificationStatus = tenantData?.tenant_verification_status || 'unverified'
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [localSearchValue, setLocalSearchValue] = useState(searchQuery)
 
   console.log(isVerified)
 
-  // Fetch categories on component mount
+  // Fetch categories and tenant data on component mount
   useEffect(() => {
     fetchCategories()
-  }, [fetchCategories])
+    fetchTenantData()
+  }, [fetchCategories, fetchTenantData])
 
   // Add a new category
   const handleAddCategory = async (data: {
     name: string
     description: string
-    icon?: string
-    parent?: string | null
+    icon?: File
+    parent?: string
   }) => {
     setIsSubmitting(true)
     try {
+      // Add the category via the store
       await addCategory(data)
-      await fetchCategories() // Refresh the list
+      
+      // Refresh categories from backend to get the latest data
+      // Reset to first page to see the new category
+      setCurrentPage(1)
+      await fetchCategories({ page: 1, search: searchQuery })
+      
     } finally {
       setIsSubmitting(false)
     }
   }
 
   // Update an existing category
-  const handleUpdateCategory = async (id: string, data: Partial<any>) => {
+  const handleUpdateCategory = async (id: string, data: {
+    name: string
+    description: string
+    icon?: File
+    parent?: string
+  }) => {
     setIsSubmitting(true)
     try {
+      // Update the category via the store
       await updateCategory(id, data)
-      await fetchCategories() // Refresh the list
+      
+      // Refresh categories from backend to get the latest data
+      await fetchCategories({ page: currentPage, search: searchQuery })
+      
     } finally {
       setIsSubmitting(false)
     }
@@ -73,8 +94,12 @@ export default function ProductCategories() {
   const handleDeleteCategory = async (id: string) => {
     setIsSubmitting(true)
     try {
+      // Delete the category via the store
       await deleteCategory(id)
-      await fetchCategories() // Refresh the list
+      
+      // Refresh categories from backend to get the latest data
+      await fetchCategories({ page: currentPage, search: searchQuery })
+      
     } finally {
       setIsSubmitting(false)
     }
@@ -157,17 +182,54 @@ export default function ProductCategories() {
           <AddCategoryDialog 
             categories={categories} 
             onAddCategory={handleAddCategory} 
-            isSubmitting={isSubmitting} 
+            isSubmitting={isSubmitting || isLoading} 
           />
         )}
       </div>
 
       {!isVerified && (
-        <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+        <Alert className={
+          verificationStatus === 'under_review' 
+            ? "bg-blue-50 text-blue-800 border-blue-200"
+            : verificationStatus === 'rejected'
+            ? "bg-red-50 text-red-800 border-red-200"
+            : verificationStatus === 'pending'
+            ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+            : "bg-amber-50 text-amber-800 border-amber-200"
+        }>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Verification Required</AlertTitle>
+          <AlertTitle>
+            {verificationStatus === 'under_review' 
+              ? 'Business Under Review'
+              : verificationStatus === 'rejected'
+              ? 'Verification Rejected'
+              : verificationStatus === 'pending'
+              ? 'Verification Pending'
+              : 'Verification Required'
+            }
+          </AlertTitle>
           <AlertDescription>
-            Your business is not verified yet. Only verified merchants can manage categories.
+            {verificationStatus === 'under_review' 
+              ? 'Your business verification is currently under review. You cannot add new categories until the review is complete. You can still view existing categories.'
+              : verificationStatus === 'rejected'
+              ? 'Your business verification was rejected. Please review the feedback and resubmit your verification documents. Only verified merchants can manage categories.'
+              : verificationStatus === 'pending'
+              ? 'Your business verification is pending review. You cannot add new categories until verification is approved. You can still view existing categories.'
+              : 'Your business is not verified yet. Only verified merchants can manage categories.'
+            }
+            {(verificationStatus === 'unverified' || verificationStatus === 'rejected') && (
+              <div className="mt-2">
+                <Link href="/merchant/profile/verify">
+                  <Button variant="outline" className={
+                    verificationStatus === 'rejected'
+                      ? "bg-white border-red-300 text-red-800 hover:bg-red-100"
+                      : "bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                  }>
+                    {verificationStatus === 'rejected' ? 'Resubmit Verification' : 'Verify Your Business'}
+                  </Button>
+                </Link>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -237,28 +299,39 @@ export default function ProductCategories() {
               </div>
             </div>
           ) : (
-            <div className="rounded-md border">
-              <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
-                <div className="col-span-5">Category Name</div>
-                <div className="col-span-3">Products</div>
-                <div className="col-span-2">Parent</div>
-                <div className="col-span-2 text-right">Actions</div>
-              </div>
-              <div className="divide-y">
-                {categories.length > 0 ? (
-                  categories.map((category) => (
-                    <CategoryListItem
-                      key={category.id}
-                      category={category}
-                      onDelete={handleDeleteCategory}
-                      onUpdate={handleUpdateCategory}
-                      isSubmitting={isSubmitting}
-                      productCount={0} // In a real app, this would be a count from the API
-                    />
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-muted-foreground">No categories found matching your search.</div>
-                )}
+            <div className="relative">
+              {isSubmitting && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-md">
+                  <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-lg border">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm font-medium">Updating categories...</span>
+                  </div>
+                </div>
+              )}
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 border-b bg-muted/50 p-3 text-sm font-medium">
+                  <div className="col-span-5">Category Name</div>
+                  <div className="col-span-3">Products</div>
+                  <div className="col-span-2">Parent</div>
+                  <div className="col-span-2 text-right">Actions</div>
+                </div>
+                <div className="divide-y">
+                  {categories.length > 0 ? (
+                    categories.map((category) => (
+                      <CategoryListItem
+                        key={category.id}
+                        category={category}
+                        onDelete={handleDeleteCategory}
+                        onUpdate={handleUpdateCategory}
+                        isSubmitting={isSubmitting || isLoading}
+                        productCount={0} // In a real app, this would be a count from the API
+                        categories={categories}
+                      />
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">No categories found matching your search.</div>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -39,16 +39,6 @@ const navigations = [
     icon: <Iconify icon="carbon:document" />,
   },
   {
-    title: 'Wishlist',
-    path: paths.eCommerce.account.wishlist,
-    icon: <Iconify icon="carbon:favorite" />,
-  },
-  {
-    title: 'Vouchers',
-    path: paths.eCommerce.account.vouchers,
-    icon: <Iconify icon="carbon:cut-out" />,
-  },
-  {
     title: 'Payment',
     path: paths.eCommerce.account.payment,
     icon: <Iconify icon="carbon:purchase" />,

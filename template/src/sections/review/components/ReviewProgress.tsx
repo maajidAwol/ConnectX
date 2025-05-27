@@ -5,26 +5,40 @@ import ReviewProgressItem from './ReviewProgressItem';
 
 // ----------------------------------------------------------------------
 
-const RATINGS = [
-  { value: '5start', number: 5212 },
-  { value: '4start', number: 2442 },
-  { value: '3start', number: 523 },
-  { value: '2start', number: 423 },
-  { value: '1start', number: 80 },
-];
+type RatingDistribution = {
+  '5': number;
+  '4': number;
+  '3': number;
+  '2': number;
+  '1': number;
+};
+
+type Props = StackProps & {
+  ratingDistribution: RatingDistribution;
+  totalReviews: number;
+};
 
 // ----------------------------------------------------------------------
 
-export default function ReviewProgress({ ...other }: StackProps) {
-  const totals = RATINGS.map((rating) => rating.number).reduce(
-    (accumulator: number, curr: number) => accumulator + curr
-  );
+export default function ReviewProgress({ ratingDistribution, totalReviews, ...other }: Props) {
+  const ratings = [
+    { value: '5', number: ratingDistribution['5'] },
+    { value: '4', number: ratingDistribution['4'] },
+    { value: '3', number: ratingDistribution['3'] },
+    { value: '2', number: ratingDistribution['2'] },
+    { value: '1', number: ratingDistribution['1'] },
+  ];
 
   return (
     <RadioGroup>
       <Stack spacing={2} {...other}>
-        {RATINGS.map((rating, index) => (
-          <ReviewProgressItem key={rating.value} rating={rating} index={index} totals={totals} />
+        {ratings.map((rating, index) => (
+          <ReviewProgressItem 
+            key={rating.value} 
+            rating={rating} 
+            index={index} 
+            totals={totalReviews} 
+          />
         ))}
       </Stack>
     </RadioGroup>
