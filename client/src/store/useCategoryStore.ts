@@ -31,10 +31,15 @@ interface CategoryState {
   addCategory: (data: {
     name: string
     description: string
-    icon?: string
-    parent?: string | null
+    icon?: File
+    parent?: string
   }) => Promise<any>
-  updateCategory: (id: string, data: Partial<Category>) => Promise<void>
+  updateCategory: (id: string, data: {
+    name: string
+    description: string
+    icon?: File
+    parent?: string
+  }) => Promise<void>
   deleteCategory: (id: string) => Promise<void>
   canEditCategory: (category: Category) => boolean
 }
@@ -56,7 +61,7 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       // Get auth token from the auth store
-      const { accessToken, isAuthenticated } = useAuthStore.getState()
+      const { accessToken, isAuthenticated, tenantData } = useAuthStore.getState()
       
       if (!isAuthenticated || !accessToken) {
         set({ error: 'Authentication required to view categories', isLoading: false })
@@ -78,12 +83,20 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
       if (search) {
         queryParams.append('search', search)
       }
+
+      // Prepare headers
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${accessToken}`,
+        accept: 'application/json'
+      }
+
+      // Add X-API-Key header if available
+      if (tenantData?.api_key) {
+        headers['X-API-Key'] = tenantData.api_key
+      }
       
       const response = await axios.get(`${API_URL}/categories/?${queryParams.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          accept: 'application/json'
-        }
+        headers
       })
       
       // The API returns { count, next, previous, results }
@@ -120,24 +133,41 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
   addCategory: async (data) => {
     set({ isLoading: true, error: null })
     try {
-      const { accessToken } = useAuthStore.getState()
+      const { accessToken, tenantData } = useAuthStore.getState()
       
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      
+      if (data.icon) {
+        formData.append('icon', data.icon)
+      }
+      
+      // Always include parent field - empty string if no parent selected
+      formData.append('parent', data.parent || '')
+
+      // Prepare headers
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${accessToken}`,
+        'accept': 'application/json'
+      }
+
+      // Add X-API-Key header if available
+      if (tenantData?.api_key) {
+        headers['X-API-Key'] = tenantData.api_key
+      }
+
       const response = await axios.post(
         `${API_URL}/categories/`,
-        data,
+        formData,
         {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'accept': 'application/json'
-          }
+          headers
         }
       )
 
       const newCategory = response.data
-      set((state) => ({
-        categories: [...state.categories, newCategory],
-      }))
+      // Don't add to local state - let the page component refresh from backend
       return newCategory
     } catch (error) {
       console.error('Error adding category:', error)
@@ -148,29 +178,50 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
     }
   },
   
-  updateCategory: async (id: string, data: Partial<Category>) => {
+  updateCategory: async (id: string, data: {
+    name: string
+    description: string
+    icon?: File
+    parent?: string
+  }) => {
     set({ isLoading: true, error: null })
     try {
-      const { accessToken } = useAuthStore.getState()
+      const { accessToken, tenantData } = useAuthStore.getState()
+
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      
+      if (data.icon) {
+        formData.append('icon', data.icon)
+      }
+      
+      // Always include parent field - empty string if no parent selected
+      formData.append('parent', data.parent || '')
+
+      // Prepare headers
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${accessToken}`,
+        'accept': 'application/json'
+      }
+
+      // Add X-API-Key header if available
+      if (tenantData?.api_key) {
+        headers['X-API-Key'] = tenantData.api_key
+      }
       
       const response = await axios.patch(
         `${API_URL}/categories/${id}/`,
-        data,
+        formData,
         {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'accept': 'application/json'
-          }
+          headers
         }
       )
 
       const updatedCategory = response.data
-      set((state) => ({
-        categories: state.categories.map((category) =>
-          category.id === id ? updatedCategory : category
-        ),
-      }))
+      // Don't update local state - let the page component refresh from backend
+      return updatedCategory
     } catch (error) {
       console.error('Error updating category:', error)
       set({ error: error instanceof Error ? error.message : 'An error occurred' })
@@ -183,24 +234,31 @@ const useCategoryStore = create<CategoryState>((set, get) => ({
   deleteCategory: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const { accessToken } = useAuthStore.getState()
+      const { accessToken, tenantData } = useAuthStore.getState()
+
+      // Prepare headers
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${accessToken}`,
+        'accept': 'application/json'
+      }
+
+      // Add X-API-Key header if available
+      if (tenantData?.api_key) {
+        headers['X-API-Key'] = tenantData.api_key
+      }
       
       await axios.delete(
         `${API_URL}/categories/${id}/`,
         {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'accept': 'application/json'
-          }
+          headers
         }
       )
 
-      set((state) => ({
-        categories: state.categories.filter((category) => category.id !== id),
-      }))
+      // Don't update local state - let the page component refresh from backend
     } catch (error) {
       console.error('Error deleting category:', error)
       set({ error: error instanceof Error ? error.message : 'An error occurred' })
+      throw error
     } finally {
       set({ isLoading: false })
     }
