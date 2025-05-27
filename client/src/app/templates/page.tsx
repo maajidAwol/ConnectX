@@ -58,7 +58,12 @@ export default function TemplatesPage() {
                     authentication, and real-time features.
                   </p>
                   <div className="flex gap-3">
-                    <Link href="https://github.com/maajidAwol/ConnectX/tree/main/template" className="flex-1">
+                    <Link 
+                      href="https://github.com/maajidAwol/ConnectX/tree/main/template" 
+                      target="_blank"
+                      rel="noopener noreferrer" 
+                      className="flex-1"
+                    >
                       <Button variant="outline" className="w-full">
                         <Github className="w-4 h-4 mr-2" />
                         GitHub
@@ -112,7 +117,12 @@ export default function TemplatesPage() {
                     performance, beautiful UI, and seamless connectivity.
                   </p>
                   <div className="flex gap-3">
-                    <Link href="https://github.com/maajidAwol/ConnectX/tree/main/mobile/ConnectX" className="flex-1">
+                    <Link 
+                      href="https://github.com/maajidAwol/ConnectX/tree/main/mobile/ConnectX" 
+                      target="_blank"
+                      rel="noopener noreferrer" 
+                      className="flex-1"
+                    >
                       <Button variant="outline" className="w-full">
                         <Github className="w-4 h-4 mr-2" />
                         GitHub
