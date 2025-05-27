@@ -1,13 +1,13 @@
 // next
 import NextLink from 'next/link';
 // @mui
-import { Link, Stack, Divider, Typography, Box } from '@mui/material';
+import { Link, Stack, Box, Typography } from '@mui/material';
 // routes
 import { paths } from 'src/routes/paths';
 // components
 import Logo from 'src/components/logo';
 //
-import { AuthWithSocial, AuthCarousel, AuthLoginForm } from '../components';
+import { AuthCarousel, AuthLoginForm } from '../components';
 
 // ----------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ export default function LoginCoverView() {
             {`Don't have an account? `}
             <Link
               component={NextLink}
-              href={paths.registerIllustration}
+              href={paths.auth.registerIllustration}
               variant="subtitle2"
               color="primary"
             >
@@ -48,14 +48,6 @@ export default function LoginCoverView() {
             </Link>
           </Typography>
         </Stack>
-
-        <AuthWithSocial />
-
-        <Divider sx={{ py: 3 }}>
-          <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-            OR
-          </Typography>
-        </Divider>
 
         <AuthLoginForm />
       </Box>

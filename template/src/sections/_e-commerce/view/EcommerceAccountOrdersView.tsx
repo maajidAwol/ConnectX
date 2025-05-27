@@ -23,7 +23,7 @@ import { useAuthStore } from 'src/store/auth';
 import { apiRequest } from 'src/lib/api-config';
 import Iconify from 'src/components/iconify';
 import { fDateTime } from 'src/utils/format-time';
-import { fCurrency } from 'src/utils/format-number';
+import { fCurrency } from 'src/utils/formatNumber';
 
 interface OrderItem {
   product_name: string;
@@ -176,14 +176,6 @@ export default function EcommerceAccountOrdersView() {
                     <Typography variant="body2" color="text.secondary">Payment Method</Typography>
                     <Typography variant="subtitle2">{selectedOrder.payment_status.method}</Typography>
                   </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">Payment Status</Typography>
-                    <Chip 
-                      label={selectedOrder.payment_status.display_status}
-                      color={selectedOrder.payment_status.display_status === 'Pending' ? 'warning' : 'success'}
-                      size="small"
-        />
-      </Stack>
                   <Stack direction="row" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">Items Count</Typography>
                     <Typography variant="subtitle2">{selectedOrder.items_count}</Typography>

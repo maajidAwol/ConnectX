@@ -1,7 +1,7 @@
 // next
 import NextLink from 'next/link';
 // @mui
-import { Link, Stack, Divider, Container, Typography, Unstable_Grid2 as Grid } from '@mui/material';
+import { Link, Stack, Container, Typography, Unstable_Grid2 as Grid } from '@mui/material';
 // routes
 import { paths } from 'src/routes/paths';
 // hooks
@@ -9,7 +9,7 @@ import useResponsive from 'src/hooks/useResponsive';
 // components
 import Image from 'src/components/image';
 //
-import { AuthWithSocial, AuthLoginForm } from '../components';
+import { AuthLoginForm } from '../components';
 
 // ----------------------------------------------------------------------
 
@@ -70,14 +70,6 @@ export default function LoginIllustrationView() {
             </div>
 
             <AuthLoginForm />
-
-            <Divider>
-              <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                or continue with
-              </Typography>
-            </Divider>
-
-            <AuthWithSocial />
           </Stack>
         </Grid>
       </Grid>

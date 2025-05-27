@@ -1,7 +1,7 @@
 // @mui
 import { Stack, Box, StackProps } from '@mui/material';
 // utils
-import { fCurrency } from 'src/utils/formatNumber';
+import { fCurrency } from 'src/utils/currency';
 
 // ----------------------------------------------------------------------
 

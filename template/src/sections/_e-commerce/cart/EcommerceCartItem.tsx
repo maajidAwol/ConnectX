@@ -1,12 +1,15 @@
 // @mui
-import { Stack, TextField, IconButton, Typography } from '@mui/material';
+import { Stack, Box, Typography, IconButton } from '@mui/material';
 // utils
-import { fCurrency } from 'src/utils/formatNumber';
+import { fCurrency } from 'src/utils/currency';
 // types
 import { IProductItemProps } from 'src/types/product';
 // components
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
+import TextMaxLine from 'src/components/text-max-line';
+// store
+import { useCartStore } from 'src/store/cart';
 
 // ----------------------------------------------------------------------
 

@@ -27,7 +27,7 @@ const VOUCHERS = [
     type: 'shipping',
     label: 'Shipping',
     title: '6% off',
-    description: 'Min. Spend $0',
+    description: 'Min. Spend ETB 0',
     dueOn: add(new Date(), { days: 1 }),
   },
   {
@@ -35,7 +35,7 @@ const VOUCHERS = [
     type: 'shipping',
     label: 'Shipping',
     title: '6% off',
-    description: 'Min. Spend $0',
+    description: 'Min. Spend ETB 0',
     dueOn: add(new Date(), { days: 2 }),
   },
   {
@@ -43,7 +43,7 @@ const VOUCHERS = [
     type: 'all',
     label: 'All Categories',
     title: '6% off',
-    description: 'Min. Spend $0 Capped at $10',
+    description: 'Min. Spend ETB 0 Capped at ETB 10',
     dueOn: add(new Date(), { days: 1 }),
   },
   {
@@ -51,7 +51,7 @@ const VOUCHERS = [
     type: 'shipping',
     label: 'Shipping',
     title: '6% off',
-    description: 'Min. Spend $0 Capped at $10',
+    description: 'Min. Spend ETB 0 Capped at ETB 10',
     dueOn: add(new Date(), { days: 2 }),
   },
   {
@@ -59,7 +59,7 @@ const VOUCHERS = [
     type: 'category',
     label: 'Men Clothes',
     title: 'Up to 50%',
-    description: 'Min. Spend $0 Capped at $10',
+    description: 'Min. Spend ETB 0 Capped at ETB 10',
     dueOn: add(new Date(), { days: 3 }),
   },
   {
@@ -67,7 +67,7 @@ const VOUCHERS = [
     type: 'shipping',
     label: 'Shipping',
     title: '6% off',
-    description: 'Min. Spend $0',
+    description: 'Min. Spend ETB 0',
     dueOn: add(new Date(), { days: 4 }),
   },
   {
@@ -75,7 +75,7 @@ const VOUCHERS = [
     type: 'shipping',
     label: 'Shipping',
     title: '6% off',
-    description: 'Min. Spend $0',
+    description: 'Min. Spend ETB 0',
     dueOn: add(new Date(), { days: 5 }),
   },
 ];

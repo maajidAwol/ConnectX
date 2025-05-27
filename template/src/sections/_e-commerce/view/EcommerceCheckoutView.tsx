@@ -40,7 +40,7 @@ import {
 } from '../checkout';
 // types
 import { CartItem } from 'src/store/cart';
-import { fCurrency } from 'src/utils/format-number';
+import { fCurrency } from 'src/utils/formatNumber';
 
 // ----------------------------------------------------------------------
 

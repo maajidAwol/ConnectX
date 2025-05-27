@@ -9,9 +9,13 @@ export function fNumber(number: InputValue) {
 }
 
 export function fCurrency(number: InputValue) {
-  const format = number ? numeral(number).format('$0,0.00') : '';
-
-  return result(format, '.00');
+  if (!number) return '';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'ETB',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Number(number));
 }
 
 export function fPercent(number: InputValue) {

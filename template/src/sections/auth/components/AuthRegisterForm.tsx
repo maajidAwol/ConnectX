@@ -328,6 +328,8 @@ export default function AuthRegisterForm() {
             Privacy Policy.
           </Link>
         </Typography>
+
+        {/* Note: Social sign-in options (Google, GitHub, Facebook) are intentionally not included */}
       </Stack>
     </FormProvider>
   );

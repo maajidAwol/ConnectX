@@ -1,26 +1,30 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { add } from 'date-fns';
 // @mui
 import { useTheme } from '@mui/material/styles';
-import { Typography, Container, Stack, Box } from '@mui/material';
+import { Typography, Container, Stack, Box, Unstable_Grid2 as Grid } from '@mui/material';
 // hooks
 import useResponsive from 'src/hooks/useResponsive';
-// _mock
-import { _products } from 'src/_mock';
+// store
+import { useProductStore } from 'src/store/product';
 // components
 import Carousel, { CarouselDots, CarouselArrows } from 'src/components/carousel';
 //
 import { ProductCountdownBlock } from '../components';
-import { EcommerceProductItemHot } from '../product/item';
+import { EcommerceProductItemHot, EcommerceProductItemCountDown } from '../product/item';
+import { EcommerceProductList } from '../product/list';
 
 // ----------------------------------------------------------------------
 
 export default function EcommerceLandingHotDealToday() {
   const theme = useTheme();
-
   const isMdUp = useResponsive('up', 'md');
-
   const carouselRef = useRef<Carousel | null>(null);
+  const { featuredProducts, loading, fetchFeaturedProducts } = useProductStore();
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, [fetchFeaturedProducts]);
 
   const carouselSettings = {
     dots: true,
@@ -55,6 +59,43 @@ export default function EcommerceLandingHotDealToday() {
   const handleNext = () => {
     carouselRef.current?.slickNext();
   };
+
+  if (loading || !featuredProducts || featuredProducts.length === 0) {
+    return null;
+  }
+
+  // Get 3 random products
+  const shuffled = [...featuredProducts].sort(() => 0.5 - Math.random());
+  const randomProducts = shuffled.slice(0, 3);
+
+  const mappedProducts = randomProducts.map((product) => ({
+    id: product.id,
+    tenant: product.tenant || [],
+    owner: product.owner || '',
+    sku: product.sku || '',
+    name: product.name,
+    base_price: product.base_price,
+    profit_percentage: product.profit_percentage || null,
+    selling_price: product.selling_price ? parseFloat(product.selling_price) : null,
+    quantity: product.quantity,
+    category: product.category,
+    is_public: product.is_public || false,
+    description: product.description,
+    short_description: product.short_description,
+    tag: product.tag || [],
+    brand: product.brand || '',
+    additional_info: product.additional_info || {},
+    warranty: product.warranty || '',
+    cover_url: product.cover_url,
+    images: product.images || [],
+    colors: product.colors || [],
+    sizes: product.sizes || [],
+    total_sold: product.total_sold,
+    total_ratings: product.review?.rating_distribution?.['5'] || 0,
+    total_reviews: product.review?.total_reviews || 0,
+    created_at: product.created_at,
+    updated_at: product.updated_at
+  }));
 
   return (
     <Container
@@ -107,19 +148,11 @@ export default function EcommerceLandingHotDealToday() {
         )}
       </Stack>
 
-      <Carousel ref={carouselRef} {...carouselSettings}>
-        {_products.map((product) => (
-          <Box
-            key={product.id}
-            sx={{
-              py: 0.5,
-              px: { xs: 1, md: 1.5 },
-            }}
-          >
-            <EcommerceProductItemHot product={product} hotProduct />
-          </Box>
-        ))}
-      </Carousel>
+      <EcommerceProductList
+        products={mappedProducts}
+        loading={loading}
+        viewMode="grid"
+      />
     </Container>
   );
 }

@@ -1,13 +1,13 @@
 // next
 import NextLink from 'next/link';
 // @mui
-import { Link, Stack, Divider, Typography, Box } from '@mui/material';
+import { Link, Stack, Box, Typography } from '@mui/material';
 // routes
 import { paths } from 'src/routes/paths';
 // components
 import Logo from 'src/components/logo';
 //
-import { AuthWithSocial, AuthCarousel, AuthRegisterForm } from '../components';
+import { AuthCarousel, AuthRegisterForm } from '../components';
 
 // ----------------------------------------------------------------------
 
@@ -38,19 +38,11 @@ export default function RegisterCoverView() {
 
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             {`Already have an account? `}
-            <Link component={NextLink} href={paths.loginCover} variant="subtitle2" color="primary">
+            <Link component={NextLink} href={paths.auth.loginCover} variant="subtitle2" color="primary">
               Login
             </Link>
           </Typography>
         </Stack>
-
-        <AuthWithSocial />
-
-        <Divider sx={{ py: 3 }}>
-          <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-            OR
-          </Typography>
-        </Divider>
 
         <AuthRegisterForm />
       </Box>
