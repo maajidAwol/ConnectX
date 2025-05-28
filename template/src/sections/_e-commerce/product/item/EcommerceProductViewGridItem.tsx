@@ -31,13 +31,21 @@ export default function EcommerceProductViewGridItem({ product, sx, ...other }: 
     event.preventDefault();
     event.stopPropagation();
     
+    if (!product.id) {
+      console.error('Product ID is missing');
+      return;
+    }
+    
     addItem({
-      id: product.id,
+      id: product.id.toString(),
       name: product.name,
       price: Number(product.base_price),
       quantity: 1,
       cover_url: product.cover_url,
-      color: product.colors[0],
+      colors: product.colors || [],
+      sizes: product.sizes || [],
+      category: product.category?.name || '',
+      color: product.colors?.[0] || '',
     });
   };
 

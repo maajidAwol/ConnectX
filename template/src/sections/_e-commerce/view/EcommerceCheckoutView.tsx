@@ -301,7 +301,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       phone: user?.phone_number || '',
       shipping_address: addressId,
       items: items.map(item => ({
-        product: item.id,
+        product: item.id.toString(),
         quantity: item.quantity,
         price: item.price.toString(),
         custom_profit_percentage: 0,
@@ -389,16 +389,29 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
       
       // Create order
       const orderData = {
+        status: 'pending',
+        subtotal: getTotalPrice().toString(),
+        taxes: '0.00',
+        shipping: '50.00',
+        discount: '0.00',
+        notes: 'Order placed through web application',
+        email: user?.email || '',
+        phone: user?.phone_number || '',
         shipping_address: newAddress.id,
-        items: items.map(item => ({
-          product: item.id,
-          quantity: item.quantity,
-          price: item.price.toString(),
-          custom_profit_percentage: 0,
-          custom_selling_price: item.price.toString()
-        })),
+        items: items.map((item) => {
+          if (!item.id) {
+            throw new Error(`Invalid product ID for item: ${item.name}`);
+          }
+          return {
+            product: item.id.toString(),
+            quantity: item.quantity,
+            price: item.price.toString(),
+            custom_profit_percentage: '0',
+            custom_selling_price: item.price.toString(),
+          };
+        }),
         total_amount: totalAmount,
-        payment_method: paymentMethod
+        payment_method: paymentMethod,
       };
 
       const orderResponse = await apiRequest<OrderResponse>('/orders/', {
@@ -441,7 +454,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
           orderId: orderResponse.id,
           addressId: newAddress.id,
           items: items.map(item => ({
-            product: item.id,
+            product: item.id.toString(),
             quantity: item.quantity,
             price: item.price.toString(),
             custom_profit_percentage: 0,
@@ -560,15 +573,20 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
         email: user?.email || '',
         phone: selectedAddress.phone_number,
         shipping_address: selectedAddress.id,
-        items: items.map(item => ({
-          product: item.id,
-          quantity: item.quantity,
-          price: item.price.toString(),
-          custom_profit_percentage: 0,
-          custom_selling_price: item.price.toString()
-        })),
+        items: items.map((item) => {
+          if (!item.id) {
+            throw new Error(`Invalid product ID for item: ${item.name}`);
+          }
+          return {
+            product: item.id.toString(),
+            quantity: item.quantity,
+            price: item.price.toString(),
+            custom_profit_percentage: '0',
+            custom_selling_price: item.price.toString(),
+          };
+        }),
         total_amount: totalAmount,
-        payment_method: paymentMethod
+        payment_method: paymentMethod,
       };
 
 
@@ -612,7 +630,7 @@ export default function EcommerceCheckoutView({ products, onDelete, onDecreaseQu
           orderId: orderResponse.id,
           addressId: selectedAddress.id,
           items: items.map(item => ({
-            product: item.id,
+            product: item.id.toString(),
             quantity: item.quantity,
             price: item.price.toString(),
             custom_profit_percentage: 0,
