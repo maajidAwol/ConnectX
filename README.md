@@ -20,7 +20,7 @@ ConnectX is a centralized, multi-tenant e-commerce platform designed to democrat
 
 ## Final PDF
 
-The final project report is available as [ConnectX_Final_Report.pdf](<./ConnectX(Group-9)%20(2)%20(1)%20(3).pdf>).
+The final project report is available as [ConnectX_Final_Report.pdf](./ConnectX%20Documentation.pdf).
 
 ## Deployment Links
 
