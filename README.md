@@ -25,6 +25,9 @@ The final project report is available as [ConnectX_Final_Report.pdf](<./ConnectX
 ## Deployment Links
 
 - **Backend API:** [https://connectx-backend-295168525338.europe-west1.run.app](https://connectx-backend-295168525338.europe-west1.run.app)
+- **Client App:** [https://connectx-client.vercel.app](https://connect-x-peach.vercel.app/)
+- **Mobile App:** [ConnectX](./ConnectX.apk) (Android APK)
+- **Template App:** [ConnectX Template](https://connect-x-pxwg.vercel.app/)
 - **Template Deployment:** See [template/docs/INTEGRATION.md](template/docs/INTEGRATION.md) for Vercel/Netlify instructions.
 
 ## License
