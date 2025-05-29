@@ -6,7 +6,7 @@ ConnectX is a centralized, multi-tenant e-commerce platform designed to democrat
 
 ## Project Structure
 
-- **client/** - Next.js frontend with merchant and admin dashboards
+- **client/** - Next.js frontend with merchant(tenants as organization) and admin dashboards
 - **Backend/** - Django backend with API endpoints for user, product, order, and transaction management
 - **mobile/** - Flutter mobile application
 - **template/** - Web app template for quick integration with ConnectX API
