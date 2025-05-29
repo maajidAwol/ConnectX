@@ -412,8 +412,8 @@ export default function TeamManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="member">Member</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      {/* <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem> */}
                     </SelectContent>
                   </Select>
                   {/* Empty div to match the height of password validation only when password is entered */}
