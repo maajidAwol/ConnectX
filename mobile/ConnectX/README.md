@@ -24,8 +24,8 @@ ConnectX Mobile is a Flutter application designed to provide a seamless e-commer
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/connectx/mobile.git
-   cd mobile/ConnectX
+   git clone https://github.com/AASTUSoftwareEngineeringDepartment/ConnectX
+   cd ConnectX/mobile/ConnectX
    ```
 
 2. **Install dependencies**

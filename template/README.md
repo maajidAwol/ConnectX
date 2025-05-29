@@ -32,8 +32,8 @@ src/
 ### Installation
 1. **Clone the template**
    ```bash
-   git clone https://github.com/connectx/template.git
-   cd template
+   git clone https://github.com/AASTUSoftwareEngineeringDepartment/ConnectX
+   cd ConnectX/template
    ```
 
 2. **Install dependencies**
