@@ -2,7 +2,7 @@
 
 ## Introduction
 
-ConnectX is a centralized, multi-tenant e-commerce platform designed to democratize online commerce for entrepreneurs, startups, and students. The project consists of a modern Next.js frontend, a robust Django backend, a Flutter mobile app, and a template for quick integration.
+ConnectX is a centralized, multi-tenant e-commerce platform built to make online commerce accessible to entrepreneurs, startups, and students. It features a modern Next.js frontend, a powerful Django backend, a Flutter mobile application, and an integration-ready template for rapid deployment.
 
 ## Project Structure
 
