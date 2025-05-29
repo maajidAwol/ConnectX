@@ -34,6 +34,12 @@ ConnectX is a centralized, multi-tenant e-commerce platform that democratizes on
 - **Accessibility**: WCAG compliant interface elements
 - **Loading States**: Skeleton loaders and smooth transitions
 
+## 🌐 Live Demo
+
+**Try ConnectX in action:** [https://connect-x-peach.vercel.app/](https://connect-x-peach.vercel.app/)
+
+Experience the full platform functionality including merchant dashboard, product management, and order processing in our deployed version.
+
 ## 🛠️ Tech Stack
 
 ### **Frontend Framework**
