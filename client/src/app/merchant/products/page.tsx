@@ -273,7 +273,6 @@ export default function ProductManagement() {
           <TabsTrigger value="public">Public Products</TabsTrigger>
           <TabsTrigger value="owned">Owned Products</TabsTrigger>
           <TabsTrigger value="listed">Listed</TabsTrigger>
-          {isVerified && <TabsTrigger value="merchant">My Products</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="all">
