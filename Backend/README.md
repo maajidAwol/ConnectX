@@ -41,7 +41,7 @@ ConnectX is a robust Django-based backend application designed to power e-commer
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/maajidAwol/ConnectX.git
+   git clone https://github.com/AASTUSoftwareEngineeringDepartment/ConnectX
    cd ConnectX/Backend
    ```
 
@@ -153,8 +153,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [API Documentation](https://connectx-backend-295168525338.europe-west1.run.app)
 - [Issue Tracker](https://github.com/AASTUSoftwareEngineeringDepartment/ConnectX/issues)
-
-## 👥 Authors
 
 ## 🙏 Acknowledgments
 

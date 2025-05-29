@@ -12,8 +12,8 @@ This template provides a ready-to-use e-commerce solution that can be easily int
 
 1. **Clone the template**
    ```bash
-   git clone https://github.com/connectx/template.git
-   cd template
+   git clone https://github.com/AASTUSoftwareEngineeringDepartment/ConnectX
+   cd ConnectX/template
    ```
 
 2. **Install dependencies**
@@ -112,6 +112,4 @@ yarn build
 
 ## Support
 For additional support:
-- Visit our [Documentation](https://docs.connectx.com)
-- Join our [Discord Community](https://discord.connectx.com)
-- Contact [Support](https://support.connectx.com) 
+- Visit our [Documentation](https://connect-x-peach.vercel.app/docs)

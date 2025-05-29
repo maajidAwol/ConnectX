@@ -25,10 +25,18 @@ The final project report is available as [ConnectX_Final_Report.pdf](<./ConnectX
 ## Deployment Links
 
 - **Backend API:** [https://connectx-backend-295168525338.europe-west1.run.app](https://connectx-backend-295168525338.europe-west1.run.app)
-- **Client App:** [https://connectx-client.vercel.app](https://connect-x-peach.vercel.app/)
-- **Mobile App:** [ConnectX](./ConnectX.apk) (Android APK)
-- **Template App:** [ConnectX Template](https://connect-x-pxwg.vercel.app/)
+- **Admin and Tenant(organization) Dashboard:** [https://connectx-client.vercel.app](https://connect-x-peach.vercel.app/)
+### Our templates
+- **Mobile App template:** [ConnectX](./ConnectX.apk) (Android APK)
+- **Web Template:** [ConnectX Template](https://connect-x-pxwg.vercel.app/)
 - **Template Deployment:** See [template/docs/INTEGRATION.md](template/docs/INTEGRATION.md) for Vercel/Netlify instructions.
+
+## 👥 Authors
+- **Adane Moges** - [GitHub](https://github.com/habeshaethiopia)
+- **Abdulmajid Awol** - [GitHub](https://github.com/maajidAwol)
+- **Amanuel Mandefrow** - [GitHub](https://github.com/amanuelmandefro3)
+- **Elias Balude** - [GitHub](https://github.com/eliasbalude)
+- **Abel Atkelet** - [GitHub](https://github.com/abelxo19)
 
 ## License
 
